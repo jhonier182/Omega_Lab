@@ -1,4 +1,4 @@
-package com.plm.plm.DTO;
+package com.plm.plm.dto;
 
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.TipoProducto;
@@ -11,17 +11,17 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductResponse {
+public class ProductDTO {
     private Integer id;
     private String codigo;
     private String nombre;
     private String descripcion;
     private String categoria;
+    private Integer categoriaId;
     private TipoProducto tipo;
     private String unidadMedida;
     private EstadoUsuario estado;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private BOMResponse bom;
 }
 

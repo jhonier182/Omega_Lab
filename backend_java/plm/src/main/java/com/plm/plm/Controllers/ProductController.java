@@ -1,18 +1,19 @@
 package com.plm.plm.Controllers;
 
-import com.plm.plm.Config.JwtTokenProvider;
-import com.plm.plm.DTO.*;
+import com.plm.plm.dto.ApiResponseDTO;
+import com.plm.plm.dto.BOMDTO;
+import com.plm.plm.dto.BOMItemDTO;
+import com.plm.plm.dto.ProductDTO;
+import com.plm.plm.security.JwtTokenProvider;
 import com.plm.plm.services.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -26,100 +27,99 @@ public class ProductController {
     private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Map<String, ProductResponse>>> createProduct(
-            @Valid @RequestBody ProductRequest request) {
-        ProductResponse product = productService.createProduct(request);
-        Map<String, ProductResponse> data = new HashMap<>();
+    public ResponseEntity<ApiResponseDTO<Map<String, ProductDTO>>> createProduct(
+            @RequestBody ProductDTO productDTO) {
+        ProductDTO product = productService.createProduct(productDTO);
+        Map<String, ProductDTO> data = new HashMap<>();
         data.put("product", product);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(data));
+            .body(ApiResponseDTO.success(data));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Map<String, java.util.List<ProductResponse>>>> getAllProducts(
+    public ResponseEntity<ApiResponseDTO<Map<String, List<ProductDTO>>>> getAllProducts(
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String search) {
-        java.util.List<ProductResponse> products = productService.getAllProducts(tipo, categoria, search);
-        Map<String, java.util.List<ProductResponse>> data = new HashMap<>();
+        List<ProductDTO> products = productService.getAllProducts(tipo, categoria, search);
+        Map<String, List<ProductDTO>> data = new HashMap<>();
         data.put("products", products);
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getProductById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getProductById(@PathVariable Integer id) {
         Map<String, Object> data = productService.getProductById(id);
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Map<String, ProductResponse>>> updateProduct(
+    public ResponseEntity<ApiResponseDTO<Map<String, ProductDTO>>> updateProduct(
             @PathVariable Integer id,
-            @Valid @RequestBody ProductRequest request) {
-        ProductResponse product = productService.updateProduct(id, request);
-        Map<String, ProductResponse> data = new HashMap<>();
+            @RequestBody ProductDTO productDTO) {
+        ProductDTO product = productService.updateProduct(id, productDTO);
+        Map<String, ProductDTO> data = new HashMap<>();
         data.put("product", product);
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     @PostMapping("/{id}/bom")
-    public ResponseEntity<ApiResponse<Map<String, BOMResponse>>> createOrUpdateBOM(
+    public ResponseEntity<ApiResponseDTO<Map<String, BOMDTO>>> createOrUpdateBOM(
             @PathVariable Integer id,
-            @Valid @RequestBody BOMRequest request,
+            @RequestBody BOMDTO bomDTO,
             HttpServletRequest httpRequest) {
         Integer userId = getUserIdFromRequest(httpRequest);
-        BOMResponse bom = productService.createOrUpdateBOM(id, request, userId);
-        Map<String, BOMResponse> data = new HashMap<>();
+        BOMDTO bom = productService.createOrUpdateBOM(id, bomDTO, userId);
+        Map<String, BOMDTO> data = new HashMap<>();
         data.put("bom", bom);
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
-
     @GetMapping("/{id}/bom/history")
-    public ResponseEntity<ApiResponse<Map<String, java.util.List<BOMResponse>>>> getBOMHistory(
+    public ResponseEntity<ApiResponseDTO<Map<String, List<BOMDTO>>>> getBOMHistory(
             @PathVariable Integer id) {
-        BOMHistoryResponse historyResponse = productService.getBOMHistory(id);
-        Map<String, java.util.List<BOMResponse>> data = new HashMap<>();
-        data.put("history", historyResponse.getHistory());
-        return ResponseEntity.ok(ApiResponse.success(data));
+        List<BOMDTO> history = productService.getBOMHistory(id);
+        Map<String, List<BOMDTO>> data = new HashMap<>();
+        data.put("history", history);
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     @PostMapping("/boms/{bomId}/items")
-    public ResponseEntity<ApiResponse<Map<String, BOMItemResponse>>> addMaterialToBOM(
+    public ResponseEntity<ApiResponseDTO<Map<String, BOMItemDTO>>> addMaterialToBOM(
             @PathVariable Integer bomId,
-            @Valid @RequestBody BOMItemRequest request) {
-        BOMItemResponse item = productService.addMaterialToBOM(bomId, request);
-        Map<String, BOMItemResponse> data = new HashMap<>();
+            @RequestBody BOMItemDTO bomItemDTO) {
+        BOMItemDTO item = productService.addMaterialToBOM(bomId, bomItemDTO);
+        Map<String, BOMItemDTO> data = new HashMap<>();
         data.put("item", item);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(data));
+            .body(ApiResponseDTO.success(data));
     }
 
     @GetMapping("/boms/{bomId}")
-    public ResponseEntity<ApiResponse<Map<String, BOMResponse>>> getBOMWithItems(
+    public ResponseEntity<ApiResponseDTO<Map<String, BOMDTO>>> getBOMWithItems(
             @PathVariable Integer bomId) {
-        BOMResponse bom = productService.getBOMWithItems(bomId);
-        Map<String, BOMResponse> data = new HashMap<>();
+        BOMDTO bom = productService.getBOMWithItems(bomId);
+        Map<String, BOMDTO> data = new HashMap<>();
         data.put("bom", bom);
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     @PutMapping("/bom-items/{itemId}")
-    public ResponseEntity<ApiResponse<Map<String, BOMItemResponse>>> updateBOMItem(
+    public ResponseEntity<ApiResponseDTO<Map<String, BOMItemDTO>>> updateBOMItem(
             @PathVariable Integer itemId,
-            @Valid @RequestBody BOMItemRequest request) {
-        BOMItemResponse item = productService.updateBOMItem(itemId, request);
-        Map<String, BOMItemResponse> data = new HashMap<>();
+            @RequestBody BOMItemDTO bomItemDTO) {
+        BOMItemDTO item = productService.updateBOMItem(itemId, bomItemDTO);
+        Map<String, BOMItemDTO> data = new HashMap<>();
         data.put("item", item);
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     @DeleteMapping("/bom-items/{itemId}")
-    public ResponseEntity<ApiResponse<Map<String, String>>> deleteBOMItem(@PathVariable Integer itemId) {
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> deleteBOMItem(@PathVariable Integer itemId) {
         productService.deleteBOMItem(itemId);
         Map<String, String> data = new HashMap<>();
         data.put("message", "Item eliminado correctamente");
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(ApiResponseDTO.success(data));
     }
 
     private Integer getUserIdFromRequest(HttpServletRequest request) {

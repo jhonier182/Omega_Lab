@@ -1,4 +1,4 @@
-package com.plm.plm.DTO;
+package com.plm.plm.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BOMItemResponse {
+public class BOMItemDTO {
     private Integer id;
     private Integer bomId;
     private Integer materialId;

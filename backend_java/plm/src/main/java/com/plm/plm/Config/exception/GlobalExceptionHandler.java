@@ -1,6 +1,6 @@
-package com.plm.plm.Config.GlobalExceptions;
+package com.plm.plm.Config.exception;
 
-import com.plm.plm.DTO.ErrorResponse;
+import com.plm.plm.dto.ErrorResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -15,13 +15,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<ErrorResponse> handleAppException(AppException ex) {
-        ErrorResponse errorResponse = ErrorResponse.of(ex.getMessage());
+    public ResponseEntity<ErrorResponseDTO> handleAppException(AppException ex) {
+        ErrorResponseDTO errorResponse = ErrorResponseDTO.of(ex.getMessage());
         return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponseDTO> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -30,16 +30,16 @@ public class GlobalExceptionHandler {
         });
         
         String message = "Error de validación: " + String.join(", ", errors.values());
-        ErrorResponse errorResponse = ErrorResponse.of(message, errors.toString());
+        ErrorResponseDTO errorResponse = ErrorResponseDTO.of(message, errors.toString());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+    public ResponseEntity<ErrorResponseDTO> handleGenericException(Exception ex) {
         String message = "Error interno del servidor";
         String details = ex.getMessage();
         
-        ErrorResponse errorResponse = ErrorResponse.of(message, details);
+        ErrorResponseDTO errorResponse = ErrorResponseDTO.of(message, details);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }

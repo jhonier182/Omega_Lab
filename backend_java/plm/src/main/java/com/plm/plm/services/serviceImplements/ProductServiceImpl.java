@@ -1,9 +1,10 @@
 package com.plm.plm.services.serviceImplements;
 
-import com.plm.plm.Config.GlobalExceptions.BadRequestException;
-import com.plm.plm.Config.GlobalExceptions.ConflictException;
-import com.plm.plm.Config.GlobalExceptions.ResourceNotFoundException;
-import com.plm.plm.DTO.*;
+import com.plm.plm.Config.exception.ConflictException;
+import com.plm.plm.Config.exception.ResourceNotFoundException;
+import com.plm.plm.dto.BOMDTO;
+import com.plm.plm.dto.BOMItemDTO;
+import com.plm.plm.dto.ProductDTO;
 import com.plm.plm.Enums.EstadoBOM;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.TipoProducto;
@@ -43,18 +44,20 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductResponse createProduct(ProductRequest request) {
-        if (productRepository.existsByCodigo(request.getCodigo())) {
+    public ProductDTO createProduct(ProductDTO productDTO) {
+        validateProductDTO(productDTO);
+
+        if (productRepository.existsByCodigo(productDTO.getCodigo())) {
             throw new ConflictException("El código del producto ya existe");
         }
 
         Product product = new Product();
-        product.setCodigo(request.getCodigo());
-        product.setNombre(request.getNombre());
-        product.setDescripcion(request.getDescripcion() != null ? request.getDescripcion() : "");
-        product.setCategoria(request.getCategoria() != null ? request.getCategoria() : "");
-        product.setTipo(request.getTipo() != null ? request.getTipo() : TipoProducto.PRODUCTO_TERMINADO);
-        product.setUnidadMedida(request.getUnidadMedida() != null ? request.getUnidadMedida() : "un");
+        product.setCodigo(productDTO.getCodigo());
+        product.setNombre(productDTO.getNombre());
+        product.setDescripcion(productDTO.getDescripcion() != null ? productDTO.getDescripcion() : "");
+        product.setCategoria(productDTO.getCategoria() != null ? productDTO.getCategoria() : "");
+        product.setTipo(productDTO.getTipo() != null ? productDTO.getTipo() : TipoProducto.PRODUCTO_TERMINADO);
+        product.setUnidadMedida(productDTO.getUnidadMedida() != null ? productDTO.getUnidadMedida() : "un");
         product.setEstado(EstadoUsuario.ACTIVO);
 
         product = productRepository.save(product);
@@ -62,9 +65,23 @@ public class ProductServiceImpl implements ProductService {
         return productToDTO(product);
     }
 
+    private void validateProductDTO(ProductDTO productDTO) {
+        if (productDTO.getCodigo() == null || productDTO.getCodigo().trim().isEmpty()) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El código del producto es requerido");
+        }
+
+        if (productDTO.getNombre() == null || productDTO.getNombre().trim().isEmpty()) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El nombre del producto es requerido");
+        }
+
+        if (productDTO.getNombre().trim().length() < 2) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El nombre debe tener al menos 2 caracteres");
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAllProducts(String tipo, String categoria, String search) {
+    public List<ProductDTO> getAllProducts(String tipo, String categoria, String search) {
         List<Product> products;
 
         if (search != null && !search.trim().isEmpty()) {
@@ -105,7 +122,7 @@ public class ProductServiceImpl implements ProductService {
             throw new ResourceNotFoundException("Producto no encontrado");
         }
 
-        ProductResponse productResponse = productToDTO(product);
+        ProductDTO productResponse = productToDTO(product);
 
         BOM bom = bomRepository.findFirstByProductoIdAndEstadoOrderByVersionDesc(
             id, EstadoBOM.APROBADO
@@ -133,7 +150,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductResponse updateProduct(Integer id, ProductRequest request) {
+    public ProductDTO updateProduct(Integer id, ProductDTO productDTO) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
@@ -141,27 +158,32 @@ public class ProductServiceImpl implements ProductService {
             throw new ResourceNotFoundException("Producto no encontrado");
         }
 
-        if (request.getCodigo() != null && !request.getCodigo().equals(product.getCodigo())) {
-            if (productRepository.existsByCodigo(request.getCodigo())) {
+        if (productDTO.getCodigo() != null && !productDTO.getCodigo().trim().isEmpty()) {
+            if (!productDTO.getCodigo().equals(product.getCodigo()) && 
+                productRepository.existsByCodigo(productDTO.getCodigo())) {
                 throw new ConflictException("El código del producto ya existe");
             }
-            product.setCodigo(request.getCodigo());
+            product.setCodigo(productDTO.getCodigo());
         }
 
-        if (request.getNombre() != null) {
-            product.setNombre(request.getNombre());
+        if (productDTO.getNombre() != null && !productDTO.getNombre().trim().isEmpty()) {
+            if (productDTO.getNombre().trim().length() < 2) {
+                throw new com.plm.plm.Config.exception.BadRequestException("El nombre debe tener al menos 2 caracteres");
+            }
+            product.setNombre(productDTO.getNombre());
         }
-        if (request.getDescripcion() != null) {
-            product.setDescripcion(request.getDescripcion());
+
+        if (productDTO.getDescripcion() != null) {
+            product.setDescripcion(productDTO.getDescripcion());
         }
-        if (request.getCategoria() != null) {
-            product.setCategoria(request.getCategoria());
+        if (productDTO.getCategoria() != null) {
+            product.setCategoria(productDTO.getCategoria());
         }
-        if (request.getTipo() != null) {
-            product.setTipo(request.getTipo());
+        if (productDTO.getTipo() != null) {
+            product.setTipo(productDTO.getTipo());
         }
-        if (request.getUnidadMedida() != null) {
-            product.setUnidadMedida(request.getUnidadMedida());
+        if (productDTO.getUnidadMedida() != null && !productDTO.getUnidadMedida().trim().isEmpty()) {
+            product.setUnidadMedida(productDTO.getUnidadMedida());
         }
 
         product = productRepository.save(product);
@@ -170,7 +192,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public BOMResponse createOrUpdateBOM(Integer productoId, BOMRequest request, Integer userId) {
+    public BOMDTO createOrUpdateBOM(Integer productoId, BOMDTO bomDTO, Integer userId) {
         Product product = productRepository.findById(productoId)
             .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
@@ -190,13 +212,13 @@ public class ProductServiceImpl implements ProductService {
             bom = new BOM();
             bom.setProducto(product);
             bom.setVersion(version);
-            bom.setJustificacion(request.getJustificacion() != null ? request.getJustificacion() : "");
+            bom.setJustificacion(bomDTO.getJustificacion() != null ? bomDTO.getJustificacion() : "");
             bom.setEstado(EstadoBOM.BORRADOR);
             User creador = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
             bom.setCreador(creador);
         } else {
-            bom.setJustificacion(request.getJustificacion() != null ? request.getJustificacion() : bom.getJustificacion());
+            bom.setJustificacion(bomDTO.getJustificacion() != null ? bomDTO.getJustificacion() : bom.getJustificacion());
         }
 
         bom = bomRepository.save(bom);
@@ -205,11 +227,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public BOMItemResponse addMaterialToBOM(Integer bomId, BOMItemRequest request) {
+    public BOMItemDTO addMaterialToBOM(Integer bomId, BOMItemDTO bomItemDTO) {
+        validateBOMItemDTO(bomItemDTO);
+
         BOM bom = bomRepository.findById(bomId)
             .orElseThrow(() -> new ResourceNotFoundException("BOM no encontrado"));
 
-        Product material = productRepository.findById(request.getMaterialId())
+        Product material = productRepository.findById(bomItemDTO.getMaterialId())
             .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado"));
 
         if (material.getEstado() != EstadoUsuario.ACTIVO) {
@@ -222,9 +246,9 @@ public class ProductServiceImpl implements ProductService {
         BOMItem item = new BOMItem();
         item.setBom(bom);
         item.setMaterial(material);
-        item.setCantidad(request.getCantidad());
-        item.setUnidad(request.getUnidad() != null ? request.getUnidad() : "mg");
-        item.setPorcentaje(request.getPorcentaje() != null ? request.getPorcentaje() : BigDecimal.ZERO);
+        item.setCantidad(bomItemDTO.getCantidad());
+        item.setUnidad(bomItemDTO.getUnidad() != null ? bomItemDTO.getUnidad() : "mg");
+        item.setPorcentaje(bomItemDTO.getPorcentaje() != null ? bomItemDTO.getPorcentaje() : BigDecimal.ZERO);
         item.setSecuencia(nextSeq);
 
         item = bomItemRepository.save(item);
@@ -232,9 +256,33 @@ public class ProductServiceImpl implements ProductService {
         return bomItemToDTO(item);
     }
 
+    private void validateBOMItemDTO(BOMItemDTO bomItemDTO) {
+        if (bomItemDTO.getMaterialId() == null) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El material es requerido");
+        }
+
+        if (bomItemDTO.getCantidad() == null) {
+            throw new com.plm.plm.Config.exception.BadRequestException("La cantidad es requerida");
+        }
+
+        if (bomItemDTO.getCantidad().compareTo(BigDecimal.valueOf(0.0001)) < 0) {
+            throw new com.plm.plm.Config.exception.BadRequestException("La cantidad debe ser mayor a 0");
+        }
+
+        if (bomItemDTO.getPorcentaje() != null) {
+            if (bomItemDTO.getPorcentaje().compareTo(BigDecimal.ZERO) < 0) {
+                throw new com.plm.plm.Config.exception.BadRequestException("El porcentaje no puede ser negativo");
+            }
+
+            if (bomItemDTO.getPorcentaje().compareTo(BigDecimal.valueOf(100)) > 0) {
+                throw new com.plm.plm.Config.exception.BadRequestException("El porcentaje no puede ser mayor a 100");
+            }
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public BOMResponse getBOMWithItems(Integer bomId) {
+    public BOMDTO getBOMWithItems(Integer bomId) {
         BOM bom = bomRepository.findById(bomId)
             .orElseThrow(() -> new ResourceNotFoundException("BOM no encontrado"));
 
@@ -246,21 +294,34 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public BOMItemResponse updateBOMItem(Integer itemId, BOMItemRequest request) {
+    public BOMItemDTO updateBOMItem(Integer itemId, BOMItemDTO bomItemDTO) {
         BOMItem item = bomItemRepository.findById(itemId)
             .orElseThrow(() -> new ResourceNotFoundException("Item no encontrado"));
 
-        if (request.getCantidad() != null) {
-            item.setCantidad(request.getCantidad());
+        if (bomItemDTO.getCantidad() != null) {
+            if (bomItemDTO.getCantidad().compareTo(BigDecimal.valueOf(0.0001)) < 0) {
+                throw new com.plm.plm.Config.exception.BadRequestException("La cantidad debe ser mayor a 0");
+            }
+            item.setCantidad(bomItemDTO.getCantidad());
         }
-        if (request.getUnidad() != null) {
-            item.setUnidad(request.getUnidad());
+
+        if (bomItemDTO.getUnidad() != null && !bomItemDTO.getUnidad().trim().isEmpty()) {
+            item.setUnidad(bomItemDTO.getUnidad());
         }
-        if (request.getPorcentaje() != null) {
-            item.setPorcentaje(request.getPorcentaje());
+
+        if (bomItemDTO.getPorcentaje() != null) {
+            if (bomItemDTO.getPorcentaje().compareTo(BigDecimal.ZERO) < 0) {
+                throw new com.plm.plm.Config.exception.BadRequestException("El porcentaje no puede ser negativo");
+            }
+
+            if (bomItemDTO.getPorcentaje().compareTo(BigDecimal.valueOf(100)) > 0) {
+                throw new com.plm.plm.Config.exception.BadRequestException("El porcentaje no puede ser mayor a 100");
+            }
+            item.setPorcentaje(bomItemDTO.getPorcentaje());
         }
-        if (request.getMaterialId() != null) {
-            Product material = productRepository.findById(request.getMaterialId())
+
+        if (bomItemDTO.getMaterialId() != null) {
+            Product material = productRepository.findById(bomItemDTO.getMaterialId())
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado"));
             item.setMaterial(material);
         }
@@ -280,14 +341,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public BOMHistoryResponse getBOMHistory(Integer productoId) {
+    public List<BOMDTO> getBOMHistory(Integer productoId) {
         List<BOM> boms = bomRepository.findByProductoIdOrderByVersionDesc(productoId);
 
-        List<BOMResponse> history = boms.stream()
+        return boms.stream()
             .map(this::bomToDTO)
             .collect(Collectors.toList());
-
-        return new BOMHistoryResponse(history);
     }
 
     private String getNextVersion(String currentVersion) {
@@ -297,13 +356,14 @@ public class ProductServiceImpl implements ProductService {
         return major + "." + (minor + 1);
     }
 
-    private ProductResponse productToDTO(Product product) {
-        ProductResponse dto = new ProductResponse();
+    private ProductDTO productToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
         dto.setId(product.getId());
         dto.setCodigo(product.getCodigo());
         dto.setNombre(product.getNombre());
         dto.setDescripcion(product.getDescripcion());
         dto.setCategoria(product.getCategoria());
+        dto.setCategoriaId(product.getCategoriaEntity() != null ? product.getCategoriaEntity().getId() : null);
         dto.setTipo(product.getTipo());
         dto.setUnidadMedida(product.getUnidadMedida());
         dto.setEstado(product.getEstado());
@@ -312,8 +372,8 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-    private BOMResponse bomToDTO(BOM bom) {
-        BOMResponse dto = new BOMResponse();
+    private BOMDTO bomToDTO(BOM bom) {
+        BOMDTO dto = new BOMDTO();
         dto.setId(bom.getId());
         dto.setProductoId(bom.getProducto().getId());
         dto.setVersion(bom.getVersion());
@@ -326,7 +386,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setUpdatedAt(bom.getUpdatedAt());
 
         if (bom.getItems() != null) {
-            List<BOMItemResponse> items = bom.getItems().stream()
+            List<BOMItemDTO> items = bom.getItems().stream()
                 .map(this::bomItemToDTO)
                 .collect(Collectors.toList());
             dto.setItems(items);
@@ -335,8 +395,8 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-    private BOMItemResponse bomItemToDTO(BOMItem item) {
-        BOMItemResponse dto = new BOMItemResponse();
+    private BOMItemDTO bomItemToDTO(BOMItem item) {
+        BOMItemDTO dto = new BOMItemDTO();
         dto.setId(item.getId());
         dto.setBomId(item.getBom().getId());
         dto.setMaterialId(item.getMaterial().getId());

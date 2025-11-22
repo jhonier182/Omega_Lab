@@ -1,13 +1,11 @@
 package com.plm.plm.services;
 
-import com.plm.plm.DTO.AuthResponse;
-import com.plm.plm.DTO.LoginRequest;
-import com.plm.plm.DTO.RegisterRequest;
-import com.plm.plm.DTO.UserDTO;
+import com.plm.plm.dto.AuthResponseDTO;
+import com.plm.plm.dto.UserDTO;
 
 public interface AuthService {
-    AuthResponse register(RegisterRequest request);
-    AuthResponse login(LoginRequest request);
+    AuthResponseDTO register(UserDTO userDTO);
+    AuthResponseDTO login(UserDTO userDTO);
     UserDTO getProfile(Integer userId);
     UserDTO getProfile(String email);
 }

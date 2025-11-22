@@ -20,12 +20,28 @@ CREATE TABLE IF NOT EXISTS usuarios (
     INDEX idx_estado (estado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de categorías
+CREATE TABLE IF NOT EXISTS categorias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    tipo_producto ENUM('producto_terminado', 'materia_prima', 'componente') NOT NULL,
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_nombre (nombre),
+    INDEX idx_tipo_producto (tipo_producto),
+    INDEX idx_estado (estado),
+    UNIQUE KEY uk_nombre (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tabla de productos
 CREATE TABLE IF NOT EXISTS productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(100) NOT NULL UNIQUE,
     nombre VARCHAR(255) NOT NULL,
     descripcion TEXT,
+    categoria_id INT,
     categoria VARCHAR(100),
     tipo ENUM('producto_terminado', 'materia_prima', 'componente') DEFAULT 'producto_terminado',
     unidad_medida VARCHAR(50) NOT NULL DEFAULT 'un',
@@ -34,9 +50,11 @@ CREATE TABLE IF NOT EXISTS productos (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_codigo (codigo),
     INDEX idx_tipo (tipo),
+    INDEX idx_categoria_id (categoria_id),
     INDEX idx_categoria (categoria),
     INDEX idx_estado (estado),
-    UNIQUE KEY uk_codigo (codigo)
+    UNIQUE KEY uk_codigo (codigo),
+    CONSTRAINT fk_producto_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de BOMs (Bill of Materials)

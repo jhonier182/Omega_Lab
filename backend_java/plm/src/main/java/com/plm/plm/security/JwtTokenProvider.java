@@ -1,4 +1,4 @@
-package com.plm.plm.Config;
+package com.plm.plm.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

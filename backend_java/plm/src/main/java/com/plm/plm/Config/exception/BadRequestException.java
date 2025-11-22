@@ -1,4 +1,4 @@
-package com.plm.plm.Config.GlobalExceptions;
+package com.plm.plm.Config.exception;
 
 public class BadRequestException extends AppException {
     public BadRequestException(String message) {

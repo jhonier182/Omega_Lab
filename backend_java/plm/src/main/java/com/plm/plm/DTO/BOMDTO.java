@@ -1,4 +1,4 @@
-package com.plm.plm.DTO;
+package com.plm.plm.dto;
 
 import com.plm.plm.Enums.EstadoBOM;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BOMResponse {
+public class BOMDTO {
     private Integer id;
     private Integer productoId;
     private String version;
@@ -22,6 +22,6 @@ public class BOMResponse {
     private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<BOMItemResponse> items;
+    private List<BOMItemDTO> items;
 }
 

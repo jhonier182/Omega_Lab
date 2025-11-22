@@ -3,9 +3,6 @@ package com.plm.plm.Models;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.Rol;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,26 +32,20 @@ public class User {
     private Integer id;
 
     @Column(nullable = false, unique = true, length = 255)
-    @NotBlank(message = "El email es requerido")
-    @Email(message = "El email no es válido")
     private String email;
 
     @Column(nullable = false, length = 255)
-    @NotBlank(message = "La contraseña es requerida")
     private String password;
 
     @Column(nullable = false, length = 255)
-    @NotBlank(message = "El nombre es requerido")
     private String nombre;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @NotNull(message = "El rol es requerido")
     private Rol rol = Rol.USUARIO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @NotNull(message = "El estado es requerido")
     private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
     @CreatedDate
