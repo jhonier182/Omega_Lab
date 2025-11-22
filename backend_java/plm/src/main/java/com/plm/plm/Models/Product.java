@@ -1,7 +1,5 @@
 package com.plm.plm.Models;
 
-package com.plm.plm.Models;
-
 import com.plm.plm.Enums.EstadoUsuario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
