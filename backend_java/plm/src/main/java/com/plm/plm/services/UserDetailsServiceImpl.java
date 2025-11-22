@@ -1,4 +1,4 @@
-package com.plm.plm.Config;
+package com.plm.plm.services;
 
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Models.User;

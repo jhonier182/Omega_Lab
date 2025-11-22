@@ -15,49 +15,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "productos",
+@Table(name = "categorias",
     indexes = {
-        @Index(name = "idx_codigo", columnList = "codigo"),
-        @Index(name = "idx_tipo", columnList = "tipo"),
-        @Index(name = "idx_categoria", columnList = "categoria"),
+        @Index(name = "idx_nombre", columnList = "nombre"),
+        @Index(name = "idx_tipo_producto", columnList = "tipo_producto"),
         @Index(name = "idx_estado", columnList = "estado")
     },
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_codigo", columnNames = "codigo")
+        @UniqueConstraint(name = "uk_nombre", columnNames = "nombre")
     }
 )
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false, unique = true, length = 100)
-    private String codigo;
-
-    @Column(nullable = false, length = 255)
     private String nombre;
 
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", foreignKey = @ForeignKey(name = "fk_producto_categoria"))
-    private Category categoriaEntity;
-
-    @Column(length = 100)
-    private String categoria;
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private TipoProducto tipo = TipoProducto.PRODUCTO_TERMINADO;
-
-    @Column(name = "unidad_medida", nullable = false, length = 50)
-    private String unidadMedida = "un";
+    @Column(name = "tipo_producto", nullable = false, length = 50)
+    private TipoProducto tipoProducto;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -71,14 +57,7 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<BOM> boms = new ArrayList<>();
-
-    @OneToMany(mappedBy = "material", fetch = FetchType.LAZY)
-    private List<BOMItem> usadoEnBOMs = new ArrayList<>();
-
-    public String getCategoriaNombre() {
-        return categoriaEntity != null ? categoriaEntity.getNombre() : categoria;
-    }
+    @OneToMany(mappedBy = "categoriaEntity", fetch = FetchType.LAZY)
+    private List<Product> productos = new ArrayList<>();
 }
 

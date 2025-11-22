@@ -1,4 +1,4 @@
-package com.plm.plm.Config;
+package com.plm.plm.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

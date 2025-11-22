@@ -1,13 +1,11 @@
 package com.plm.plm.services.serviceImplements;
 
-import com.plm.plm.Config.GlobalExceptions.ConflictException;
-import com.plm.plm.Config.GlobalExceptions.ResourceNotFoundException;
-import com.plm.plm.Config.GlobalExceptions.UnauthorizedException;
-import com.plm.plm.Config.JwtTokenProvider;
-import com.plm.plm.DTO.AuthResponse;
-import com.plm.plm.DTO.LoginRequest;
-import com.plm.plm.DTO.RegisterRequest;
-import com.plm.plm.DTO.UserDTO;
+import com.plm.plm.Config.exception.ConflictException;
+import com.plm.plm.Config.exception.ResourceNotFoundException;
+import com.plm.plm.Config.exception.UnauthorizedException;
+import com.plm.plm.security.JwtTokenProvider;
+import com.plm.plm.dto.AuthResponseDTO;
+import com.plm.plm.dto.UserDTO;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.Rol;
 import com.plm.plm.Models.User;
@@ -32,18 +30,20 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+    public AuthResponseDTO register(UserDTO userDTO) {
+        validateUserDTO(userDTO, true);
+
+        if (userRepository.existsByEmail(userDTO.getEmail())) {
             throw new ConflictException("El email ya está registrado");
         }
 
-        String hashedPassword = passwordEncoder.encode(request.getPassword());
+        String hashedPassword = passwordEncoder.encode(userDTO.getPassword());
 
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setEmail(userDTO.getEmail());
         user.setPassword(hashedPassword);
-        user.setNombre(request.getNombre());
-        user.setRol(request.getRol() != null ? request.getRol() : Rol.USUARIO);
+        user.setNombre(userDTO.getNombre());
+        user.setRol(userDTO.getRol() != null ? userDTO.getRol() : Rol.USUARIO);
         user.setEstado(EstadoUsuario.ACTIVO);
 
         user = userRepository.save(user);
@@ -54,20 +54,22 @@ public class AuthServiceImpl implements AuthService {
             user.getRol().getValor()
         );
 
-        UserDTO userDTO = userToDTO(user);
+        UserDTO responseDTO = userToDTO(user);
 
-        return new AuthResponse(userDTO, token);
+        return new AuthResponseDTO(responseDTO, token);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponseDTO login(UserDTO userDTO) {
+        validateUserDTO(userDTO, false);
+
         User user = userRepository.findByEmailAndEstado(
-            request.getEmail(),
+            userDTO.getEmail(),
             EstadoUsuario.ACTIVO
         ).orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(userDTO.getPassword(), user.getPassword())) {
             throw new UnauthorizedException("Credenciales inválidas");
         }
 
@@ -77,9 +79,41 @@ public class AuthServiceImpl implements AuthService {
             user.getRol().getValor()
         );
 
-        UserDTO userDTO = userToDTO(user);
+        UserDTO responseDTO = userToDTO(user);
 
-        return new AuthResponse(userDTO, token);
+        return new AuthResponseDTO(responseDTO, token);
+    }
+
+    private void validateUserDTO(UserDTO userDTO, boolean requirePassword) {
+        if (userDTO.getEmail() == null || userDTO.getEmail().trim().isEmpty()) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El email es requerido");
+        }
+
+        if (!isValidEmail(userDTO.getEmail())) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El email no es válido");
+        }
+
+        if (requirePassword) {
+            if (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty()) {
+                throw new com.plm.plm.Config.exception.BadRequestException("La contraseña es requerida");
+            }
+
+            if (userDTO.getPassword().length() < 6) {
+                throw new com.plm.plm.Config.exception.BadRequestException("La contraseña debe tener al menos 6 caracteres");
+            }
+        }
+
+        if (userDTO.getNombre() == null || userDTO.getNombre().trim().isEmpty()) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El nombre es requerido");
+        }
+
+        if (userDTO.getNombre().trim().length() < 2) {
+            throw new com.plm.plm.Config.exception.BadRequestException("El nombre debe tener al menos 2 caracteres");
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
 
     @Override

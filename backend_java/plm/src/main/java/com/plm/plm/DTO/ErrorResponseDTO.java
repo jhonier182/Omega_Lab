@@ -1,4 +1,4 @@
-package com.plm.plm.DTO;
+package com.plm.plm.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorResponse {
+public class ErrorResponseDTO {
     private boolean success = false;
     private ErrorDetail error;
 
@@ -19,12 +19,12 @@ public class ErrorResponse {
         private String details;
     }
 
-    public static ErrorResponse of(String message) {
-        return new ErrorResponse(false, new ErrorDetail(message, null));
+    public static ErrorResponseDTO of(String message) {
+        return new ErrorResponseDTO(false, new ErrorDetail(message, null));
     }
 
-    public static ErrorResponse of(String message, String details) {
-        return new ErrorResponse(false, new ErrorDetail(message, details));
+    public static ErrorResponseDTO of(String message, String details) {
+        return new ErrorResponseDTO(false, new ErrorDetail(message, details));
     }
 }
 

@@ -2,8 +2,6 @@ package com.plm.plm.Models;
 
 import com.plm.plm.Enums.EstadoBOM;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,16 +36,13 @@ public class BOM {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "producto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_bom_producto"))
-    @NotNull(message = "El producto es requerido")
     private Product producto;
 
     @Column(nullable = false, length = 20)
-    @NotBlank(message = "La versión es requerida")
     private String version;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @NotNull(message = "El estado es requerido")
     private EstadoBOM estado = EstadoBOM.BORRADOR;
 
     @Column(columnDefinition = "TEXT")
