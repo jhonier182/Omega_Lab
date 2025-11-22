@@ -3,6 +3,7 @@ package com.plm.plm.Config;
 import com.plm.plm.Enums.EstadoBOM;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.Rol;
+import com.plm.plm.Enums.TipoProducto;
 import com.plm.plm.Models.BOM;
 import com.plm.plm.Models.BOMItem;
 import com.plm.plm.Models.Category;

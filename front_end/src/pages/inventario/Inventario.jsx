@@ -18,11 +18,6 @@ const Inventario = () => {
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-text-light text-3xl font-bold tracking-tight">Inventario</h1>
-        <p className="text-text-muted text-sm mt-1">Gestión de productos, materiales, categorías y unidades de medida</p>
-      </div>
-
-      <div className="mb-6">
         <nav className="flex gap-2 border-b border-border-dark">
           {subpages.map((page) => (
             <NavLink
