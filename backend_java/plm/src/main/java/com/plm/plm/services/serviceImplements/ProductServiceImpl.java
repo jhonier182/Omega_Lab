@@ -7,13 +7,14 @@ import com.plm.plm.dto.BOMItemDTO;
 import com.plm.plm.dto.ProductDTO;
 import com.plm.plm.Enums.EstadoBOM;
 import com.plm.plm.Enums.EstadoUsuario;
-import com.plm.plm.Enums.TipoProducto;
 import com.plm.plm.Models.BOM;
 import com.plm.plm.Models.BOMItem;
+import com.plm.plm.Models.Material;
 import com.plm.plm.Models.Product;
 import com.plm.plm.Models.User;
 import com.plm.plm.Reposotory.BOMItemRepository;
 import com.plm.plm.Reposotory.BOMRepository;
+import com.plm.plm.Reposotory.MaterialRepository;
 import com.plm.plm.Reposotory.ProductRepository;
 import com.plm.plm.Reposotory.UserRepository;
 import com.plm.plm.services.ProductService;
@@ -40,6 +41,9 @@ public class ProductServiceImpl implements ProductService {
     private BOMItemRepository bomItemRepository;
 
     @Autowired
+    private MaterialRepository materialRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Override
@@ -56,7 +60,6 @@ public class ProductServiceImpl implements ProductService {
         product.setNombre(productDTO.getNombre());
         product.setDescripcion(productDTO.getDescripcion() != null ? productDTO.getDescripcion() : "");
         product.setCategoria(productDTO.getCategoria() != null ? productDTO.getCategoria() : "");
-        product.setTipo(productDTO.getTipo() != null ? productDTO.getTipo() : TipoProducto.PRODUCTO_TERMINADO);
         product.setUnidadMedida(productDTO.getUnidadMedida() != null ? productDTO.getUnidadMedida() : "un");
         product.setEstado(EstadoUsuario.ACTIVO);
 
@@ -89,15 +92,6 @@ public class ProductServiceImpl implements ProductService {
                 search.trim(),
                 EstadoUsuario.ACTIVO
             );
-        } else if (tipo != null && categoria != null) {
-            TipoProducto tipoEnum = TipoProducto.fromString(tipo);
-            products = productRepository.findByTipoAndEstado(tipoEnum, EstadoUsuario.ACTIVO)
-                .stream()
-                .filter(p -> categoria.equals(p.getCategoria()))
-                .collect(Collectors.toList());
-        } else if (tipo != null) {
-            TipoProducto tipoEnum = TipoProducto.fromString(tipo);
-            products = productRepository.findByTipoAndEstado(tipoEnum, EstadoUsuario.ACTIVO);
         } else if (categoria != null) {
             products = productRepository.findByCategoriaAndEstado(categoria, EstadoUsuario.ACTIVO);
         } else {
@@ -179,9 +173,6 @@ public class ProductServiceImpl implements ProductService {
         if (productDTO.getCategoria() != null) {
             product.setCategoria(productDTO.getCategoria());
         }
-        if (productDTO.getTipo() != null) {
-            product.setTipo(productDTO.getTipo());
-        }
         if (productDTO.getUnidadMedida() != null && !productDTO.getUnidadMedida().trim().isEmpty()) {
             product.setUnidadMedida(productDTO.getUnidadMedida());
         }
@@ -233,7 +224,7 @@ public class ProductServiceImpl implements ProductService {
         BOM bom = bomRepository.findById(bomId)
             .orElseThrow(() -> new ResourceNotFoundException("BOM no encontrado"));
 
-        Product material = productRepository.findById(bomItemDTO.getMaterialId())
+        Material material = materialRepository.findById(bomItemDTO.getMaterialId())
             .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado"));
 
         if (material.getEstado() != EstadoUsuario.ACTIVO) {
@@ -321,9 +312,13 @@ public class ProductServiceImpl implements ProductService {
         }
 
         if (bomItemDTO.getMaterialId() != null) {
-            Product material = productRepository.findById(bomItemDTO.getMaterialId())
+            Material material = materialRepository.findById(bomItemDTO.getMaterialId())
                 .orElseThrow(() -> new ResourceNotFoundException("Material no encontrado"));
-            item.setMaterial(material);
+            if (material.getEstado() != EstadoUsuario.ACTIVO) {
+                item.setMaterial(material);
+            } else {
+                throw new ResourceNotFoundException("Material no encontrado");
+            }
         }
 
         item = bomItemRepository.save(item);
@@ -364,7 +359,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setDescripcion(product.getDescripcion());
         dto.setCategoria(product.getCategoria());
         dto.setCategoriaId(product.getCategoriaEntity() != null ? product.getCategoriaEntity().getId() : null);
-        dto.setTipo(product.getTipo());
+        dto.setTipo(null);
         dto.setUnidadMedida(product.getUnidadMedida());
         dto.setEstado(product.getEstado());
         dto.setCreatedAt(product.getCreatedAt());
@@ -399,10 +394,13 @@ public class ProductServiceImpl implements ProductService {
         BOMItemDTO dto = new BOMItemDTO();
         dto.setId(item.getId());
         dto.setBomId(item.getBom().getId());
-        dto.setMaterialId(item.getMaterial().getId());
-        dto.setMaterialNombre(item.getMaterial().getNombre());
-        dto.setMaterialCodigo(item.getMaterial().getCodigo());
-        dto.setMaterialUnidadMedida(item.getMaterial().getUnidadMedida());
+        Material material = item.getMaterial();
+        if (material != null) {
+            dto.setMaterialId(material.getId());
+            dto.setMaterialNombre(material.getNombre());
+            dto.setMaterialCodigo(material.getCodigo());
+            dto.setMaterialUnidadMedida(material.getUnidadMedida());
+        }
         dto.setCantidad(item.getCantidad());
         dto.setUnidad(item.getUnidad());
         dto.setPorcentaje(item.getPorcentaje());

@@ -3,6 +3,7 @@ package com.plm.plm.Config.exception;
 import com.plm.plm.dto.ErrorResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,6 +19,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleAppException(AppException ex) {
         ErrorResponseDTO errorResponse = ErrorResponseDTO.of(ex.getMessage());
         return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDTO> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        String message = "Error al procesar la solicitud. Verifique el formato de los datos enviados.";
+        String details = ex.getMessage();
+        if (details != null && details.contains("JSON")) {
+            message = "Error en el formato JSON. Verifique que todos los campos estén correctamente formateados.";
+        }
+        ErrorResponseDTO errorResponse = ErrorResponseDTO.of(message, details);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
