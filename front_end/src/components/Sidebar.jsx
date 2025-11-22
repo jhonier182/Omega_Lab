@@ -14,6 +14,7 @@ const Sidebar = ({ isOpen, onToggle, currentPath }) => {
     { key: 'dashboard', name: 'Dashboard', icon: 'dashboard', path: '/' },
     { key: 'ideas', name: 'Ideas / Research', icon: 'lightbulb', path: '/ideas' },
     { key: 'formulacion', name: 'Formulación', icon: 'science', path: '/formulacion' },
+    { key: 'inventario', name: 'Inventario', icon: 'inventory_2', path: '/inventario' },
     { key: 'ia', name: 'IA / Simulación', icon: 'psychology', path: '/ia' },
     { key: 'produccion', name: 'Producción / Proceso', icon: 'precision_manufacturing', path: '/produccion' },
     { key: 'pruebas', name: 'Pruebas / C. Calidad', icon: 'biotech', path: '/pruebas' },

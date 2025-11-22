@@ -1,15 +1,16 @@
 package com.plm.plm.services;
 
-import com.plm.plm.dto.ProductDTO;
-import com.plm.plm.Enums.TipoProducto;
+import com.plm.plm.dto.MaterialDTO;
 
 import java.util.List;
 
 public interface MaterialService {
-    List<ProductDTO> getAllMaterials();
-    List<ProductDTO> getMaterialsByTipo(TipoProducto tipo);
-    List<ProductDTO> getMaterialsByCategoria(String categoria);
-    ProductDTO getMaterialById(Integer id);
-    List<ProductDTO> searchMaterials(String search);
+    MaterialDTO createMaterial(MaterialDTO materialDTO);
+    List<MaterialDTO> getAllMaterials();
+    List<MaterialDTO> getMaterialsByCategoria(String categoria);
+    MaterialDTO getMaterialById(Integer id);
+    MaterialDTO updateMaterial(Integer id, MaterialDTO materialDTO);
+    void deleteMaterial(Integer id);
+    List<MaterialDTO> searchMaterials(String search);
 }
 

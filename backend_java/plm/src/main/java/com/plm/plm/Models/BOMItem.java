@@ -34,7 +34,7 @@ public class BOMItem {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "material_id", nullable = false, foreignKey = @ForeignKey(name = "fk_bom_item_material"))
-    private Product material;
+    private Material material;
 
     @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal cantidad;

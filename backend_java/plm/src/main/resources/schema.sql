@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS categorias (
     UNIQUE KEY uk_nombre (nombre)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de productos
+-- Tabla de productos terminados
 CREATE TABLE IF NOT EXISTS productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(100) NOT NULL UNIQUE,
@@ -43,18 +43,36 @@ CREATE TABLE IF NOT EXISTS productos (
     descripcion TEXT,
     categoria_id INT,
     categoria VARCHAR(100),
-    tipo ENUM('producto_terminado', 'materia_prima', 'componente') DEFAULT 'producto_terminado',
     unidad_medida VARCHAR(50) NOT NULL DEFAULT 'un',
     estado ENUM('activo', 'inactivo') DEFAULT 'activo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_codigo (codigo),
-    INDEX idx_tipo (tipo),
     INDEX idx_categoria_id (categoria_id),
     INDEX idx_categoria (categoria),
     INDEX idx_estado (estado),
     UNIQUE KEY uk_codigo (codigo),
     CONSTRAINT fk_producto_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de materiales (materias primas)
+CREATE TABLE IF NOT EXISTS materiales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(100) NOT NULL UNIQUE,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    categoria_id INT,
+    categoria VARCHAR(100),
+    unidad_medida VARCHAR(50) NOT NULL DEFAULT 'kg',
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_codigo (codigo),
+    INDEX idx_categoria_id (categoria_id),
+    INDEX idx_categoria (categoria),
+    INDEX idx_estado (estado),
+    UNIQUE KEY uk_codigo (codigo),
+    CONSTRAINT fk_material_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de BOMs (Bill of Materials)
@@ -92,6 +110,6 @@ CREATE TABLE IF NOT EXISTS bom_items (
     INDEX idx_material_id (material_id),
     INDEX idx_secuencia (secuencia),
     CONSTRAINT fk_bom_item_bom FOREIGN KEY (bom_id) REFERENCES boms(id) ON DELETE CASCADE,
-    CONSTRAINT fk_bom_item_material FOREIGN KEY (material_id) REFERENCES productos(id) ON DELETE CASCADE
+    CONSTRAINT fk_bom_item_material FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -68,6 +68,20 @@ class ProductService {
   }
 
   /**
+   * Elimina un producto
+   * @param {number} id - ID del producto
+   * @returns {Promise<boolean>}
+   */
+  async deleteProduct(id) {
+    try {
+      await api.delete(`/products/${id}`);
+      return true;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Crea o actualiza el BOM de un producto
    * @param {number} productoId - ID del producto
    * @param {Object} bomData - Datos del BOM

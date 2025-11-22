@@ -3,15 +3,16 @@ package com.plm.plm.Config;
 import com.plm.plm.Enums.EstadoBOM;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.Rol;
-import com.plm.plm.Enums.TipoProducto;
 import com.plm.plm.Models.BOM;
 import com.plm.plm.Models.BOMItem;
 import com.plm.plm.Models.Category;
+import com.plm.plm.Models.Material;
 import com.plm.plm.Models.Product;
 import com.plm.plm.Models.User;
 import com.plm.plm.Reposotory.BOMItemRepository;
 import com.plm.plm.Reposotory.BOMRepository;
 import com.plm.plm.Reposotory.CategoryRepository;
+import com.plm.plm.Reposotory.MaterialRepository;
 import com.plm.plm.Reposotory.ProductRepository;
 import com.plm.plm.Reposotory.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +44,16 @@ public class DataInitializer implements CommandLineRunner {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private MaterialRepository materialRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
         initializeAdmin();
         initializeCategories();
+        initializeMaterials();
         initializeProducts();
         initializeBOMs();
     }
@@ -82,6 +87,13 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeCategories() {
+        long existingProducts = productRepository.count();
+        if (existingProducts > 0) {
+            System.out.println("Eliminando " + existingProducts + " productos existentes...");
+            productRepository.deleteAll();
+            System.out.println("Productos eliminados exitosamente");
+        }
+
         long existingCategories = categoryRepository.count();
         if (existingCategories > 0) {
             System.out.println("Eliminando " + existingCategories + " categorías existentes...");
@@ -105,10 +117,10 @@ public class DataInitializer implements CommandLineRunner {
         };
 
         String[][] categoriasMP = {
-            {"Proteínas", "Materias primas proteicas"},
-            {"Proteínas Vegetales", "Proteínas de origen vegetal"},
-            {"Creatinas", "Materias primas de creatina"},
-            {"Aminoácidos", "Aminoácidos en polvo"},
+            {"Proteínas MP", "Materias primas proteicas"},
+            {"Proteínas Vegetales MP", "Proteínas de origen vegetal"},
+            {"Creatinas MP", "Materias primas de creatina"},
+            {"Aminoácidos MP", "Aminoácidos en polvo"},
             {"Estimulantes", "Estimulantes y energizantes"},
             {"Vasodilatadores", "Vasodilatadores para bombeo"},
             {"Carbohidratos", "Carbohidratos de rápida absorción"}
@@ -157,12 +169,6 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeProducts() {
-        long existingCount = productRepository.count();
-        if (existingCount > 0) {
-            System.out.println("Eliminando " + existingCount + " productos existentes...");
-            productRepository.deleteAll();
-            System.out.println("Productos eliminados exitosamente");
-        }
 
         List<Product> products = new ArrayList<>();
 
@@ -222,11 +228,17 @@ public class DataInitializer implements CommandLineRunner {
             if (categoriaEntity != null) {
                 product.setCategoriaEntity(categoriaEntity);
             }
-            product.setTipo(TipoProducto.PRODUCTO_TERMINADO);
             product.setUnidadMedida("un");
             product.setEstado(EstadoUsuario.ACTIVO);
             products.add(product);
         }
+
+        productRepository.saveAll(products);
+        System.out.println("Se crearon " + products.size() + " productos terminados exitosamente");
+    }
+
+    private void initializeMaterials() {
+        List<Material> materials = new ArrayList<>();
 
         String[] materiasPrimas = {
             "Proteína de Suero Concentrada (WPC 80%)", "Proteína de Suero Aislada (WPI 90%)",
@@ -255,80 +267,35 @@ public class DataInitializer implements CommandLineRunner {
         };
 
         String[] categoriasMP = {
-            "Proteínas", "Proteínas", "Proteínas", "Proteínas Vegetales",
-            "Proteínas Vegetales", "Creatinas", "Creatinas", "Aminoácidos",
-            "Aminoácidos", "Aminoácidos", "Aminoácidos", "Estimulantes",
-            "Vasodilatadores", "Aminoácidos", "Carbohidratos"
+            "Proteínas MP", "Proteínas MP", "Proteínas MP", "Proteínas Vegetales MP",
+            "Proteínas Vegetales MP", "Creatinas MP", "Creatinas MP", "Aminoácidos MP",
+            "Aminoácidos MP", "Aminoácidos MP", "Aminoácidos MP", "Estimulantes",
+            "Vasodilatadores", "Aminoácidos MP", "Carbohidratos"
         };
 
+        java.util.Map<String, Category> categoriasMap = new java.util.HashMap<>();
+        List<Category> allCategories = categoryRepository.findAll();
+        for (Category cat : allCategories) {
+            categoriasMap.put(cat.getNombre(), cat);
+        }
+
         for (int i = 0; i < 15; i++) {
-            Product product = new Product();
-            product.setCodigo("MP-" + String.format("%03d", i + 1));
-            product.setNombre(materiasPrimas[i]);
-            product.setDescripcion(descripcionesMP[i]);
-            product.setCategoria(categoriasMP[i]);
-            // Asignar categoría desde la tabla
+            Material material = new Material();
+            material.setCodigo("MP-" + String.format("%03d", i + 1));
+            material.setNombre(materiasPrimas[i]);
+            material.setDescripcion(descripcionesMP[i]);
+            material.setCategoria(categoriasMP[i]);
             Category categoriaEntity = categoriasMap.get(categoriasMP[i]);
             if (categoriaEntity != null) {
-                product.setCategoriaEntity(categoriaEntity);
+                material.setCategoriaEntity(categoriaEntity);
             }
-            product.setTipo(TipoProducto.MATERIA_PRIMA);
-            product.setUnidadMedida("kg");
-            product.setEstado(EstadoUsuario.ACTIVO);
-            products.add(product);
+            material.setUnidadMedida("kg");
+            material.setEstado(EstadoUsuario.ACTIVO);
+            materials.add(material);
         }
 
-        String[] componentes = {
-            "Sucralosa", "Acesulfame K", "Stevia", "Saborizante Chocolate",
-            "Saborizante Vainilla", "Saborizante Fresa", "Saborizante Cookies & Cream",
-            "Colorante Caramelo", "Colorante Rojo Natural", "Lecitina de Soja",
-            "Goma Xantana", "Ácido Cítrico", "Vitamina D3", "Vitamina B12",
-            "Enzimas Digestivas"
-        };
-
-        String[] descripcionesComp = {
-            "Edulcorante artificial sin calorías. Alta intensidad dulce.",
-            "Edulcorante artificial sin calorías. Estable al calor.",
-            "Edulcorante natural de origen vegetal. Sin calorías.",
-            "Saborizante artificial para sabor chocolate.",
-            "Saborizante artificial para sabor vainilla.",
-            "Saborizante artificial para sabor fresa.",
-            "Saborizante artificial para sabor cookies & cream.",
-            "Colorante natural de caramelo. Color marrón.",
-            "Colorante natural rojo. Origen vegetal.",
-            "Emulsionante natural. Mejora la textura y solubilidad.",
-            "Espesante y estabilizante natural. Mejora la viscosidad.",
-            "Acidulante natural. Regula el pH y sabor.",
-            "Vitamina D3 en polvo. Absorción de calcio y salud ósea.",
-            "Vitamina B12 en polvo. Energía y función nerviosa.",
-            "Mezcla de enzimas digestivas. Mejora la absorción."
-        };
-
-        String[] categoriasComp = {
-            "Edulcorantes", "Edulcorantes", "Edulcorantes", "Saborizantes",
-            "Saborizantes", "Saborizantes", "Saborizantes", "Colorantes",
-            "Colorantes", "Emulsionantes", "Espesantes", "Acidulantes",
-            "Vitaminas", "Vitaminas", "Enzimas"
-        };
-
-        for (int i = 0; i < 15; i++) {
-            Product product = new Product();
-            product.setCodigo("COMP-" + String.format("%03d", i + 1));
-            product.setNombre(componentes[i]);
-            product.setDescripcion(descripcionesComp[i]);
-            product.setCategoria(categoriasComp[i]);
-            Category categoriaEntity = categoriasMap.get(categoriasComp[i]);
-            if (categoriaEntity != null) {
-                product.setCategoriaEntity(categoriaEntity);
-            }
-            product.setTipo(TipoProducto.COMPONENTE);
-            product.setUnidadMedida("g");
-            product.setEstado(EstadoUsuario.ACTIVO);
-            products.add(product);
-        }
-
-        productRepository.saveAll(products);
-        System.out.println("Se crearon " + products.size() + " productos de Proscience exitosamente");
+        materialRepository.saveAll(materials);
+        System.out.println("Se crearon " + materials.size() + " materiales exitosamente");
     }
 
     private void initializeBOMs() {
@@ -344,69 +311,74 @@ public class DataInitializer implements CommandLineRunner {
         Optional<User> adminOpt = userRepository.findByEmail("admin@proscience.com");
         User admin = adminOpt.orElse(null);
 
-        // Obtener productos por código para crear las relaciones
         List<Product> allProducts = productRepository.findAll();
         java.util.Map<String, Product> productosMap = new java.util.HashMap<>();
         for (Product p : allProducts) {
             productosMap.put(p.getCodigo(), p);
         }
 
+        List<Material> allMaterials = materialRepository.findAll();
+        java.util.Map<String, Material> materialesMap = new java.util.HashMap<>();
+        for (Material m : allMaterials) {
+            materialesMap.put(m.getCodigo(), m);
+        }
+
         // Crear BOMs para productos terminados de proteínas
         createBOMForProduct(productosMap.get("PT-001"), "BEST WHEY 2.04 LB", admin, productosMap,
-            new String[]{"MP-001", "COMP-004", "COMP-001", "COMP-010", "COMP-011"},
+            new String[]{"MP-001", "MP-001", "MP-001", "MP-001", "MP-001"},
             new double[]{0.85, 0.05, 0.03, 0.04, 0.03},
-            new String[]{"kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-002"), "BEST WHEY 4 LB", admin, productosMap,
-            new String[]{"MP-001", "COMP-004", "COMP-001", "COMP-010", "COMP-011"},
+            new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005"},
             new double[]{0.85, 0.05, 0.03, 0.04, 0.03},
-            new String[]{"kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-003"), "BEST PROTEIN 2.04 LB", admin, productosMap,
-            new String[]{"MP-001", "MP-002", "MP-003", "COMP-005", "COMP-001", "COMP-010"},
+            new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.50, 0.30, 0.15, 0.03, 0.01, 0.01},
-            new String[]{"kg", "kg", "kg", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-004"), "BEST VEGAN", admin, productosMap,
-            new String[]{"MP-004", "MP-005", "COMP-003", "COMP-005", "COMP-010", "COMP-011"},
+            new String[]{"MP-004", "MP-005", "MP-006", "MP-007", "MP-008", "MP-009"},
             new double[]{0.60, 0.30, 0.02, 0.04, 0.02, 0.02},
-            new String[]{"kg", "kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-005"), "SMART 3.25 LB", admin, productosMap,
-            new String[]{"MP-001", "MP-002", "COMP-004", "COMP-001", "COMP-010", "COMP-013"},
+            new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.70, 0.20, 0.05, 0.02, 0.02, 0.01},
-            new String[]{"kg", "kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-006"), "SMART 6 LB", admin, productosMap,
-            new String[]{"MP-001", "MP-002", "COMP-004", "COMP-001", "COMP-010", "COMP-013"},
+            new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.70, 0.20, 0.05, 0.02, 0.02, 0.01},
-            new String[]{"kg", "kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-007"), "SMART BOLSA 13.01 LB", admin, productosMap,
-            new String[]{"MP-001", "MP-002", "COMP-004", "COMP-001", "COMP-010", "COMP-013"},
+            new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.70, 0.20, 0.05, 0.02, 0.02, 0.01},
-            new String[]{"kg", "kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-008"), "LA WEY 1.72 LB", admin, productosMap,
-            new String[]{"MP-002", "COMP-005", "COMP-001", "COMP-010", "COMP-011"},
+            new String[]{"MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.90, 0.05, 0.02, 0.02, 0.01},
-            new String[]{"kg", "g", "g", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         // BOMs para creatinas
         createBOMForProduct(productosMap.get("PT-009"), "LEGACY 30S CREATINA HCL", admin, productosMap,
-            new String[]{"MP-007", "COMP-012"},
+            new String[]{"MP-006", "MP-007"},
             new double[]{0.95, 0.05},
-            new String[]{"kg", "g"});
+            new String[]{"kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-010"), "LEGACY 50S CREATINA HCL", admin, productosMap,
-            new String[]{"MP-007", "COMP-012"},
+            new String[]{"MP-006", "MP-007"},
             new double[]{0.95, 0.05},
-            new String[]{"kg", "g"});
+            new String[]{"kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-011"), "LEGACY PLUS 50S", admin, productosMap,
-            new String[]{"MP-007", "MP-010", "COMP-012"},
+            new String[]{"MP-006", "MP-007", "MP-010"},
             new double[]{0.85, 0.10, 0.05},
-            new String[]{"kg", "kg", "g"});
+            new String[]{"kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-012"), "LEGEND CON CREAPURE®", admin, productosMap,
             new String[]{"MP-006"},
@@ -420,41 +392,41 @@ public class DataInitializer implements CommandLineRunner {
 
         // BOMs para suplementos
         createBOMForProduct(productosMap.get("PT-014"), "EEA'S (ARMY) 30 SERVICIOS", admin, productosMap,
-            new String[]{"MP-008", "MP-009", "MP-010", "COMP-001", "COMP-010"},
+            new String[]{"MP-008", "MP-009", "MP-010", "MP-011", "MP-012"},
             new double[]{0.40, 0.35, 0.20, 0.03, 0.02},
-            new String[]{"kg", "kg", "kg", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-015"), "INTENZE 30 SERVICIOS", admin, productosMap,
-            new String[]{"MP-011", "MP-012", "MP-013", "MP-014", "COMP-001", "COMP-008"},
+            new String[]{"MP-011", "MP-012", "MP-013", "MP-014", "MP-001", "MP-002"},
             new double[]{0.30, 0.25, 0.20, 0.15, 0.05, 0.05},
-            new String[]{"kg", "kg", "kg", "kg", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-016"), "THE ONE", admin, productosMap,
-            new String[]{"COMP-013", "COMP-014", "MP-010", "COMP-010", "COMP-015"},
+            new String[]{"MP-010", "MP-011", "MP-012", "MP-013", "MP-014"},
             new double[]{0.20, 0.15, 0.30, 0.20, 0.15},
-            new String[]{"g", "g", "kg", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-017"), "OMEGA 3", admin, productosMap,
-            new String[]{"COMP-010", "COMP-011"},
+            new String[]{"MP-001", "MP-002"},
             new double[]{0.90, 0.10},
-            new String[]{"g", "g"});
+            new String[]{"kg", "kg"});
 
         // Los kits no tienen BOM directo, son combinaciones de productos terminados
         // Pero podemos crear BOMs básicos para ellos
         createBOMForProduct(productosMap.get("PT-018"), "KIT GYMBRO", admin, productosMap,
-            new String[]{"MP-001", "MP-006", "COMP-004", "COMP-001"},
+            new String[]{"MP-001", "MP-006", "MP-007", "MP-008"},
             new double[]{0.60, 0.30, 0.05, 0.05},
-            new String[]{"kg", "kg", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-019"), "KIT GYM RAT", admin, productosMap,
-            new String[]{"MP-001", "MP-006", "MP-008", "COMP-004", "COMP-001"},
+            new String[]{"MP-001", "MP-006", "MP-008", "MP-009", "MP-010"},
             new double[]{0.50, 0.25, 0.15, 0.05, 0.05},
-            new String[]{"kg", "kg", "kg", "g", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         createBOMForProduct(productosMap.get("PT-020"), "KIT ESSENTIAL", admin, productosMap,
-            new String[]{"MP-001", "MP-006", "MP-008", "MP-010", "COMP-004"},
+            new String[]{"MP-001", "MP-006", "MP-008", "MP-010", "MP-011"},
             new double[]{0.40, 0.20, 0.20, 0.15, 0.05},
-            new String[]{"kg", "kg", "kg", "kg", "g"});
+            new String[]{"kg", "kg", "kg", "kg", "kg"});
 
         System.out.println("Se crearon BOMs para todos los productos terminados exitosamente");
     }
@@ -466,6 +438,12 @@ public class DataInitializer implements CommandLineRunner {
         if (producto == null) {
             System.out.println("Producto no encontrado para crear BOM");
             return;
+        }
+
+        List<Material> allMaterials = materialRepository.findAll();
+        java.util.Map<String, Material> materialesMap = new java.util.HashMap<>();
+        for (Material m : allMaterials) {
+            materialesMap.put(m.getCodigo(), m);
         }
 
         BOM bom = new BOM();
@@ -483,7 +461,7 @@ public class DataInitializer implements CommandLineRunner {
         double totalPorcentaje = 0.0;
 
         for (int i = 0; i < codigosMateriales.length; i++) {
-            Product material = productosMap.get(codigosMateriales[i]);
+            Material material = materialesMap.get(codigosMateriales[i]);
             if (material == null) {
                 System.out.println("Material no encontrado: " + codigosMateriales[i]);
                 continue;
