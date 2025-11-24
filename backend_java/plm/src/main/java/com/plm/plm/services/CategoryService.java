@@ -1,7 +1,7 @@
 package com.plm.plm.services;
 
-import com.plm.plm.dto.CategoryDTO;
 import com.plm.plm.Enums.TipoProducto;
+import com.plm.plm.dto.CategoryDTO;
 
 import java.util.List;
 

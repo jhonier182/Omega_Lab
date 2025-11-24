@@ -1,12 +1,13 @@
 package com.plm.plm.services.serviceImplements;
 
-import com.plm.plm.Config.exception.ConflictException;
+import com.plm.plm.Config.Exception.BadRequestException;
+import com.plm.plm.Config.Exception.DuplicateResourceException;
 import com.plm.plm.Config.exception.ResourceNotFoundException;
-import com.plm.plm.dto.CategoryDTO;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.TipoProducto;
 import com.plm.plm.Models.Category;
 import com.plm.plm.Reposotory.CategoryRepository;
+import com.plm.plm.dto.CategoryDTO;
 import com.plm.plm.services.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,47 +25,46 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryDTO createCategory(CategoryDTO categoryDTO) {
-        validateCategoryDTO(categoryDTO);
+        validateCategoryData(categoryDTO.getNombre(), categoryDTO.getTipoProducto());
 
-        if (categoryRepository.existsByNombre(categoryDTO.getNombre())) {
-            throw new ConflictException("La categoría con ese nombre ya existe");
+        if (categoryDTO.getNombre() != null && categoryRepository.existsByNombre(categoryDTO.getNombre())) {
+            throw new DuplicateResourceException("La categoría con ese nombre ya existe");
         }
 
         Category category = new Category();
         category.setNombre(categoryDTO.getNombre());
         category.setDescripcion(categoryDTO.getDescripcion() != null ? categoryDTO.getDescripcion() : "");
         category.setTipoProducto(categoryDTO.getTipoProducto());
-        category.setEstado(EstadoUsuario.ACTIVO);
+        category.setEstado(categoryDTO.getEstado() != null ? categoryDTO.getEstado() : EstadoUsuario.ACTIVO);
 
-        category = categoryRepository.save(category);
-        return categoryToDTO(category);
+        return categoryRepository.save(category).getDTO();
     }
 
-    private void validateCategoryDTO(CategoryDTO categoryDTO) {
-        if (categoryDTO.getNombre() == null || categoryDTO.getNombre().trim().isEmpty()) {
-            throw new com.plm.plm.Config.exception.BadRequestException("El nombre de la categoría es requerido");
+    private void validateCategoryData(String nombre, TipoProducto tipoProducto) {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new BadRequestException("El nombre de la categoría es requerido");
         }
 
-        if (categoryDTO.getTipoProducto() == null) {
-            throw new com.plm.plm.Config.exception.BadRequestException("El tipo de producto es requerido");
+        if (tipoProducto == null) {
+            throw new BadRequestException("El tipo de producto es requerido");
         }
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CategoryDTO> getAllCategories() {
-        List<Category> categories = categoryRepository.findByEstado(EstadoUsuario.ACTIVO);
-        return categories.stream()
-                .map(this::categoryToDTO)
+        return categoryRepository.findByEstado(EstadoUsuario.ACTIVO)
+                .stream()
+                .map(Category::getDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CategoryDTO> getCategoriesByTipoProducto(TipoProducto tipoProducto) {
-        List<Category> categories = categoryRepository.findByTipoProductoAndEstado(tipoProducto, EstadoUsuario.ACTIVO);
-        return categories.stream()
-                .map(this::categoryToDTO)
+        return categoryRepository.findByTipoProductoAndEstado(tipoProducto, EstadoUsuario.ACTIVO)
+                .stream()
+                .map(Category::getDTO)
                 .collect(Collectors.toList());
     }
 
@@ -78,7 +78,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ResourceNotFoundException("Categoría no encontrada");
         }
         
-        return categoryToDTO(category);
+        return category.getDTO();
     }
 
     @Override
@@ -87,29 +87,15 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
 
-        if (category.getEstado() != EstadoUsuario.ACTIVO) {
-            throw new ResourceNotFoundException("Categoría no encontrada");
-        }
-
-        if (categoryDTO.getNombre() == null || categoryDTO.getNombre().trim().isEmpty()) {
-            throw new com.plm.plm.Config.exception.BadRequestException("El nombre de la categoría es requerido");
-        }
-
-        if (categoryDTO.getTipoProducto() == null) {
-            throw new com.plm.plm.Config.exception.BadRequestException("El tipo de producto es requerido");
-        }
-
-        if (!category.getNombre().equals(categoryDTO.getNombre()) && 
-            categoryRepository.existsByNombre(categoryDTO.getNombre())) {
-            throw new ConflictException("La categoría con ese nombre ya existe");
-        }
-
         category.setNombre(categoryDTO.getNombre());
         category.setDescripcion(categoryDTO.getDescripcion() != null ? categoryDTO.getDescripcion() : "");
         category.setTipoProducto(categoryDTO.getTipoProducto());
 
-        category = categoryRepository.save(category);
-        return categoryToDTO(category);
+        if (categoryDTO.getEstado() != null) {
+            category.setEstado(categoryDTO.getEstado());
+        }
+
+        return categoryRepository.save(category).getDTO();
     }
 
     @Override
@@ -120,18 +106,6 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setEstado(EstadoUsuario.INACTIVO);
         categoryRepository.save(category);
-    }
-
-    private CategoryDTO categoryToDTO(Category category) {
-        CategoryDTO dto = new CategoryDTO();
-        dto.setId(category.getId());
-        dto.setNombre(category.getNombre());
-        dto.setDescripcion(category.getDescripcion());
-        dto.setTipoProducto(category.getTipoProducto());
-        dto.setEstado(category.getEstado());
-        dto.setCreatedAt(category.getCreatedAt());
-        dto.setUpdatedAt(category.getUpdatedAt());
-        return dto;
     }
 }
 

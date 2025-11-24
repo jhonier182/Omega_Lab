@@ -1,30 +1,23 @@
 package com.plm.plm.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ErrorResponseDTO {
-    private boolean success = false;
-    private ErrorDetail error;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ErrorDetail {
-        private String message;
-        private String details;
-    }
-
-    public static ErrorResponseDTO of(String message) {
-        return new ErrorResponseDTO(false, new ErrorDetail(message, null));
-    }
-
-    public static ErrorResponseDTO of(String message, String details) {
-        return new ErrorResponseDTO(false, new ErrorDetail(message, details));
-    }
+    private Integer status;
+    private String message;
+    private LocalDateTime timestamp;
+    private String path;
+    private String error;
+    private Map<String, Object> details;
 }
 

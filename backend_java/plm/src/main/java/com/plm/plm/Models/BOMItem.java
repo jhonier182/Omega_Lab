@@ -1,5 +1,6 @@
 package com.plm.plm.Models;
 
+import com.plm.plm.dto.BOMItemDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -51,5 +52,25 @@ public class BOMItem {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public BOMItemDTO getDTO() {
+        BOMItemDTO dto = new BOMItemDTO();
+        dto.setId(id);
+        dto.setBomId(bom != null ? bom.getId() : null);
+        
+        if (material != null) {
+            dto.setMaterialId(material.getId());
+            dto.setMaterialNombre(material.getNombre());
+            dto.setMaterialCodigo(material.getCodigo());
+            dto.setMaterialUnidadMedida(material.getUnidadMedida());
+        }
+        
+        dto.setCantidad(cantidad);
+        dto.setUnidad(unidad);
+        dto.setPorcentaje(porcentaje);
+        dto.setSecuencia(secuencia);
+        dto.setCreatedAt(createdAt);
+        return dto;
+    }
 }
 

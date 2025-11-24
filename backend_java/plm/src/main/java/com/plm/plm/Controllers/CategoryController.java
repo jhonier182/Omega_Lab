@@ -1,6 +1,5 @@
 package com.plm.plm.Controllers;
 
-import com.plm.plm.dto.ApiResponseDTO;
 import com.plm.plm.dto.CategoryDTO;
 import com.plm.plm.Enums.TipoProducto;
 import com.plm.plm.services.CategoryService;
@@ -21,17 +20,16 @@ public class CategoryController {
     private CategoryService categoryService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<Map<String, CategoryDTO>>> createCategory(
+    public ResponseEntity<Map<String, CategoryDTO>> createCategory(
             @RequestBody CategoryDTO categoryDTO) {
         CategoryDTO category = categoryService.createCategory(categoryDTO);
         Map<String, CategoryDTO> data = new HashMap<>();
         data.put("category", category);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponseDTO.success(data));
+        return ResponseEntity.status(HttpStatus.CREATED).body(data);
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponseDTO<Map<String, List<CategoryDTO>>>> getAllCategories(
+    public ResponseEntity<Map<String, List<CategoryDTO>>> getAllCategories(
             @RequestParam(required = false) String tipoProducto) {
         List<CategoryDTO> categories;
         
@@ -44,34 +42,34 @@ public class CategoryController {
         
         Map<String, List<CategoryDTO>> data = new HashMap<>();
         data.put("categories", categories);
-        return ResponseEntity.ok(ApiResponseDTO.success(data));
+        return ResponseEntity.ok(data);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<Map<String, CategoryDTO>>> getCategoryById(
+    public ResponseEntity<Map<String, CategoryDTO>> getCategoryById(
             @PathVariable Integer id) {
         CategoryDTO category = categoryService.getCategoryById(id);
         Map<String, CategoryDTO> data = new HashMap<>();
         data.put("category", category);
-        return ResponseEntity.ok(ApiResponseDTO.success(data));
+        return ResponseEntity.ok(data);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<Map<String, CategoryDTO>>> updateCategory(
+    public ResponseEntity<Map<String, CategoryDTO>> updateCategory(
             @PathVariable Integer id,
             @RequestBody CategoryDTO categoryDTO) {
         CategoryDTO category = categoryService.updateCategory(id, categoryDTO);
         Map<String, CategoryDTO> data = new HashMap<>();
         data.put("category", category);
-        return ResponseEntity.ok(ApiResponseDTO.success(data));
+        return ResponseEntity.ok(data);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<Map<String, String>>> deleteCategory(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, String>> deleteCategory(@PathVariable Integer id) {
         categoryService.deleteCategory(id);
         Map<String, String> data = new HashMap<>();
         data.put("message", "Categoría eliminada correctamente");
-        return ResponseEntity.ok(ApiResponseDTO.success(data));
+        return ResponseEntity.ok(data);
     }
 }
 

@@ -2,6 +2,7 @@ package com.plm.plm.Models;
 
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.Rol;
+import com.plm.plm.dto.UserDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -61,5 +62,19 @@ public class User {
 
     @OneToMany(mappedBy = "aprobador", fetch = FetchType.LAZY)
     private List<BOM> bomsAprobados = new ArrayList<>();
+
+
+    public UserDTO getDTO() {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(id);
+        userDTO.setEmail(email);
+        userDTO.setNombre(nombre);
+        userDTO.setRol(rol);
+        userDTO.setEstado(estado);
+        userDTO.setCreatedAt(createdAt);
+        userDTO.setUpdatedAt(updatedAt);
+        return userDTO;
+    }
+
 }
 

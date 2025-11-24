@@ -1,6 +1,7 @@
 package com.plm.plm.Models;
 
 import com.plm.plm.Enums.EstadoUsuario;
+import com.plm.plm.dto.ProductDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -70,6 +71,22 @@ public class Product {
 
     public String getCategoriaNombre() {
         return categoriaEntity != null ? categoriaEntity.getNombre() : categoria;
+    }
+
+    public ProductDTO getDTO() {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(id);
+        dto.setCodigo(codigo);
+        dto.setNombre(nombre);
+        dto.setDescripcion(descripcion);
+        dto.setCategoria(categoria);
+        dto.setCategoriaId(categoriaEntity != null ? categoriaEntity.getId() : null);
+        dto.setTipo(categoriaEntity != null ? categoriaEntity.getTipoProducto() : null);
+        dto.setUnidadMedida(unidadMedida);
+        dto.setEstado(estado);
+        dto.setCreatedAt(createdAt);
+        dto.setUpdatedAt(updatedAt);
+        return dto;
     }
 }
 

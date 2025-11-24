@@ -1,8 +1,17 @@
-package com.plm.plm.Config.exception;
+package com.plm.plm.Config.Exception;
 
-public class ForbiddenException extends AppException {
+/**
+ * Excepción lanzada cuando el usuario no tiene permisos para realizar una acción.
+ * Retorna HTTP 403 (FORBIDDEN)
+ */
+public class ForbiddenException extends RuntimeException {
+    
     public ForbiddenException(String message) {
-        super(message, 403);
+        super(message);
+    }
+    
+    public ForbiddenException(String resourceName, String action) {
+        super(String.format("No tiene permisos para %s en %s", action, resourceName));
     }
 }
 
