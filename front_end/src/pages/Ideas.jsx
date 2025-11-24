@@ -23,14 +23,6 @@ const Ideas = () => {
   const [loadingAnalistas, setLoadingAnalistas] = useState(false)
   const [selectedAnalistaId, setSelectedAnalistaId] = useState(null)
   const [pruebasPorIdea, setPruebasPorIdea] = useState(new Map())
-  const [showCreatePruebaDialog, setShowCreatePruebaDialog] = useState(false)
-  const [selectedIdeaForPrueba, setSelectedIdeaForPrueba] = useState(null)
-  const [nuevaPrueba, setNuevaPrueba] = useState({
-    codigoMuestra: '',
-    tipoPrueba: '',
-    descripcion: '',
-    equiposUtilizados: ''
-  })
 
   // Verificar permisos de acceso
   const isSupervisorQA = hasAnyRole(user, 'SUPERVISOR_QA')
@@ -63,10 +55,12 @@ const Ideas = () => {
   const loadIdeas = async () => {
     setLoadingIdeas(true)
     try {
-      // Si es analista, cargar solo sus ideas asignadas
+      // Si es analista, cargar solo sus ideas asignadas en estado EN_PRUEBA
       if (isAnalista) {
         const data = await ideaService.getMisIdeas()
-        setIdeas(data)
+        // Filtrar solo ideas en estado EN_PRUEBA (las PRUEBA_APROBADA van al historial)
+        const ideasEnPrueba = data.filter(idea => idea.estado === 'EN_PRUEBA')
+        setIdeas(ideasEnPrueba)
       } else {
         // Si es Supervisor QA o Admin, cargar todas las ideas con filtros
         const data = await ideaService.getIdeas(filters)
@@ -196,49 +190,6 @@ const Ideas = () => {
     setPruebasPorIdea(pruebasMap)
   }
 
-  const handleCreatePruebaFromIdea = (idea) => {
-    setSelectedIdeaForPrueba(idea)
-    setNuevaPrueba({
-      codigoMuestra: '',
-      tipoPrueba: '',
-      descripcion: '',
-      equiposUtilizados: '',
-      pruebasRequeridas: ''
-    })
-    setShowCreatePruebaDialog(true)
-  }
-
-  const handleCreatePrueba = async () => {
-    if (!nuevaPrueba.codigoMuestra || !nuevaPrueba.tipoPrueba) {
-      alert('Por favor completa todos los campos requeridos')
-      return
-    }
-
-    try {
-      await pruebaService.createPrueba({
-        ideaId: selectedIdeaForPrueba.id,
-        codigoMuestra: nuevaPrueba.codigoMuestra,
-        tipoPrueba: nuevaPrueba.tipoPrueba,
-        descripcion: nuevaPrueba.descripcion,
-        equiposUtilizados: nuevaPrueba.equiposUtilizados,
-        pruebasRequeridas: nuevaPrueba.pruebasRequeridas,
-        estado: 'PENDIENTE'
-      })
-      setShowCreatePruebaDialog(false)
-      setSelectedIdeaForPrueba(null)
-      setNuevaPrueba({
-        codigoMuestra: '',
-        tipoPrueba: '',
-        descripcion: '',
-        equiposUtilizados: '',
-        pruebasRequeridas: ''
-      })
-      loadPruebasForIdeas()
-    } catch (error) {
-      console.error('Error al crear prueba:', error)
-      alert('Error al crear prueba: ' + (error.message || 'Error desconocido'))
-    }
-  }
 
   const parseAIDetails = (detallesIA) => {
     if (!detallesIA) return null
@@ -367,42 +318,60 @@ const Ideas = () => {
                         </div>
                       </div>
                     </div>
-                    {isAnalista && idea.estado === 'EN_PRUEBA' && (
-                      <div className="mt-4 pt-4 border-t border-primary/20">
-                        <button
-                          onClick={async () => {
-                            try {
-                              // Crear prueba automáticamente con los datos de la idea
-                              const codigoMuestra = `MU-${idea.id}-${Date.now()}`
-                              const nuevaPrueba = await pruebaService.createPrueba({
-                                ideaId: idea.id,
-                                codigoMuestra: codigoMuestra,
-                                tipoPrueba: 'Control de Calidad - Fórmula IA',
-                                descripcion: `Prueba generada automáticamente para validar la fórmula: ${idea.titulo}`,
-                                pruebasRequeridas: idea.pruebasRequeridas,
-                                estado: 'PENDIENTE'
-                              })
-                              
-                              // Recargar pruebas
-                              loadPruebasForIdeas()
-                              
-                              // Redirigir a Pruebas con la prueba seleccionada
-                              navigate(`/pruebas?pruebaId=${nuevaPrueba.id}`)
-                            } catch (error) {
-                              console.error('Error al crear prueba:', error)
-                              alert('Error al crear prueba: ' + (error.message || 'Error desconocido'))
-                            }
-                          }}
-                          className="w-full px-4 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 flex items-center justify-center gap-2"
-                        >
-                          <span className="material-symbols-outlined text-sm">play_arrow</span>
-                          Iniciar Prueba
-                        </button>
-                        <p className="text-text-muted text-xs mt-2 text-center">
-                          Se creará una prueba con estos parámetros y serás redirigido al módulo de Control de Calidad
-                        </p>
-                      </div>
-                    )}
+                    {isAnalista && idea.estado === 'EN_PRUEBA' && (() => {
+                      // Verificar si ya existe una prueba para esta idea
+                      const pruebasExistentes = pruebasPorIdea.get(idea.id) || []
+                      const tienePruebaIniciada = pruebasExistentes.length > 0
+                      
+                      return !tienePruebaIniciada ? (
+                        <div className="mt-4 pt-4 border-t border-primary/20">
+                          <button
+                            onClick={async () => {
+                              try {
+                                // Crear prueba automáticamente con los datos de la idea
+                                const codigoMuestra = `MU-${idea.id}-${Date.now()}`
+                                const nuevaPrueba = await pruebaService.createPrueba({
+                                  ideaId: idea.id,
+                                  codigoMuestra: codigoMuestra,
+                                  tipoPrueba: 'Control de Calidad - Fórmula IA',
+                                  descripcion: `Prueba generada automáticamente para validar la fórmula: ${idea.titulo}`,
+                                  pruebasRequeridas: idea.pruebasRequeridas,
+                                  estado: 'PENDIENTE'
+                                })
+                                
+                                // Recargar pruebas
+                                loadPruebasForIdeas()
+                                
+                                // Redirigir a Pruebas con la prueba seleccionada
+                                navigate(`/pruebas?pruebaId=${nuevaPrueba.id}`)
+                              } catch (error) {
+                                console.error('Error al crear prueba:', error)
+                                alert('Error al crear prueba: ' + (error.message || 'Error desconocido'))
+                              }
+                            }}
+                            className="w-full px-4 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 flex items-center justify-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-sm">play_arrow</span>
+                            Iniciar Prueba
+                          </button>
+                          <p className="text-text-muted text-xs mt-2 text-center">
+                            Se creará una prueba con estos parámetros y serás redirigido al módulo de Control de Calidad
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-4 pt-4 border-t border-primary/20">
+                          <div className="p-3 rounded-lg bg-success/10 border border-success/30">
+                            <p className="text-text-light text-sm font-medium flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">check_circle</span>
+                              Prueba iniciada
+                            </p>
+                            <p className="text-text-muted text-xs mt-1">
+                              Ya existe una prueba para esta idea. Puedes verla en el módulo de Pruebas / Control de Calidad.
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
               )}
@@ -683,19 +652,6 @@ const Ideas = () => {
                 </div>
               )}
 
-              {/* Botón para crear prueba (solo para analistas con ideas en EN_PRUEBA) */}
-              {isAnalista && idea.estado === 'EN_PRUEBA' && (
-                <div className="mt-4 pt-4 border-t border-border-dark">
-                  <button
-                    onClick={() => handleCreatePruebaFromIdea(idea)}
-                    className="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-sm font-medium hover:bg-primary/30 flex items-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-sm">add</span>
-                    Crear Prueba de Laboratorio
-                  </button>
-                </div>
-              )}
-
               {/* Acciones según estado y rol */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-dark">
                 {/* Acciones para Supervisor QA y Admin */}
@@ -756,25 +712,6 @@ const Ideas = () => {
                   </>
                 )}
                 
-                {/* Acciones para Analista - Solo puede aprobar/rechazar pruebas */}
-                {isAnalista && idea.estado === 'EN_PRUEBA' && (
-                  <>
-                    <button
-                      onClick={() => handleChangeEstado(idea, 'prueba_aprobada')}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30"
-                    >
-                      <span className="material-symbols-outlined text-sm mr-1">check_circle</span>
-                      Aprobar Pruebas
-                    </button>
-                    <button
-                      onClick={() => handleChangeEstado(idea, 'rechazada')}
-                      className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
-                    >
-                      <span className="material-symbols-outlined text-sm mr-1">cancel</span>
-                      Rechazar Pruebas
-                    </button>
-                  </>
-                )}
               </div>
           </div>
           ))}
@@ -874,118 +811,6 @@ const Ideas = () => {
         </div>
       )}
 
-      {/* Diálogo para crear prueba desde idea */}
-      {showCreatePruebaDialog && selectedIdeaForPrueba && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowCreatePruebaDialog(false)
-              setSelectedIdeaForPrueba(null)
-            }
-          }}
-        >
-          <div className="bg-card-dark rounded-lg border border-border-dark max-w-md w-full shadow-xl">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-text-light text-lg font-semibold">Crear Prueba de Laboratorio</h3>
-                  <p className="text-text-muted text-xs mt-1">Idea: {selectedIdeaForPrueba.titulo}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowCreatePruebaDialog(false)
-                    setSelectedIdeaForPrueba(null)
-                  }}
-                  className="text-text-muted hover:text-text-light"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-text-muted text-sm mb-2">Código de Muestra *</label>
-                  <input
-                    type="text"
-                    value={nuevaPrueba.codigoMuestra}
-                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, codigoMuestra: e.target.value })}
-                    placeholder="Ej: MU-2024-001"
-                    className="w-full h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-text-muted text-sm mb-2">Tipo de Prueba *</label>
-                  <input
-                    type="text"
-                    value={nuevaPrueba.tipoPrueba}
-                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, tipoPrueba: e.target.value })}
-                    placeholder="Ej: Control de Calidad, Análisis Sensorial"
-                    className="w-full h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-text-muted text-sm mb-2">Descripción</label>
-                  <textarea
-                    value={nuevaPrueba.descripcion}
-                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, descripcion: e.target.value })}
-                    placeholder="Descripción de la prueba..."
-                    rows="3"
-                    className="w-full px-4 py-2 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-text-muted text-sm mb-2">Equipos Utilizados</label>
-                  <input
-                    type="text"
-                    value={nuevaPrueba.equiposUtilizados}
-                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, equiposUtilizados: e.target.value })}
-                    placeholder="Ej: HPLC-001, BAL-002"
-                    className="w-full h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-text-muted text-sm mb-2">
-                    Pruebas Requeridas <span className="text-primary">*</span>
-                  </label>
-                  <textarea
-                    value={nuevaPrueba.pruebasRequeridas}
-                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, pruebasRequeridas: e.target.value })}
-                    placeholder="Especifica qué pruebas debe realizar el analista. Ejemplo:&#10;- pH (especificación: 6.5 - 7.5)&#10;- Humedad (especificación: ≤ 5%)&#10;- Proteína (especificación: ≥ 80%)&#10;- Grasa (especificación: ≤ 10%)&#10;- Análisis microbiológico"
-                    rows="6"
-                    className="w-full px-4 py-3 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-                  />
-                  <p className="text-text-muted text-xs mt-1">
-                    Lista detallada de los parámetros y pruebas que el analista debe realizar. El analista verá esta información al recibir la prueba.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end mt-6">
-                <button
-                  onClick={() => {
-                    setShowCreatePruebaDialog(false)
-                    setSelectedIdeaForPrueba(null)
-                  }}
-                  className="px-4 py-2 rounded-lg bg-input-dark text-text-light text-sm font-medium hover:bg-border-dark transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleCreatePrueba}
-                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                  Crear Prueba
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

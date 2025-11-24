@@ -7,12 +7,15 @@ import com.plm.plm.Models.Idea;
 import com.plm.plm.Models.Prueba;
 import com.plm.plm.Models.ResultadoPrueba;
 import com.plm.plm.Models.User;
+import com.plm.plm.Enums.EstadoIdea;
+import com.plm.plm.Enums.EstadoPrueba;
 import com.plm.plm.Reposotory.IdeaRepository;
 import com.plm.plm.Reposotory.PruebaRepository;
 import com.plm.plm.Reposotory.ResultadoPruebaRepository;
 import com.plm.plm.Reposotory.UserRepository;
 import com.plm.plm.dto.PruebaDTO;
 import com.plm.plm.dto.ResultadoPruebaDTO;
+import com.plm.plm.services.IdeaService;
 import com.plm.plm.services.PruebaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,9 @@ public class PruebaServiceImpl implements PruebaService {
 
     @Autowired
     private ResultadoPruebaRepository resultadoPruebaRepository;
+
+    @Autowired
+    private IdeaService ideaService;
 
     @Override
     @Transactional
@@ -70,6 +76,15 @@ public class PruebaServiceImpl implements PruebaService {
     public PruebaDTO getPruebaById(Integer id) {
         Prueba prueba = pruebaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Prueba no encontrada"));
+        
+        // Forzar la carga de la relación con la idea
+        if (prueba.getIdea() != null) {
+            prueba.getIdea().getId(); // Acceder para forzar la carga
+            if (prueba.getIdea().getEstado() != null) {
+                prueba.getIdea().getEstado(); // Acceder al estado
+            }
+        }
+        
         return prueba.getDTO();
     }
 
@@ -77,7 +92,16 @@ public class PruebaServiceImpl implements PruebaService {
     @Transactional(readOnly = true)
     public List<PruebaDTO> getPruebasByIdeaId(Integer ideaId) {
         return pruebaRepository.findByIdeaId(ideaId).stream()
-                .map(Prueba::getDTO)
+                .map(prueba -> {
+                    // Forzar la carga de la relación con la idea
+                    if (prueba.getIdea() != null) {
+                        prueba.getIdea().getId(); // Acceder para forzar la carga
+                        if (prueba.getIdea().getEstado() != null) {
+                            prueba.getIdea().getEstado(); // Acceder al estado
+                        }
+                    }
+                    return prueba.getDTO();
+                })
                 .toList();
     }
 
@@ -85,7 +109,16 @@ public class PruebaServiceImpl implements PruebaService {
     @Transactional(readOnly = true)
     public List<PruebaDTO> getPruebasByAnalistaId(Integer analistaId) {
         return pruebaRepository.findByAnalistaId(analistaId).stream()
-                .map(Prueba::getDTO)
+                .map(prueba -> {
+                    // Forzar la carga de la relación con la idea
+                    if (prueba.getIdea() != null) {
+                        prueba.getIdea().getId(); // Acceder para forzar la carga
+                        if (prueba.getIdea().getEstado() != null) {
+                            prueba.getIdea().getEstado(); // Acceder al estado
+                        }
+                    }
+                    return prueba.getDTO();
+                })
                 .toList();
     }
 
@@ -102,7 +135,16 @@ public class PruebaServiceImpl implements PruebaService {
             prueba.setDescripcion(pruebaDTO.getDescripcion());
         }
         if (pruebaDTO.getEstado() != null) {
+            EstadoPrueba estadoAnterior = prueba.getEstado();
             prueba.setEstado(pruebaDTO.getEstado());
+            
+            // Si la prueba se completa (COMPLETADA, OOS o RECHAZADA) y no tiene fecha de finalización, establecerla
+            if ((pruebaDTO.getEstado() == EstadoPrueba.COMPLETADA || 
+                 pruebaDTO.getEstado() == EstadoPrueba.OOS || 
+                 pruebaDTO.getEstado() == EstadoPrueba.RECHAZADA) &&
+                prueba.getFechaFin() == null) {
+                prueba.setFechaFin(LocalDateTime.now());
+            }
         }
         if (pruebaDTO.getFechaMuestreo() != null) {
             prueba.setFechaMuestreo(pruebaDTO.getFechaMuestreo());
@@ -126,7 +168,66 @@ public class PruebaServiceImpl implements PruebaService {
             prueba.setPruebasRequeridas(pruebaDTO.getPruebasRequeridas());
         }
 
-        return pruebaRepository.save(prueba).getDTO();
+        Prueba pruebaGuardada = pruebaRepository.save(prueba);
+        
+        // Si el estado de la prueba cambió a COMPLETADA u OOS, verificar si todas las pruebas de la idea están completadas
+        if (pruebaDTO.getEstado() != null && 
+            (pruebaDTO.getEstado() == EstadoPrueba.COMPLETADA || pruebaDTO.getEstado() == EstadoPrueba.OOS || pruebaDTO.getEstado() == EstadoPrueba.RECHAZADA)) {
+            sincronizarEstadoIdea(pruebaGuardada.getIdea().getId());
+        }
+        
+        return pruebaGuardada.getDTO();
+    }
+    
+    /**
+     * Sincroniza el estado de la idea basándose en el estado de todas sus pruebas asociadas.
+     * Si todas las pruebas están completadas:
+     * - Si todas pasaron (COMPLETADA), la idea pasa a PRUEBA_APROBADA
+     * - Si alguna falló (OOS o RECHAZADA), la idea pasa a RECHAZADA
+     */
+    private void sincronizarEstadoIdea(Integer ideaId) {
+        try {
+            // Obtener todas las pruebas asociadas a la idea
+            List<Prueba> pruebasDeIdea = pruebaRepository.findByIdeaId(ideaId);
+            
+            if (pruebasDeIdea.isEmpty()) {
+                return; // No hay pruebas, no hacer nada
+            }
+            
+            // Verificar si todas las pruebas están completadas (COMPLETADA, OOS o RECHAZADA)
+            boolean todasCompletadas = pruebasDeIdea.stream()
+                    .allMatch(p -> p.getEstado() == EstadoPrueba.COMPLETADA || 
+                                  p.getEstado() == EstadoPrueba.OOS || 
+                                  p.getEstado() == EstadoPrueba.RECHAZADA);
+            
+            if (todasCompletadas) {
+                // Verificar si todas las pruebas pasaron
+                boolean todasPasaron = pruebasDeIdea.stream()
+                        .allMatch(p -> p.getEstado() == EstadoPrueba.COMPLETADA);
+                
+                // Verificar si alguna falló
+                boolean algunaFallo = pruebasDeIdea.stream()
+                        .anyMatch(p -> p.getEstado() == EstadoPrueba.OOS || p.getEstado() == EstadoPrueba.RECHAZADA);
+                
+                // Obtener la idea para verificar su estado actual
+                com.plm.plm.Models.Idea idea = ideaRepository.findById(ideaId)
+                        .orElse(null);
+                
+                if (idea != null && idea.getEstado() == EstadoIdea.EN_PRUEBA) {
+                    if (todasPasaron) {
+                        // Todas las pruebas pasaron, cambiar idea a PRUEBA_APROBADA
+                        ideaService.changeEstado(ideaId, EstadoIdea.PRUEBA_APROBADA, null, null);
+                    } else if (algunaFallo) {
+                        // Alguna prueba falló, cambiar idea a RECHAZADA
+                        ideaService.changeEstado(ideaId, EstadoIdea.RECHAZADA, null, null);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log el error pero no interrumpir el flujo
+            System.err.println("Error al sincronizar estado de idea: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -149,7 +250,18 @@ public class PruebaServiceImpl implements PruebaService {
 
         resultadoPruebaRepository.save(resultado);
 
-        return pruebaRepository.findById(pruebaId).get().getDTO();
+        Prueba pruebaActualizada = pruebaRepository.findById(pruebaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prueba no encontrada"));
+        
+        // Forzar la carga de la relación con la idea
+        if (pruebaActualizada.getIdea() != null) {
+            pruebaActualizada.getIdea().getId(); // Acceder para forzar la carga
+            if (pruebaActualizada.getIdea().getEstado() != null) {
+                pruebaActualizada.getIdea().getEstado(); // Acceder al estado
+            }
+        }
+        
+        return pruebaActualizada.getDTO();
     }
 
     @Override

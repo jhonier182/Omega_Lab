@@ -89,6 +89,8 @@ public class Prueba {
         PruebaDTO dto = new PruebaDTO();
         dto.setId(id);
         dto.setIdeaId(idea != null ? idea.getId() : null);
+        dto.setIdeaTitulo(idea != null ? idea.getTitulo() : null);
+        dto.setIdeaEstado(idea != null && idea.getEstado() != null ? idea.getEstado().name() : null);
         dto.setCodigoMuestra(codigoMuestra);
         dto.setTipoPrueba(tipoPrueba);
         dto.setDescripcion(descripcion);

@@ -65,7 +65,18 @@ const Pruebas = () => {
     try {
       if (isAnalista) {
         const data = await pruebaService.getMisPruebas()
-        setPruebas(data)
+        // Filtrar solo pruebas activas:
+        // 1. No completadas, no OOS, no rechazadas
+        // 2. Y cuya idea asociada NO esté en estado PRUEBA_APROBADA
+        // Las pruebas completadas o con ideas aprobadas se mostrarán en el Historial
+        const pruebasActivas = data.filter(p => {
+          const estadoPruebaActivo = p.estado !== 'COMPLETADA' && 
+                                     p.estado !== 'OOS' && 
+                                     p.estado !== 'RECHAZADA'
+          const ideaNoAprobada = p.ideaEstado !== 'PRUEBA_APROBADA'
+          return estadoPruebaActivo && ideaNoAprobada
+        })
+        setPruebas(pruebasActivas)
       } else {
         // Para otros roles, cargar todas las pruebas (implementar después)
         setPruebas([])
@@ -177,11 +188,21 @@ const Pruebas = () => {
             const pruebaActualizadaEstado = await pruebaService.getPruebaById(pruebaCompleta.id)
             setSelectedPrueba(pruebaActualizadaEstado)
             loadPruebas()
+            // El backend sincronizará automáticamente el estado de la idea
+            // Recargar ideas asignadas si es analista para reflejar el cambio de estado
+            if (isAnalista) {
+              loadIdeasAsignadas()
+            }
           } else if (hayOOS && pruebaCompleta.estado === 'EN_PROCESO') {
             await pruebaService.updatePrueba(pruebaCompleta.id, { estado: 'OOS' })
             const pruebaActualizadaEstado = await pruebaService.getPruebaById(pruebaCompleta.id)
             setSelectedPrueba(pruebaActualizadaEstado)
             loadPruebas()
+            // El backend sincronizará automáticamente el estado de la idea
+            // Recargar ideas asignadas si es analista para reflejar el cambio de estado
+            if (isAnalista) {
+              loadIdeasAsignadas()
+            }
           }
         }
         // Si no todas las pruebas requeridas tienen resultados, mantener EN_PROCESO

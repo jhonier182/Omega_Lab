@@ -14,6 +14,8 @@ import java.util.List;
 public class PruebaDTO {
     private Integer id;
     private Integer ideaId;
+    private String ideaTitulo;
+    private String ideaEstado;
     private String codigoMuestra;
     private String tipoPrueba;
     private String descripcion;
