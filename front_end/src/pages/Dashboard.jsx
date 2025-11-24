@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 const Dashboard = () => {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="w-full h-full">
       {/* PageHeading */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>

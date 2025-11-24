@@ -52,39 +52,56 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        initializeAdmin();
+        initializeUsers();
         initializeCategories();
         initializeMaterials();
         initializeProducts();
         initializeBOMs();
     }
 
-    private void initializeAdmin() {
-        String email = "admin@proscience.com";
-        String password = "admin123";
-        String nombre = "Administrador";
-        Rol rol = Rol.ADMINISTRADOR;
+    private void initializeUsers() {
+        // Configuración de usuarios para cada rol
+        Object[][] usuariosConfig = {
+            {Rol.ADMINISTRADOR, "admin@proscience.com", "admin123", "Administrador"},
+            {Rol.SUPERVISOR_QA, "supervisor.qa@proscience.com", "supervisor123", "Supervisor QA"},
+            {Rol.SUPERVISOR_CALIDAD, "supervisor.calidad@proscience.com", "calidad123", "Supervisor Calidad"},
+            {Rol.ANALISTA_LABORATORIO, "analista.lab@proscience.com", "analista123", "Analista Laboratorio"}
+        };
 
-        if (userRepository.findByEmail(email).isPresent()) {
-            System.out.println("El usuario administrador ya existe");
-            return;
+        List<User> usuariosCreados = new ArrayList<>();
+
+        for (Object[] config : usuariosConfig) {
+            Rol rol = (Rol) config[0];
+            String email = (String) config[1];
+            String password = (String) config[2];
+            String nombre = (String) config[3];
+
+            if (userRepository.findByEmail(email).isPresent()) {
+                System.out.println("El usuario " + email + " ya existe");
+                continue;
+            }
+
+            String hashedPassword = passwordEncoder.encode(password);
+
+            User usuario = new User();
+            usuario.setEmail(email);
+            usuario.setPassword(hashedPassword);
+            usuario.setNombre(nombre);
+            usuario.setRol(rol);
+            usuario.setEstado(EstadoUsuario.ACTIVO);
+
+            userRepository.save(usuario);
+            usuariosCreados.add(usuario);
+
+            System.out.println("Usuario " + rol.name() + " creado exitosamente");
+            System.out.println("  Email: " + email);
+            System.out.println("  Password: " + password);
         }
 
-        String hashedPassword = passwordEncoder.encode(password);
-
-        User admin = new User();
-        admin.setEmail(email);
-        admin.setPassword(hashedPassword);
-        admin.setNombre(nombre);
-        admin.setRol(rol);
-        admin.setEstado(EstadoUsuario.ACTIVO);
-
-        userRepository.save(admin);
-
-        System.out.println("Usuario administrador creado exitosamente");
-        System.out.println("Email: " + email);
-        System.out.println("Password: " + password);
-        System.out.println("IMPORTANTE: Cambia la contraseña después del primer login");
+        if (!usuariosCreados.isEmpty()) {
+            System.out.println("\nTotal de usuarios creados: " + usuariosCreados.size());
+            System.out.println("IMPORTANTE: Cambia las contraseñas después del primer login");
+        }
     }
 
     private void initializeCategories() {
@@ -93,6 +110,14 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Eliminando " + existingProducts + " productos existentes...");
             productRepository.deleteAll();
             System.out.println("Productos eliminados exitosamente");
+        }
+
+        // Eliminar materiales antes de eliminar categorías (por restricción de clave foránea)
+        long existingMaterials = materialRepository.count();
+        if (existingMaterials > 0) {
+            System.out.println("Eliminando " + existingMaterials + " materiales existentes...");
+            materialRepository.deleteAll();
+            System.out.println("Materiales eliminados exitosamente");
         }
 
         long existingCategories = categoryRepository.count();

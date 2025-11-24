@@ -23,7 +23,7 @@ const Configuracion = () => {
   ])
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="w-full h-full">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-text-light text-3xl font-bold tracking-tight">Configuración del Sistema</h1>

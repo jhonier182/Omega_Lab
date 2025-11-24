@@ -229,6 +229,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public BOMItemDTO addMaterialToBOM(Integer bomId, Integer materialId, BigDecimal cantidad, String unidad, BigDecimal porcentaje) {
+        if (materialId == null) {
+            throw new BadRequestException("El ID del material es requerido");
+        }
+        
+        if (bomId == null) {
+            throw new BadRequestException("El ID del BOM es requerido");
+        }
+        
         BOM bom = bomRepository.findById(bomId)
             .orElseThrow(() -> new ResourceNotFoundException("BOM no encontrado"));
 

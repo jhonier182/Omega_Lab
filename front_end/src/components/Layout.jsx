@@ -7,10 +7,10 @@ const Layout = () => {
   const location = useLocation()
 
   return (
-    <div className="flex min-h-screen w-full bg-background-dark">
+    <div className="flex h-screen w-full bg-background-dark overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} currentPath={location.pathname} />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <div className="p-6 lg:p-8">
+      <main className={`flex-1 h-screen overflow-y-auto transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <div className="h-full w-full p-6 lg:p-8">
           <Outlet />
         </div>
       </main>
