@@ -196,6 +196,12 @@ public class IdeaController {
             ideaDTO.setDetallesIA(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
             System.out.println("Detalles IA guardados (longitud): " + ideaDTO.getDetallesIA().length());
             
+            // Extraer pruebasRequeridas si existe
+            if (jsonNode.has("pruebasRequeridas")) {
+                ideaDTO.setPruebasRequeridas(jsonNode.get("pruebasRequeridas").asText());
+                System.out.println("Pruebas requeridas extraídas (longitud): " + ideaDTO.getPruebasRequeridas().length());
+            }
+            
         } catch (Exception e) {
             // Si no es JSON válido, usar la respuesta completa como descripción
             System.out.println("ERROR: La respuesta de IA no es JSON válido: " + e.getMessage());

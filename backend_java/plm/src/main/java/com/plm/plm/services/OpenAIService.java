@@ -44,48 +44,58 @@ public class OpenAIService {
             
             System.out.println("BOM Info construido: " + (bomInfo.length() > 0 ? "Sí (" + bomInfo.length() + " caracteres)" : "No"));
             
-            String prompt = String.format(
-                "Eres un experto en formulación de productos nutracéuticos y suplementos deportivos.\n\n" +
-                "Producto base:\n" +
-                "- Nombre: %s\n" +
-                "- Código: %s\n" +
-                "- Descripción: %s\n" +
-                "- Categoría: %s\n\n" +
-                "%s\n\n" +
-                "%s\n\n" +
-                "Objetivo del cliente: %s\n\n" +
-                "Analiza el producto base, su BOM (Bill of Materials) completo y el inventario de materiales disponibles. " +
-                "Genera una nueva fórmula adaptada que cumpla con el objetivo especificado.\n\n" +
-                "CONSIDERACIONES IMPORTANTES:\n" +
-                "1. Revisa el inventario de materiales disponibles antes de proponer cambios\n" +
-                "2. Si un ingrediente del BOM actual no está disponible en inventario, sugiere alternativas del inventario\n" +
-                "3. Si necesitas agregar nuevos ingredientes, verifica que estén disponibles en el inventario\n" +
-                "4. Calcula las cantidades necesarias y verifica que sean viables con el inventario\n" +
-                "5. Si un material no está disponible, sugiere alternativas similares del inventario\n" +
-                "6. Prioriza usar materiales que ya están en el inventario para reducir costos\n\n" +
-                "IMPORTANTE: Responde ÚNICAMENTE en formato JSON válido con las siguientes claves:\n" +
-                "{\n" +
-                "  \"titulo\": \"Título descriptivo de la nueva fórmula\",\n" +
-                "  \"descripcion\": \"Descripción detallada y completa de la fórmula propuesta\",\n" +
-                "  \"bomModificado\": [\n" +
-                "    {\"ingrediente\": \"Nombre del ingrediente\", \"cantidadActual\": \"X kg/g\", \"cantidadPropuesta\": \"Y kg/g\", \"porcentajeActual\": X, \"porcentajePropuesto\": Y, \"disponibleEnInventario\": true/false, \"razon\": \"Razón del cambio\"}\n" +
-                "  ],\n" +
-                "  \"materialesNuevos\": [\"Material nuevo 1\", \"Material nuevo 2\"],\n" +
-                "  \"materialesEliminados\": [\"Material eliminado 1\", \"Material eliminado 2\"],\n" +
-                "  \"verificacionInventario\": \"Verificación de disponibilidad de materiales en inventario\",\n" +
-                "  \"escenariosPositivos\": [\"Escenario positivo 1\", \"Escenario positivo 2\"],\n" +
-                "  \"escenariosNegativos\": [\"Escenario negativo 1\", \"Escenario negativo 2\"],\n" +
-                "  \"justificacion\": \"Justificación técnica detallada de todos los cambios\"\n" +
-                "}\n\n" +
-                "Asegúrate de que el JSON sea válido y no incluyas texto adicional fuera del JSON.",
-                product.getNombre(),
-                product.getCodigo(),
-                product.getDescripcion() != null ? product.getDescripcion() : "Sin descripción",
-                product.getCategoria() != null ? product.getCategoria() : "Sin categoría",
-                bomInfo,
-                inventarioInfo,
-                objetivo
-            );
+            // Construir el prompt usando StringBuilder para evitar problemas con String.format() y paréntesis
+            StringBuilder promptBuilder = new StringBuilder();
+            promptBuilder.append("Eres un experto en formulación de productos nutracéuticos y suplementos deportivos.\n\n");
+            promptBuilder.append("Producto base:\n");
+            promptBuilder.append("- Nombre: ").append(product.getNombre()).append("\n");
+            promptBuilder.append("- Código: ").append(product.getCodigo()).append("\n");
+            promptBuilder.append("- Descripción: ").append(product.getDescripcion() != null ? product.getDescripcion() : "Sin descripción").append("\n");
+            promptBuilder.append("- Categoría: ").append(product.getCategoria() != null ? product.getCategoria() : "Sin categoría").append("\n\n");
+            promptBuilder.append(bomInfo).append("\n\n");
+            promptBuilder.append(inventarioInfo).append("\n\n");
+            promptBuilder.append("Objetivo del cliente: ").append(objetivo).append("\n\n");
+            promptBuilder.append("Analiza el producto base, su BOM (Bill of Materials) completo y el inventario de materiales disponibles. ");
+            promptBuilder.append("Genera una nueva fórmula adaptada que cumpla con el objetivo especificado.\n\n");
+            promptBuilder.append("CONSIDERACIONES IMPORTANTES:\n");
+            promptBuilder.append("1. Revisa el inventario de materiales disponibles antes de proponer cambios\n");
+            promptBuilder.append("2. Si un ingrediente del BOM actual no está disponible en inventario, sugiere alternativas del inventario\n");
+            promptBuilder.append("3. Si necesitas agregar nuevos ingredientes, verifica que estén disponibles en el inventario\n");
+            promptBuilder.append("4. Calcula las cantidades necesarias y verifica que sean viables con el inventario\n");
+            promptBuilder.append("5. Si un material no está disponible, sugiere alternativas similares del inventario\n");
+            promptBuilder.append("6. Prioriza usar materiales que ya están en el inventario para reducir costos\n\n");
+            promptBuilder.append("PREDICCIÓN DE PARÁMETROS FISICOQUÍMICOS:\n");
+            promptBuilder.append("Para cada ingrediente de la fórmula propuesta, predice y analiza los siguientes parámetros fisicoquímicos:\n");
+            promptBuilder.append("- Solubilidad: Predice la solubilidad del ingrediente en diferentes medios (acuoso, lipídico, etc.)\n");
+            promptBuilder.append("- LogP: Predice el coeficiente de partición octanol-agua (logaritmo de la relación de concentraciones)\n");
+            promptBuilder.append("- Estabilidad: Predice la estabilidad del ingrediente bajo diferentes condiciones (pH, temperatura, luz, etc.)\n");
+            promptBuilder.append("- Biodisponibilidad: Predice la biodisponibilidad oral del ingrediente y su absorción\n");
+            promptBuilder.append("- Compatibilidad: Predice la compatibilidad entre ingredientes y posibles interacciones\n\n");
+            promptBuilder.append("IMPORTANTE: Responde ÚNICAMENTE en formato JSON válido con las siguientes claves:\n");
+            promptBuilder.append("{\n");
+            promptBuilder.append("  \"titulo\": \"Título descriptivo de la nueva fórmula\",\n");
+            promptBuilder.append("  \"descripcion\": \"Descripción detallada y completa de la fórmula propuesta\",\n");
+            promptBuilder.append("  \"bomModificado\": [\n");
+            promptBuilder.append("    {\"ingrediente\": \"Nombre del ingrediente\", \"cantidadActual\": \"X kg/g\", \"cantidadPropuesta\": \"Y kg/g\", \"porcentajeActual\": X, \"porcentajePropuesto\": Y, \"disponibleEnInventario\": true/false, \"razon\": \"Razón del cambio\"}\n");
+            promptBuilder.append("  ],\n");
+            promptBuilder.append("  \"materialesNuevos\": [\"Material nuevo 1\", \"Material nuevo 2\"],\n");
+            promptBuilder.append("  \"materialesEliminados\": [\"Material eliminado 1\", \"Material eliminado 2\"],\n");
+            promptBuilder.append("  \"verificacionInventario\": \"Verificación de disponibilidad de materiales en inventario\",\n");
+            promptBuilder.append("  \"escenariosPositivos\": [\"Escenario positivo 1\", \"Escenario positivo 2\"],\n");
+            promptBuilder.append("  \"escenariosNegativos\": [\"Escenario negativo 1\", \"Escenario negativo 2\"],\n");
+            promptBuilder.append("  \"justificacion\": \"Justificación técnica detallada de todos los cambios\",\n");
+            promptBuilder.append("  \"parametrosFisicoquimicos\": {\n");
+            promptBuilder.append("    \"solubilidad\": \"Predicción de solubilidad de la fórmula completa y sus componentes principales\",\n");
+            promptBuilder.append("    \"logP\": \"Predicción del coeficiente de partición octanol-agua (LogP) y su impacto en la absorción\",\n");
+            promptBuilder.append("    \"estabilidad\": \"Predicción de estabilidad bajo diferentes condiciones (pH, temperatura, almacenamiento)\",\n");
+            promptBuilder.append("    \"biodisponibilidad\": \"Predicción de biodisponibilidad oral y absorción del producto final\",\n");
+            promptBuilder.append("    \"compatibilidad\": \"Análisis de compatibilidad entre ingredientes y posibles interacciones o sinergias\"\n");
+            promptBuilder.append("  },\n");
+            promptBuilder.append("  \"pruebasRequeridas\": \"Lista detallada de pruebas de laboratorio que deben realizarse para validar la nueva fórmula. Formato: cada prueba en una línea nueva con guión, incluyendo el parámetro y su especificación. Ejemplo:\\n- pH (especificación: 6.5 - 7.5)\\n- Humedad (especificación: ≤ 5%%)\\n- Proteína (especificación: ≥ 80%%)\\n- Grasa (especificación: ≤ 10%%)\\n- Análisis microbiológico (especificación: Ausencia de patógenos)\"\n");
+            promptBuilder.append("}\n\n");
+            promptBuilder.append("Asegúrate de que el JSON sea válido y no incluyas texto adicional fuera del JSON.");
+            
+            String prompt = promptBuilder.toString();
             
             System.out.println("Prompt construido. Longitud: " + prompt.length() + " caracteres");
 

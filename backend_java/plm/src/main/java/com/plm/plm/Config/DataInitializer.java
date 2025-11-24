@@ -57,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         updateIdeasTableSchema();
+        updatePruebasTableSchema();
         initializeUsers();
         initializeCategories();
         initializeMaterials();
@@ -118,6 +119,16 @@ public class DataInitializer implements CommandLineRunner {
                 System.out.println("Agregando columna 'detalles_ia' a la tabla ideas...");
                 jdbcTemplate.execute("ALTER TABLE ideas ADD COLUMN detalles_ia LONGTEXT AFTER descripcion");
                 System.out.println("Columna 'detalles_ia' agregada exitosamente");
+            }
+
+            // Verificar si la columna pruebas_requeridas existe
+            String checkPruebasRequeridas = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'pruebas_requeridas'";
+            Integer pruebasRequeridasExists = jdbcTemplate.queryForObject(checkPruebasRequeridas, Integer.class);
+            
+            if (pruebasRequeridasExists == null || pruebasRequeridasExists == 0) {
+                System.out.println("Agregando columna 'pruebas_requeridas' a la tabla ideas...");
+                jdbcTemplate.execute("ALTER TABLE ideas ADD COLUMN pruebas_requeridas TEXT AFTER detalles_ia");
+                System.out.println("Columna 'pruebas_requeridas' agregada exitosamente");
             }
 
             // Verificar y actualizar el ENUM de estado
@@ -189,6 +200,39 @@ public class DataInitializer implements CommandLineRunner {
             System.err.println("Error al actualizar la estructura de la tabla ideas: " + e.getMessage());
             e.printStackTrace();
             // No lanzar excepción para que la aplicación pueda continuar
+        }
+    }
+
+    /**
+     * Actualiza la estructura de las tablas de pruebas si es necesario
+     */
+    private void updatePruebasTableSchema() {
+        try {
+            System.out.println("Verificando y actualizando estructura de las tablas de pruebas...");
+            
+            // Verificar si la tabla pruebas existe
+            String checkTable = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'pruebas'";
+            Integer tableExists = jdbcTemplate.queryForObject(checkTable, Integer.class);
+            
+            if (tableExists == null || tableExists == 0) {
+                System.out.println("Las tablas de pruebas no existen. Se crearán automáticamente por JPA.");
+                return;
+            }
+            
+            // Agregar columna pruebas_requeridas si no existe
+            String checkColumn = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'pruebas' AND column_name = 'pruebas_requeridas'";
+            Integer columnExists = jdbcTemplate.queryForObject(checkColumn, Integer.class);
+            
+            if (columnExists == null || columnExists == 0) {
+                System.out.println("Agregando columna pruebas_requeridas a la tabla pruebas...");
+                jdbcTemplate.execute("ALTER TABLE pruebas ADD COLUMN pruebas_requeridas TEXT AFTER equipos_utilizados");
+                System.out.println("Columna pruebas_requeridas agregada exitosamente.");
+            }
+            
+            System.out.println("Las tablas de pruebas ya existen. No se requiere actualización.");
+        } catch (Exception e) {
+            System.out.println("Error al verificar tablas de pruebas: " + e.getMessage());
+            // No lanzar excepción, permitir que JPA cree las tablas si es necesario
         }
     }
 

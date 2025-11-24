@@ -118,6 +118,8 @@ CREATE TABLE IF NOT EXISTS ideas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
+    detalles_ia LONGTEXT,
+    pruebas_requeridas TEXT,
     categoria VARCHAR(100),
     prioridad VARCHAR(20),
     objetivo TEXT,
@@ -139,5 +141,46 @@ CREATE TABLE IF NOT EXISTS ideas (
     CONSTRAINT fk_idea_aprobador FOREIGN KEY (approved_by) REFERENCES usuarios(id) ON DELETE SET NULL,
     CONSTRAINT fk_idea_producto_origen FOREIGN KEY (producto_origen_id) REFERENCES productos(id) ON DELETE SET NULL,
     CONSTRAINT fk_idea_asignado FOREIGN KEY (asignado_a) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de pruebas de laboratorio
+CREATE TABLE IF NOT EXISTS pruebas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    idea_id INT NOT NULL,
+    codigo_muestra VARCHAR(100) NOT NULL,
+    tipo_prueba VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    estado ENUM('pendiente', 'en_proceso', 'completada', 'oos', 'rechazada') DEFAULT 'pendiente',
+    fecha_muestreo TIMESTAMP NULL,
+    fecha_inicio TIMESTAMP NULL,
+    fecha_fin TIMESTAMP NULL,
+    resultado TEXT,
+    observaciones TEXT,
+    equipos_utilizados TEXT,
+    pruebas_requeridas TEXT,
+    analista_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_idea_id (idea_id),
+    INDEX idx_analista_id (analista_id),
+    INDEX idx_estado (estado),
+    INDEX idx_codigo_muestra (codigo_muestra),
+    CONSTRAINT fk_prueba_idea FOREIGN KEY (idea_id) REFERENCES ideas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_prueba_analista FOREIGN KEY (analista_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de resultados analíticos de pruebas
+CREATE TABLE IF NOT EXISTS resultados_prueba (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prueba_id INT NOT NULL,
+    parametro VARCHAR(255) NOT NULL,
+    especificacion VARCHAR(255),
+    resultado VARCHAR(255) NOT NULL,
+    unidad VARCHAR(50),
+    cumple_especificacion BOOLEAN DEFAULT TRUE,
+    observaciones TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_prueba_id (prueba_id),
+    CONSTRAINT fk_resultado_prueba FOREIGN KEY (prueba_id) REFERENCES pruebas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

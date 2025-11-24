@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { hasAnyRole } from '../utils/rolePermissions'
 import ideaService from '../services/ideaService'
+import pruebaService from '../services/pruebaService'
 
 const Ideas = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [ideas, setIdeas] = useState([])
   const [loadingIdeas, setLoadingIdeas] = useState(false)
   const [expandedIdeas, setExpandedIdeas] = useState(new Set())
@@ -19,6 +22,15 @@ const Ideas = () => {
   const [analistas, setAnalistas] = useState([])
   const [loadingAnalistas, setLoadingAnalistas] = useState(false)
   const [selectedAnalistaId, setSelectedAnalistaId] = useState(null)
+  const [pruebasPorIdea, setPruebasPorIdea] = useState(new Map())
+  const [showCreatePruebaDialog, setShowCreatePruebaDialog] = useState(false)
+  const [selectedIdeaForPrueba, setSelectedIdeaForPrueba] = useState(null)
+  const [nuevaPrueba, setNuevaPrueba] = useState({
+    codigoMuestra: '',
+    tipoPrueba: '',
+    descripcion: '',
+    equiposUtilizados: ''
+  })
 
   // Verificar permisos de acceso
   const isSupervisorQA = hasAnyRole(user, 'SUPERVISOR_QA')
@@ -40,6 +52,13 @@ const Ideas = () => {
   useEffect(() => {
     loadIdeas()
   }, [filters])
+
+  useEffect(() => {
+    // Cargar pruebas para cada idea cuando se cargan las ideas
+    if (ideas.length > 0) {
+      loadPruebasForIdeas()
+    }
+  }, [ideas])
 
   const loadIdeas = async () => {
     setLoadingIdeas(true)
@@ -164,6 +183,63 @@ const Ideas = () => {
     setExpandedIdeas(newExpanded)
   }
 
+  const loadPruebasForIdeas = async () => {
+    const pruebasMap = new Map()
+    for (const idea of ideas) {
+      try {
+        const pruebas = await pruebaService.getPruebasByIdeaId(idea.id)
+        pruebasMap.set(idea.id, pruebas)
+      } catch (error) {
+        console.error(`Error al cargar pruebas para idea ${idea.id}:`, error)
+      }
+    }
+    setPruebasPorIdea(pruebasMap)
+  }
+
+  const handleCreatePruebaFromIdea = (idea) => {
+    setSelectedIdeaForPrueba(idea)
+    setNuevaPrueba({
+      codigoMuestra: '',
+      tipoPrueba: '',
+      descripcion: '',
+      equiposUtilizados: '',
+      pruebasRequeridas: ''
+    })
+    setShowCreatePruebaDialog(true)
+  }
+
+  const handleCreatePrueba = async () => {
+    if (!nuevaPrueba.codigoMuestra || !nuevaPrueba.tipoPrueba) {
+      alert('Por favor completa todos los campos requeridos')
+      return
+    }
+
+    try {
+      await pruebaService.createPrueba({
+        ideaId: selectedIdeaForPrueba.id,
+        codigoMuestra: nuevaPrueba.codigoMuestra,
+        tipoPrueba: nuevaPrueba.tipoPrueba,
+        descripcion: nuevaPrueba.descripcion,
+        equiposUtilizados: nuevaPrueba.equiposUtilizados,
+        pruebasRequeridas: nuevaPrueba.pruebasRequeridas,
+        estado: 'PENDIENTE'
+      })
+      setShowCreatePruebaDialog(false)
+      setSelectedIdeaForPrueba(null)
+      setNuevaPrueba({
+        codigoMuestra: '',
+        tipoPrueba: '',
+        descripcion: '',
+        equiposUtilizados: '',
+        pruebasRequeridas: ''
+      })
+      loadPruebasForIdeas()
+    } catch (error) {
+      console.error('Error al crear prueba:', error)
+      alert('Error al crear prueba: ' + (error.message || 'Error desconocido'))
+    }
+  }
+
   const parseAIDetails = (detallesIA) => {
     if (!detallesIA) return null
     try {
@@ -272,6 +348,64 @@ const Ideas = () => {
                   </div>
         </div>
       </div>
+
+              {/* Pruebas Requeridas - Siempre visible, especialmente para analistas */}
+              {idea.pruebasRequeridas && (
+                <div className="mt-4 pt-4 border-t border-border-dark">
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="text-text-light font-semibold mb-2 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-sm">assignment</span>
+                          Pruebas Requeridas (Generadas por IA)
+                        </h4>
+                        <p className="text-text-muted text-xs mb-3">
+                          Lista de pruebas de laboratorio que deben realizarse para validar esta fórmula:
+                        </p>
+                        <div className="whitespace-pre-line text-text-light text-sm leading-relaxed bg-card-dark p-3 rounded-lg border border-border-dark">
+                          {idea.pruebasRequeridas}
+                        </div>
+                      </div>
+                    </div>
+                    {isAnalista && idea.estado === 'EN_PRUEBA' && (
+                      <div className="mt-4 pt-4 border-t border-primary/20">
+                        <button
+                          onClick={async () => {
+                            try {
+                              // Crear prueba automáticamente con los datos de la idea
+                              const codigoMuestra = `MU-${idea.id}-${Date.now()}`
+                              const nuevaPrueba = await pruebaService.createPrueba({
+                                ideaId: idea.id,
+                                codigoMuestra: codigoMuestra,
+                                tipoPrueba: 'Control de Calidad - Fórmula IA',
+                                descripcion: `Prueba generada automáticamente para validar la fórmula: ${idea.titulo}`,
+                                pruebasRequeridas: idea.pruebasRequeridas,
+                                estado: 'PENDIENTE'
+                              })
+                              
+                              // Recargar pruebas
+                              loadPruebasForIdeas()
+                              
+                              // Redirigir a Pruebas con la prueba seleccionada
+                              navigate(`/pruebas?pruebaId=${nuevaPrueba.id}`)
+                            } catch (error) {
+                              console.error('Error al crear prueba:', error)
+                              alert('Error al crear prueba: ' + (error.message || 'Error desconocido'))
+                            }
+                          }}
+                          className="w-full px-4 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-sm">play_arrow</span>
+                          Iniciar Prueba
+                        </button>
+                        <p className="text-text-muted text-xs mt-2 text-center">
+                          Se creará una prueba con estos parámetros y serás redirigido al módulo de Control de Calidad
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Detalles de IA */}
               {idea.detallesIA && (
@@ -443,10 +577,123 @@ const Ideas = () => {
                             <p className="text-text-light text-sm leading-relaxed">{aiDetails.justificacion}</p>
                           </div>
                         )}
+
+                        {/* Parámetros Fisicoquímicos */}
+                        {aiDetails.parametrosFisicoquimicos && (
+                          <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">psychology</span>
+                              Predicción de Parámetros Fisicoquímicos
+                            </h4>
+                            <p className="text-text-muted text-xs mb-4 italic">
+                              Modelos predictivos para estimar propiedades como solubilidad, estabilidad, compatibilidad y biodisponibilidad.
+                            </p>
+                            <div className="space-y-3">
+                              {aiDetails.parametrosFisicoquimicos.solubilidad && (
+                                <div className="p-3 rounded-lg bg-card-dark border border-border-dark">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="material-symbols-outlined text-indigo-400 text-sm">water_drop</span>
+                                    <span className="text-text-light font-medium text-sm">Solubilidad</span>
+                                  </div>
+                                  <p className="text-text-light text-sm leading-relaxed">{aiDetails.parametrosFisicoquimicos.solubilidad}</p>
+                                </div>
+                              )}
+                              {aiDetails.parametrosFisicoquimicos.logP && (
+                                <div className="p-3 rounded-lg bg-card-dark border border-border-dark">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="material-symbols-outlined text-indigo-400 text-sm">calculate</span>
+                                    <span className="text-text-light font-medium text-sm">LogP (Coeficiente de Partición)</span>
+                                  </div>
+                                  <p className="text-text-light text-sm leading-relaxed">{aiDetails.parametrosFisicoquimicos.logP}</p>
+                                </div>
+                              )}
+                              {aiDetails.parametrosFisicoquimicos.estabilidad && (
+                                <div className="p-3 rounded-lg bg-card-dark border border-border-dark">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="material-symbols-outlined text-indigo-400 text-sm">shield</span>
+                                    <span className="text-text-light font-medium text-sm">Estabilidad</span>
+                                  </div>
+                                  <p className="text-text-light text-sm leading-relaxed">{aiDetails.parametrosFisicoquimicos.estabilidad}</p>
+                                </div>
+                              )}
+                              {aiDetails.parametrosFisicoquimicos.biodisponibilidad && (
+                                <div className="p-3 rounded-lg bg-card-dark border border-border-dark">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="material-symbols-outlined text-indigo-400 text-sm">biotech</span>
+                                    <span className="text-text-light font-medium text-sm">Biodisponibilidad</span>
+                                  </div>
+                                  <p className="text-text-light text-sm leading-relaxed">{aiDetails.parametrosFisicoquimicos.biodisponibilidad}</p>
+                                </div>
+                              )}
+                              {aiDetails.parametrosFisicoquimicos.compatibilidad && (
+                                <div className="p-3 rounded-lg bg-card-dark border border-border-dark">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="material-symbols-outlined text-indigo-400 text-sm">sync</span>
+                                    <span className="text-text-light font-medium text-sm">Compatibilidad</span>
+                                  </div>
+                                  <p className="text-text-light text-sm leading-relaxed">{aiDetails.parametrosFisicoquimicos.compatibilidad}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
             </div>
                     )
                   })()}
           </div>
+              )}
+
+              {/* Pruebas Asociadas */}
+              {pruebasPorIdea.has(idea.id) && pruebasPorIdea.get(idea.id).length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border-dark">
+                  <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">biotech</span>
+                    Pruebas de Laboratorio ({pruebasPorIdea.get(idea.id).length})
+                  </h4>
+                  <div className="space-y-2">
+                    {pruebasPorIdea.get(idea.id).map((prueba) => (
+                      <div key={prueba.id} className="p-3 rounded-lg bg-input-dark border border-border-dark">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-text-light font-medium text-sm">{prueba.codigoMuestra}</p>
+                            <p className="text-text-muted text-xs">{prueba.tipoPrueba}</p>
+                            {prueba.fechaMuestreo && (
+                              <p className="text-text-muted text-xs mt-1">
+                                Muestreo: {new Date(prueba.fechaMuestreo).toLocaleDateString('es-ES')}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            prueba.estado === 'PENDIENTE' ? 'bg-warning/20 text-warning' :
+                            prueba.estado === 'EN_PROCESO' ? 'bg-primary/20 text-primary' :
+                            prueba.estado === 'COMPLETADA' ? 'bg-success/20 text-success' :
+                            prueba.estado === 'OOS' ? 'bg-danger/20 text-danger' :
+                            'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {prueba.estado === 'PENDIENTE' ? 'Pendiente' :
+                             prueba.estado === 'EN_PROCESO' ? 'En Proceso' :
+                             prueba.estado === 'COMPLETADA' ? 'Completada' :
+                             prueba.estado === 'OOS' ? 'OOS' :
+                             prueba.estado === 'RECHAZADA' ? 'Rechazada' : prueba.estado}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Botón para crear prueba (solo para analistas con ideas en EN_PRUEBA) */}
+              {isAnalista && idea.estado === 'EN_PRUEBA' && (
+                <div className="mt-4 pt-4 border-t border-border-dark">
+                  <button
+                    onClick={() => handleCreatePruebaFromIdea(idea)}
+                    className="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-sm font-medium hover:bg-primary/30 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    Crear Prueba de Laboratorio
+                  </button>
+                </div>
               )}
 
               {/* Acciones según estado y rol */}
@@ -623,7 +870,120 @@ const Ideas = () => {
           </button>
               </div>
             </div>
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diálogo para crear prueba desde idea */}
+      {showCreatePruebaDialog && selectedIdeaForPrueba && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowCreatePruebaDialog(false)
+              setSelectedIdeaForPrueba(null)
+            }
+          }}
+        >
+          <div className="bg-card-dark rounded-lg border border-border-dark max-w-md w-full shadow-xl">
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-text-light text-lg font-semibold">Crear Prueba de Laboratorio</h3>
+                  <p className="text-text-muted text-xs mt-1">Idea: {selectedIdeaForPrueba.titulo}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCreatePruebaDialog(false)
+                    setSelectedIdeaForPrueba(null)
+                  }}
+                  className="text-text-muted hover:text-text-light"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-text-muted text-sm mb-2">Código de Muestra *</label>
+                  <input
+                    type="text"
+                    value={nuevaPrueba.codigoMuestra}
+                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, codigoMuestra: e.target.value })}
+                    placeholder="Ej: MU-2024-001"
+                    className="w-full h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-text-muted text-sm mb-2">Tipo de Prueba *</label>
+                  <input
+                    type="text"
+                    value={nuevaPrueba.tipoPrueba}
+                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, tipoPrueba: e.target.value })}
+                    placeholder="Ej: Control de Calidad, Análisis Sensorial"
+                    className="w-full h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-text-muted text-sm mb-2">Descripción</label>
+                  <textarea
+                    value={nuevaPrueba.descripcion}
+                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, descripcion: e.target.value })}
+                    placeholder="Descripción de la prueba..."
+                    rows="3"
+                    className="w-full px-4 py-2 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-text-muted text-sm mb-2">Equipos Utilizados</label>
+                  <input
+                    type="text"
+                    value={nuevaPrueba.equiposUtilizados}
+                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, equiposUtilizados: e.target.value })}
+                    placeholder="Ej: HPLC-001, BAL-002"
+                    className="w-full h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-text-muted text-sm mb-2">
+                    Pruebas Requeridas <span className="text-primary">*</span>
+                  </label>
+                  <textarea
+                    value={nuevaPrueba.pruebasRequeridas}
+                    onChange={(e) => setNuevaPrueba({ ...nuevaPrueba, pruebasRequeridas: e.target.value })}
+                    placeholder="Especifica qué pruebas debe realizar el analista. Ejemplo:&#10;- pH (especificación: 6.5 - 7.5)&#10;- Humedad (especificación: ≤ 5%)&#10;- Proteína (especificación: ≥ 80%)&#10;- Grasa (especificación: ≤ 10%)&#10;- Análisis microbiológico"
+                    rows="6"
+                    className="w-full px-4 py-3 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+                  />
+                  <p className="text-text-muted text-xs mt-1">
+                    Lista detallada de los parámetros y pruebas que el analista debe realizar. El analista verá esta información al recibir la prueba.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  onClick={() => {
+                    setShowCreatePruebaDialog(false)
+                    setSelectedIdeaForPrueba(null)
+                  }}
+                  className="px-4 py-2 rounded-lg bg-input-dark text-text-light text-sm font-medium hover:bg-border-dark transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreatePrueba}
+                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  Crear Prueba
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
