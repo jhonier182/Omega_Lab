@@ -153,23 +153,38 @@ const Pruebas = () => {
       setSelectedPrueba(pruebaCompleta)
       
       // Evaluar automáticamente el estado de la prueba basado en los resultados
-      if (pruebaCompleta.resultados && pruebaCompleta.resultados.length > 0) {
-        const todosCumplen = pruebaCompleta.resultados.every(r => r.cumpleEspecificacion !== false)
-        const hayOOS = pruebaCompleta.resultados.some(r => r.cumpleEspecificacion === false)
+      // Solo cambiar a COMPLETADA si TODAS las pruebas requeridas tienen resultados
+      if (pruebaCompleta.resultados && pruebaCompleta.resultados.length > 0 && pruebaCompleta.pruebasRequeridas) {
+        const pruebasRequeridas = parsePruebasRequeridas(pruebaCompleta.pruebasRequeridas)
         
-        // Si todos los resultados cumplen, cambiar a COMPLETADA
-        // Si hay algún OOS, cambiar a OOS
-        if (todosCumplen && pruebaCompleta.estado === 'EN_PROCESO') {
-          await pruebaService.updatePrueba(pruebaCompleta.id, { estado: 'COMPLETADA' })
-          const pruebaActualizadaEstado = await pruebaService.getPruebaById(pruebaCompleta.id)
-          setSelectedPrueba(pruebaActualizadaEstado)
-          loadPruebas()
-        } else if (hayOOS && pruebaCompleta.estado === 'EN_PROCESO') {
-          await pruebaService.updatePrueba(pruebaCompleta.id, { estado: 'OOS' })
-          const pruebaActualizadaEstado = await pruebaService.getPruebaById(pruebaCompleta.id)
-          setSelectedPrueba(pruebaActualizadaEstado)
-          loadPruebas()
+        // Verificar que todas las pruebas requeridas tengan resultados registrados
+        const todasLasPruebasTienenResultados = pruebasRequeridas.every(pruebaReq => {
+          return pruebaCompleta.resultados.some(resultado => {
+            const parametroLower = resultado.parametro.toLowerCase().trim()
+            const pruebaReqLower = pruebaReq.parametro.toLowerCase().trim()
+            return parametroLower.includes(pruebaReqLower) || pruebaReqLower.includes(parametroLower)
+          })
+        })
+        
+        if (todasLasPruebasTienenResultados) {
+          // Todas las pruebas requeridas tienen resultados, ahora evaluar cumplimiento
+          const todosCumplen = pruebaCompleta.resultados.every(r => r.cumpleEspecificacion !== false)
+          const hayOOS = pruebaCompleta.resultados.some(r => r.cumpleEspecificacion === false)
+          
+          // Solo cambiar estado si todas las pruebas requeridas están completas
+          if (todosCumplen && pruebaCompleta.estado === 'EN_PROCESO') {
+            await pruebaService.updatePrueba(pruebaCompleta.id, { estado: 'COMPLETADA' })
+            const pruebaActualizadaEstado = await pruebaService.getPruebaById(pruebaCompleta.id)
+            setSelectedPrueba(pruebaActualizadaEstado)
+            loadPruebas()
+          } else if (hayOOS && pruebaCompleta.estado === 'EN_PROCESO') {
+            await pruebaService.updatePrueba(pruebaCompleta.id, { estado: 'OOS' })
+            const pruebaActualizadaEstado = await pruebaService.getPruebaById(pruebaCompleta.id)
+            setSelectedPrueba(pruebaActualizadaEstado)
+            loadPruebas()
+          }
         }
+        // Si no todas las pruebas requeridas tienen resultados, mantener EN_PROCESO
       }
       
       setShowAddResultadoDialog(false)
@@ -535,56 +550,87 @@ const Pruebas = () => {
               )}
               {selectedPrueba.pruebasRequeridas && (
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
-                  <div className="flex items-start gap-2 mb-3">
-                    <span className="material-symbols-outlined text-primary text-lg">assignment</span>
-                    <div className="flex-1">
-                      <p className="text-text-light font-semibold mb-1">Pruebas Requeridas</p>
-                      <p className="text-text-muted text-xs mb-3">Lista de pruebas que debes realizar:</p>
-                      <div className="space-y-2">
-                        {parsePruebasRequeridas(selectedPrueba.pruebasRequeridas).map((prueba, index) => {
-                          // Verificar si ya se registró un resultado para este parámetro
-                          const resultadoRegistrado = selectedPrueba.resultados?.find(r => 
-                            r.parametro.toLowerCase().includes(prueba.parametro.toLowerCase()) ||
-                            prueba.parametro.toLowerCase().includes(r.parametro.toLowerCase())
-                          )
-                          
-                          return (
-                            <div 
-                              key={index} 
-                              className={`p-3 rounded-lg border ${
-                                resultadoRegistrado 
-                                  ? resultadoRegistrado.cumpleEspecificacion === false
-                                    ? 'bg-danger/10 border-danger/30'
-                                    : 'bg-success/10 border-success/30'
-                                  : 'bg-input-dark border-border-dark'
-                              }`}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-2 flex-1">
+                      <span className="material-symbols-outlined text-primary text-lg">assignment</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-text-light font-semibold">Pruebas Requeridas y Resultados</p>
+                          {isAnalista && selectedPrueba.estado === 'EN_PROCESO' && (
+                            <button
+                              onClick={() => setShowAddResultadoDialog(true)}
+                              className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 flex items-center gap-1.5"
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <p className="text-text-light font-medium text-sm">{prueba.parametro}</p>
-                                  {prueba.especificacion && (
-                                    <p className="text-text-muted text-xs mt-1">
-                                      Especificación: <span className="text-text-light">{prueba.especificacion}</span>
-                                    </p>
+                              <span className="material-symbols-outlined text-sm">add</span>
+                              Agregar Resultado
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-text-muted text-xs mb-3">Lista de pruebas que debes realizar y sus resultados:</p>
+                        <div className="space-y-2">
+                          {parsePruebasRequeridas(selectedPrueba.pruebasRequeridas).map((prueba, index) => {
+                            // Verificar si ya se registró un resultado para este parámetro
+                            const resultadoRegistrado = selectedPrueba.resultados?.find(r => 
+                              r.parametro.toLowerCase().includes(prueba.parametro.toLowerCase()) ||
+                              prueba.parametro.toLowerCase().includes(r.parametro.toLowerCase())
+                            )
+                            
+                            return (
+                              <div 
+                                key={index} 
+                                className={`p-4 rounded-lg border ${
+                                  resultadoRegistrado 
+                                    ? resultadoRegistrado.cumpleEspecificacion === false
+                                      ? 'bg-danger/10 border-danger/30'
+                                      : 'bg-success/10 border-success/30'
+                                    : 'bg-input-dark border-border-dark'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <p className="text-text-light font-medium text-sm">{prueba.parametro}</p>
+                                    {prueba.especificacion && (
+                                      <p className="text-text-muted text-xs mt-1">
+                                        Especificación: <span className="text-text-light">{prueba.especificacion}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                  {resultadoRegistrado ? (
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      resultadoRegistrado.cumpleEspecificacion === false
+                                        ? 'bg-danger/20 text-danger'
+                                        : 'bg-success/20 text-success'
+                                    }`}>
+                                      {resultadoRegistrado.cumpleEspecificacion === false ? '✗ OOS' : '✓ Cumple'}
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-1 rounded text-xs bg-warning/20 text-warning font-medium">
+                                      Pendiente
+                                    </span>
                                   )}
                                 </div>
-                                {resultadoRegistrado ? (
-                                  <span className={`px-2 py-1 rounded text-xs ${
-                                    resultadoRegistrado.cumpleEspecificacion === false
-                                      ? 'bg-danger/20 text-danger'
-                                      : 'bg-success/20 text-success'
-                                  }`}>
-                                    {resultadoRegistrado.cumpleEspecificacion === false ? '✗ OOS' : '✓ Cumple'}
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-1 rounded text-xs bg-warning/20 text-warning">
-                                    Pendiente
-                                  </span>
+                                
+                                {/* Mostrar resultado si está registrado */}
+                                {resultadoRegistrado && (
+                                  <div className="mt-3 pt-3 border-t border-border-dark">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <p className="text-text-light font-semibold text-sm">
+                                          Resultado: <span className="text-primary">{resultadoRegistrado.resultado}</span> {resultadoRegistrado.unidad || ''}
+                                        </p>
+                                        {resultadoRegistrado.observaciones && (
+                                          <p className="text-text-muted text-xs mt-1 italic">
+                                            {resultadoRegistrado.observaciones}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                          )
-                        })}
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -593,60 +639,6 @@ const Pruebas = () => {
             </div>
           </div>
 
-          {/* Resultados Analíticos */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-text-light font-semibold">Resultados Analíticos</h3>
-              {isAnalista && selectedPrueba.estado === 'EN_PROCESO' && (
-                <button
-                  onClick={() => setShowAddResultadoDialog(true)}
-                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-sm">add</span>
-                  Agregar Resultado
-                </button>
-              )}
-            </div>
-            {selectedPrueba.resultados && selectedPrueba.resultados.length > 0 ? (
-            <div className="space-y-4">
-                {selectedPrueba.resultados.map((result) => (
-                  <div key={result.id} className={`p-4 rounded-lg border ${
-                    result.cumpleEspecificacion === false ? 'bg-danger/10 border-danger/50' : 'bg-input-dark border-border-dark'
-                }`}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="text-text-light font-medium">{result.parametro}</p>
-                        {result.especificacion && (
-                      <p className="text-text-muted text-xs">Especificación: {result.especificacion}</p>
-                        )}
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                        result.cumpleEspecificacion === false ? 'bg-danger/20 text-danger' : 'bg-success/20 text-success'
-                    }`}>
-                        {result.cumpleEspecificacion === false ? 'OOS' : 'Cumple'}
-                    </span>
-                  </div>
-                  <div className="mt-2">
-                      <p className="text-text-light font-semibold">
-                        Resultado: {result.resultado} {result.unidad || ''}
-                      </p>
-                      {result.observaciones && (
-                        <p className="text-text-muted text-xs mt-1">{result.observaciones}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-              </div>
-            ) : (
-              <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
-                <p className="text-text-muted text-sm">
-                  {selectedPrueba.estado === 'PENDIENTE' 
-                    ? 'Inicia la prueba para poder agregar resultados' 
-                    : 'No hay resultados registrados aún'}
-                </p>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -680,7 +672,7 @@ const Pruebas = () => {
                 <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
                   <p className="text-text-muted text-xs mb-2">Prueba Asociada</p>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+          <div>
                       <p className="text-text-light font-medium">{selectedPrueba?.codigoMuestra}</p>
                       <p className="text-text-muted text-xs">{selectedPrueba?.tipoPrueba}</p>
                     </div>
@@ -728,7 +720,7 @@ const Pruebas = () => {
                             {yaRegistrado && (
                               <p className="text-xs text-warning mt-1">✓ Ya registrado</p>
                             )}
-                          </button>
+                      </button>
                         )
                       })}
                     </div>
