@@ -16,7 +16,7 @@ const Inventario = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="w-full h-full">
       <div className="mb-6">
         <nav className="flex gap-2 border-b border-border-dark">
           {subpages.map((page) => (
