@@ -11,6 +11,8 @@ const Historial = () => {
   const [pruebas, setPruebas] = useState([])
   const [loadingPruebas, setLoadingPruebas] = useState(false)
   const [selectedPrueba, setSelectedPrueba] = useState(null)
+  const [selectedIdea, setSelectedIdea] = useState(null)
+  const [loadingIdea, setLoadingIdea] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [filterEstado, setFilterEstado] = useState('TODAS')
 
@@ -62,10 +64,36 @@ const Historial = () => {
     try {
       const prueba = await pruebaService.getPruebaById(pruebaId)
       setSelectedPrueba(prueba)
+      
+      // Cargar la idea asociada si existe para obtener el BOM modificado
+      if (prueba.ideaId) {
+        setLoadingIdea(true)
+        try {
+          const idea = await ideaService.getIdeaById(prueba.ideaId)
+          setSelectedIdea(idea)
+        } catch (error) {
+          console.error('Error al cargar idea:', error)
+          setSelectedIdea(null)
+        } finally {
+          setLoadingIdea(false)
+        }
+      } else {
+        setSelectedIdea(null)
+      }
+      
       setShowDetailsModal(true)
     } catch (error) {
       console.error('Error al cargar prueba:', error)
       alert('Error al cargar detalles: ' + (error.message || 'Error desconocido'))
+    }
+  }
+
+  const parseAIDetails = (detallesIA) => {
+    if (!detallesIA) return null
+    try {
+      return JSON.parse(detallesIA)
+    } catch (e) {
+      return null
     }
   }
 
@@ -255,6 +283,7 @@ const Historial = () => {
                     onClick={() => {
                       setShowDetailsModal(false)
                       setSelectedPrueba(null)
+                      setSelectedIdea(null)
                     }}
                     className="text-text-muted hover:text-text-light"
                   >
@@ -263,73 +292,50 @@ const Historial = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {selectedPrueba.fechaMuestreo && (
-                  <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
-                    <p className="text-text-muted text-xs mb-1">Fecha de Muestreo</p>
-                    <p className="text-text-light text-sm">
-                      {new Date(selectedPrueba.fechaMuestreo).toLocaleDateString('es-ES')}
-                    </p>
-                  </div>
-                )}
-                {selectedPrueba.fechaFin && (
-                  <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
-                    <p className="text-text-muted text-xs mb-1">Fecha de Finalización</p>
-                    <p className="text-text-light text-sm">
-                      {new Date(selectedPrueba.fechaFin).toLocaleDateString('es-ES')}
-                    </p>
-                  </div>
-                )}
-                {selectedPrueba.ideaTitulo && (
-                  <div className="p-4 rounded-lg bg-input-dark border border-border-dark col-span-2">
-                    <p className="text-text-muted text-xs mb-1">Idea Asociada</p>
-                    <p className="text-text-light text-sm">{selectedPrueba.ideaTitulo}</p>
-                  </div>
-                )}
-              </div>
-
-              {selectedPrueba.descripcion && (
-                <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
-                  <p className="text-text-muted text-xs mb-1">Descripción</p>
-                  <p className="text-text-light text-sm">{selectedPrueba.descripcion}</p>
-                </div>
-              )}
-
-              {selectedPrueba.pruebasRequeridas && (
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
-                  <div className="flex items-start gap-2 mb-3">
-                    <span className="material-symbols-outlined text-primary text-lg">assignment</span>
-                    <div className="flex-1">
-                      <p className="text-text-light font-semibold mb-1 text-sm">Pruebas Requeridas</p>
-                      <div className="whitespace-pre-line text-text-light text-xs leading-relaxed bg-card-dark p-3 rounded-lg border border-border-dark mt-2">
-                        {selectedPrueba.pruebasRequeridas}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Resultados */}
-              {selectedPrueba.resultados && selectedPrueba.resultados.length > 0 && (
+              {/* Fecha - Sin cuadrado */}
+              {selectedPrueba.fechaFin && (
                 <div>
-                  <h3 className="text-text-light font-semibold mb-4 text-sm">Resultados Analíticos</h3>
-                  <div className="space-y-3">
+                  <p className="text-text-muted text-xs mb-1">Fecha de Finalización</p>
+                  <p className="text-text-light text-sm">
+                    {new Date(selectedPrueba.fechaFin).toLocaleDateString('es-ES', { 
+                      day: '2-digit', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Pruebas Realizadas y Resultados */}
+              <div>
+                <h3 className="text-text-light font-semibold mb-3 text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">science</span>
+                  Pruebas Realizadas y Resultados
+                </h3>
+                {selectedPrueba.resultados && selectedPrueba.resultados.length > 0 ? (
+                  <div className="space-y-2">
                     {selectedPrueba.resultados.map((result) => (
                       <div
                         key={result.id}
-                        className={`p-4 rounded-lg border ${
+                        className={`p-3 rounded-lg border ${
                           result.cumpleEspecificacion === false
                             ? 'bg-danger/10 border-danger/30'
                             : 'bg-success/10 border-success/30'
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="text-text-light font-medium text-sm">{result.parametro}</p>
                             {result.especificacion && (
                               <p className="text-text-muted text-xs mt-1">
                                 Especificación: {result.especificacion}
                               </p>
+                            )}
+                            <p className="text-text-light text-sm mt-1">
+                              Resultado: <span className="text-primary font-semibold">{result.resultado}</span> {result.unidad || ''}
+                            </p>
+                            {result.observaciones && (
+                              <p className="text-text-muted text-xs mt-1 italic">{result.observaciones}</p>
                             )}
                           </div>
                           <span
@@ -342,19 +348,66 @@ const Historial = () => {
                             {result.cumpleEspecificacion === false ? 'OOS' : 'Cumple'}
                           </span>
                         </div>
-                        <div className="mt-2">
-                          <p className="text-text-light font-semibold text-sm">
-                            Resultado: <span className="text-primary">{result.resultado}</span> {result.unidad || ''}
-                          </p>
-                          {result.observaciones && (
-                            <p className="text-text-muted text-xs mt-1 italic">{result.observaciones}</p>
-                          )}
-                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
+                    <p className="text-text-muted text-sm">No hay resultados registrados para esta prueba</p>
+                  </div>
+                )}
+              </div>
+
+              {/* BOM Nuevo con Volúmenes */}
+              {selectedIdea && selectedIdea.detallesIA && (() => {
+                const aiDetails = parseAIDetails(selectedIdea.detallesIA)
+                if (aiDetails && aiDetails.bomModificado && Array.isArray(aiDetails.bomModificado) && aiDetails.bomModificado.length > 0) {
+                  return (
+                    <div>
+                      <h3 className="text-text-light font-semibold mb-3 text-sm flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm">list</span>
+                        BOM Nuevo con Volúmenes
+                      </h3>
+                      <div className="space-y-2">
+                        {aiDetails.bomModificado.map((item, idx) => (
+                          <div key={idx} className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                            <div className="flex items-start justify-between mb-2">
+                              <span className="text-text-light font-medium text-sm">{item.ingrediente || 'Ingrediente'}</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                              {item.cantidadPropuesta && (
+                                <div>
+                                  <span className="text-text-muted">Cantidad Propuesta:</span>
+                                  <p className="text-primary font-medium">{item.cantidadPropuesta}</p>
+                                </div>
+                              )}
+                              {item.porcentajePropuesto && (
+                                <div>
+                                  <span className="text-text-muted">% Propuesto:</span>
+                                  <p className="text-text-light">{item.porcentajePropuesto}</p>
+                                </div>
+                              )}
+                              {item.unidad && (
+                                <div>
+                                  <span className="text-text-muted">Unidad:</span>
+                                  <p className="text-text-light">{item.unidad}</p>
+                                </div>
+                              )}
+                              {item.volumen && (
+                                <div>
+                                  <span className="text-text-muted">Volumen:</span>
+                                  <p className="text-text-light font-medium">{item.volumen}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                }
+                return null
+              })()}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-border-dark">
                 {selectedPrueba.ideaId && selectedPrueba.ideaEstado === 'PRUEBA_APROBADA' && (
@@ -370,6 +423,7 @@ const Historial = () => {
                   onClick={() => {
                     setShowDetailsModal(false)
                     setSelectedPrueba(null)
+                    setSelectedIdea(null)
                   }}
                   className="px-4 py-2 rounded-lg bg-input-dark text-text-light text-sm font-medium hover:bg-border-dark"
                 >

@@ -85,6 +85,11 @@ public class PruebaServiceImpl implements PruebaService {
             }
         }
         
+        // Forzar la carga de los resultados
+        if (prueba.getResultados() != null) {
+            prueba.getResultados().size(); // Acceder para forzar la carga de la colección
+        }
+        
         return prueba.getDTO();
     }
 

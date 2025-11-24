@@ -14,6 +14,7 @@ const Productos = () => {
   const [error, setError] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showAddMaterial, setShowAddMaterial] = useState(false)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
@@ -243,6 +244,10 @@ const Productos = () => {
         unidad: 'mg',
         porcentaje: ''
       })
+      // Si el modal de detalles está abierto, mantenerlo abierto
+      if (showDetailsModal) {
+        // El BOM ya se recargó arriba, no necesitamos hacer nada más
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -299,92 +304,136 @@ const Productos = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="rounded-lg bg-card-dark border border-border-dark overflow-hidden">
-            <div className="p-4 border-b border-border-dark">
-              <h2 className="text-text-light font-semibold">Lista de Productos</h2>
-            </div>
-            {loading && !products.length ? (
-              <div className="p-4 text-center text-text-muted">Cargando...</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border-dark">
-                      <th className="text-left p-3 text-text-muted text-xs font-semibold">Código</th>
-                      <th className="text-left p-3 text-text-muted text-xs font-semibold">Nombre</th>
-                      <th className="text-right p-3 text-text-muted text-xs font-semibold">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.length === 0 ? (
-                      <tr>
-                        <td colSpan="3" className="p-4 text-center text-text-muted text-sm">
-                          No hay productos registrados
-                        </td>
-                      </tr>
-                    ) : (
-                      products.map((product) => (
-                        <tr 
-                          key={product.id} 
-                          className={`border-b border-border-dark hover:bg-border-dark/30 cursor-pointer ${
-                            selectedProduct?.id === product.id ? 'bg-primary/10' : ''
-                          }`}
-                          onClick={() => setSelectedProduct(product)}
-                        >
-                          <td className="p-3 text-text-light font-medium text-sm">{product.codigo}</td>
-                          <td className="p-3 text-text-light text-sm">{product.nombre}</td>
-                          <td className="p-3 text-right">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteProduct(product.id)
-                              }}
-                              className="px-2 py-1 rounded text-xs text-danger hover:bg-danger/10"
-                            >
-                              Eliminar
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+      {/* Tabla de Productos Horizontal */}
+      <div className="bg-card-dark rounded-lg border border-border-dark overflow-hidden mb-6">
+        <div className="p-4 border-b border-border-dark flex items-center justify-between">
+          <h2 className="text-text-light font-semibold">Lista de Productos ({products.length})</h2>
         </div>
+        {loading && !products.length ? (
+          <div className="p-8 text-center text-text-muted">Cargando...</div>
+        ) : products.length === 0 ? (
+          <div className="p-8 text-center text-text-muted">
+            <span className="material-symbols-outlined text-4xl mb-2 block">inventory_2</span>
+            <p className="text-sm">No hay productos registrados</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-input-dark/50 border-b border-border-dark">
+                <tr>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Código</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Nombre</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Categoría</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Unidad</th>
+                  <th className="px-3 py-2 text-center text-text-muted text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-dark">
+                {products.map((product) => (
+                  <tr
+                    key={product.id}
+                    className={`hover:bg-input-dark/30 transition-colors ${
+                      selectedProduct?.id === product.id ? 'bg-primary/10' : ''
+                    }`}
+                  >
+                    <td className="px-3 py-2.5">
+                      <span className="text-text-light text-xs font-medium">{product.codigo}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span 
+                        className="text-text-light text-xs cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => setSelectedProduct(product)}
+                      >
+                        {product.nombre}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className="text-text-muted text-xs">{product.categoria || '-'}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className="text-text-muted text-xs">{product.unidadMedida || '-'}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(product)
+                            setShowDetailsModal(true)
+                          }}
+                          className="px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          title="Ver detalles"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="px-2 py-1 rounded bg-danger/10 text-danger hover:bg-danger/20 transition-colors"
+                          title="Eliminar"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-        <div className="lg:col-span-2">
-          {selectedProduct ? (
-            <div className="space-y-6">
-              <div className="rounded-lg bg-card-dark border border-border-dark p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-text-light text-2xl font-bold">{selectedProduct.nombre}</h2>
-                    <p className="text-text-muted text-sm">{selectedProduct.codigo}</p>
-                  </div>
+      {/* Modal de Detalles del Producto */}
+      {showDetailsModal && selectedProduct && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDetailsModal(false)
+              setSelectedProduct(null)
+              setBom(null)
+            }
+          }}
+        >
+          <div className="bg-card-dark rounded-lg border border-border-dark max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="p-6 space-y-6">
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-text-light text-2xl font-bold mb-2">{selectedProduct.nombre}</h2>
+                  <p className="text-text-muted text-sm">{selectedProduct.codigo}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-text-muted text-xs mb-1">Categoría</p>
-                    <p className="text-text-light">{selectedProduct.categoria || 'Sin categoría'}</p>
-                  </div>
-                  <div>
-                    <p className="text-text-muted text-xs mb-1">Unidad de Medida</p>
-                    <p className="text-text-light">{selectedProduct.unidadMedida}</p>
-                  </div>
-                  {selectedProduct.descripcion && (
-                    <div className="col-span-2">
-                      <p className="text-text-muted text-xs mb-1">Descripción</p>
-                      <p className="text-text-light">{selectedProduct.descripcion}</p>
-                    </div>
-                  )}
-                </div>
+                <button
+                  onClick={() => {
+                    setShowDetailsModal(false)
+                    setSelectedProduct(null)
+                    setBom(null)
+                  }}
+                  className="text-text-muted hover:text-text-light"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
               </div>
 
-              <div className="rounded-lg bg-card-dark border border-border-dark p-6">
+              {/* Detalles del Producto */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-text-muted text-xs mb-1">Categoría</p>
+                  <p className="text-text-light text-sm">{selectedProduct.categoria || 'Sin categoría'}</p>
+                </div>
+                <div>
+                  <p className="text-text-muted text-xs mb-1">Unidad de Medida</p>
+                  <p className="text-text-light text-sm">{selectedProduct.unidadMedida}</p>
+                </div>
+                {selectedProduct.descripcion && (
+                  <div className="col-span-2">
+                    <p className="text-text-muted text-xs mb-1">Descripción</p>
+                    <p className="text-text-light text-sm">{selectedProduct.descripcion}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Lista de Materiales (BOM) */}
+              <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-text-light font-semibold">Lista de Materiales (BOM)</h3>
                   {bom ? (
@@ -397,10 +446,12 @@ const Productos = () => {
                         {bom.version} - {bom.estado}
                       </span>
                       <button
-                        onClick={() => setShowAddMaterial(true)}
-                        className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 flex items-center gap-2"
+                        onClick={() => {
+                          setShowAddMaterial(true)
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 flex items-center gap-1.5"
                       >
-                        <span className="material-symbols-outlined text-base">add</span>
+                        <span className="material-symbols-outlined text-sm">add</span>
                         Agregar Material
                       </button>
                     </div>
@@ -408,7 +459,7 @@ const Productos = () => {
                     <button
                       onClick={handleCreateBOM}
                       disabled={loading}
-                      className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 disabled:opacity-50"
                     >
                       Crear BOM
                     </button>
@@ -418,32 +469,45 @@ const Productos = () => {
                 {bom && bom.items && bom.items.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border-dark">
-                          <th className="text-left p-3 text-text-muted text-sm font-semibold">Material</th>
-                          <th className="text-left p-3 text-text-muted text-sm font-semibold">Cantidad</th>
-                          <th className="text-left p-3 text-text-muted text-sm font-semibold">Unidad</th>
-                          <th className="text-left p-3 text-text-muted text-sm font-semibold">%</th>
-                          <th className="text-right p-3 text-text-muted text-sm font-semibold">Acciones</th>
+                      <thead className="bg-input-dark/50 border-b border-border-dark">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Material</th>
+                          <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Cantidad</th>
+                          <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Unidad</th>
+                          <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">%</th>
+                          <th className="px-3 py-2 text-center text-text-muted text-xs font-semibold uppercase tracking-wider">Acciones</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-border-dark">
                         {bom.items.map((item) => (
-                          <tr key={item.id} className="border-b border-border-dark">
-                            <td className="p-3 text-text-light">
-                              {item.materialNombre || item.material?.nombre || `Material ${item.materialId || item.material_id}`}
-                              <p className="text-text-muted text-xs">{item.materialCodigo || item.material?.codigo || ''}</p>
+                          <tr key={item.id} className="hover:bg-input-dark/30 transition-colors">
+                            <td className="px-3 py-2.5">
+                              <span className="text-text-light text-xs font-medium">
+                                {item.materialNombre || item.material?.nombre || `Material ${item.materialId || item.material_id}`}
+                              </span>
+                              {item.materialCodigo || item.material?.codigo ? (
+                                <p className="text-text-muted text-xs">{item.materialCodigo || item.material?.codigo}</p>
+                              ) : null}
                             </td>
-                            <td className="p-3 text-text-light">{item.cantidad}</td>
-                            <td className="p-3 text-text-muted">{item.unidad}</td>
-                            <td className="p-3 text-text-muted">{item.porcentaje}%</td>
-                            <td className="p-3 text-right">
-                              <button
-                                onClick={() => handleDeleteMaterial(item.id)}
-                                className="text-danger hover:text-danger/80 text-sm"
-                              >
-                                Eliminar
-                              </button>
+                            <td className="px-3 py-2.5">
+                              <span className="text-text-light text-xs">{item.cantidad}</span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <span className="text-text-muted text-xs">{item.unidad}</span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <span className="text-text-muted text-xs">{item.porcentaje}%</span>
+                            </td>
+                            <td className="px-3 py-2.5">
+                              <div className="flex items-center justify-center">
+                                <button
+                                  onClick={() => handleDeleteMaterial(item.id)}
+                                  className="px-2 py-1 rounded bg-danger/10 text-danger hover:bg-danger/20 transition-colors"
+                                  title="Eliminar"
+                                >
+                                  <span className="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -451,32 +515,30 @@ const Productos = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-text-muted">
-                    <span className="material-symbols-outlined text-4xl mb-2">inventory_2</span>
-                    <p>No hay materiales en la lista. Agrega materiales para crear la fórmula.</p>
+                  <div className="text-center py-8 text-text-muted bg-input-dark rounded-lg border border-border-dark">
+                    <span className="material-symbols-outlined text-4xl mb-2 block">inventory_2</span>
+                    <p className="text-sm">No hay materiales en la lista. Agrega materiales para crear la fórmula.</p>
                   </div>
                 )}
               </div>
 
-              {bom && (
-                <div className="rounded-lg bg-card-dark border border-border-dark p-6">
-                  <h3 className="text-text-light font-semibold mb-4">Justificación Técnica de Sinergia</h3>
-                  <div className="p-4 rounded-lg bg-input-dark min-h-[100px]">
-                    <p className="text-text-light text-sm leading-relaxed">
-                      {bom.justificacion || 'Sin justificación técnica aún.'}
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* Botón Cerrar */}
+              <div className="flex justify-end pt-4 border-t border-border-dark">
+                <button
+                  onClick={() => {
+                    setShowDetailsModal(false)
+                    setSelectedProduct(null)
+                    setBom(null)
+                  }}
+                  className="px-4 py-2 rounded-lg bg-input-dark text-text-light text-sm font-medium hover:bg-border-dark"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="rounded-lg bg-card-dark border border-border-dark p-12 text-center">
-              <span className="material-symbols-outlined text-6xl text-text-muted mb-4">inventory_2</span>
-              <p className="text-text-muted">Selecciona un producto para ver su lista de materiales</p>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -597,7 +659,9 @@ const Productos = () => {
             <div className="p-6 border-b border-border-dark flex items-center justify-between">
               <h2 className="text-text-light text-xl font-semibold">Agregar Material al BOM</h2>
               <button
-                onClick={() => setShowAddMaterial(false)}
+                onClick={() => {
+                  setShowAddMaterial(false)
+                }}
                 className="text-text-muted hover:text-text-light"
               >
                 <span className="material-symbols-outlined">close</span>
