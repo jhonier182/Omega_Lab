@@ -47,18 +47,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = tokenProvider.getUsernameFromToken(jwt);
 
                 User user = userRepository.findByEmail(username).orElse(null);
-                if (user != null) {
-                    UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                        .username(user.getEmail())
-                        .password(user.getPassword())
-                        .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRol().name())))
-                        .build();
-                    
-                    UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                if (user != null && user.getRol() != null) {
+                    try {
+                        // Crear autoridad con el nombre del rol del enum
+                        String roleAuthority = "ROLE_" + user.getRol().name();
+                        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                            .username(user.getEmail())
+                            .password(user.getPassword())
+                            .authorities(Collections.singletonList(new SimpleGrantedAuthority(roleAuthority)))
+                            .build();
+                        
+                        UsernamePasswordAuthenticationToken authentication = 
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        logger.debug("User authenticated successfully: " + username + " with role: " + user.getRol().name());
+                    } catch (IllegalArgumentException e) {
+                        logger.error("Invalid role for user: " + username + ", role: " + user.getRol() + ". Please update user role in database.", e);
+                    } catch (Exception e) {
+                        logger.error("Error creating authentication for user: " + username + ", role: " + user.getRol(), e);
+                    }
+                } else {
+                    logger.warn("User not found or has no role: " + username);
                 }
             }
         } catch (Exception ex) {
