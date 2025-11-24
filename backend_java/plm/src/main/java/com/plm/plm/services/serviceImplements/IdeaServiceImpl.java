@@ -42,6 +42,7 @@ public class IdeaServiceImpl implements IdeaService {
         Idea idea = new Idea();
         idea.setTitulo(ideaDTO.getTitulo());
         idea.setDescripcion(ideaDTO.getDescripcion());
+        idea.setDetallesIA(ideaDTO.getDetallesIA());
         idea.setCategoria(ideaDTO.getCategoria() != null ? ideaDTO.getCategoria() : "Nutracéutico");
         idea.setPrioridad(ideaDTO.getPrioridad() != null ? ideaDTO.getPrioridad() : "Media");
         idea.setObjetivo(ideaDTO.getObjetivo());

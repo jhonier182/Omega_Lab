@@ -7,6 +7,7 @@ const Ideas = () => {
   const { user } = useAuth()
   const [ideas, setIdeas] = useState([])
   const [loadingIdeas, setLoadingIdeas] = useState(false)
+  const [expandedIdeas, setExpandedIdeas] = useState(new Set())
   const [filters, setFilters] = useState({
     estado: '',
     categoria: '',
@@ -104,6 +105,25 @@ const Ideas = () => {
     }
   }
 
+  const toggleDetails = (ideaId) => {
+    const newExpanded = new Set(expandedIdeas)
+    if (newExpanded.has(ideaId)) {
+      newExpanded.delete(ideaId)
+    } else {
+      newExpanded.add(ideaId)
+    }
+    setExpandedIdeas(newExpanded)
+  }
+
+  const parseAIDetails = (detallesIA) => {
+    if (!detallesIA) return null
+    try {
+      return JSON.parse(detallesIA)
+    } catch (e) {
+      return null
+    }
+  }
+
   return (
     <div className="w-full h-full">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -159,7 +179,7 @@ const Ideas = () => {
         <div className="flex items-center justify-center py-8">
           <span className="material-symbols-outlined animate-spin text-primary">sync</span>
           <p className="text-text-muted ml-2">Cargando ideas...</p>
-        </div>
+                  </div>
       ) : ideas.length === 0 ? (
         <div className="text-center py-12 rounded-lg bg-card-dark border border-border-dark">
           <span className="material-symbols-outlined text-6xl text-text-muted mb-4">lightbulb_outline</span>
@@ -167,7 +187,7 @@ const Ideas = () => {
           <p className="text-text-muted text-sm">
             Ve al módulo <strong>IA / Simulación</strong> para generar nuevas ideas desde productos del inventario
           </p>
-        </div>
+                </div>
       ) : (
         <div className="space-y-4">
           {ideas.map((idea) => (
@@ -187,7 +207,7 @@ const Ideas = () => {
                     <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
                       <p className="text-text-muted text-xs mb-1">Objetivo:</p>
                       <p className="text-text-light text-sm font-medium">{idea.objetivo}</p>
-                    </div>
+                  </div>
                   )}
 
                   <div className="flex flex-wrap gap-4 text-xs text-text-muted">
@@ -212,6 +232,182 @@ const Ideas = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Detalles de IA */}
+              {idea.detallesIA && (
+                <div className="mt-4 pt-4 border-t border-border-dark">
+                  <button
+                    onClick={() => toggleDetails(idea.id)}
+                    className="flex items-center gap-2 text-text-light hover:text-primary transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {expandedIdeas.has(idea.id) ? 'expand_less' : 'expand_more'}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {expandedIdeas.has(idea.id) ? 'Ocultar' : 'Ver'} Detalles de IA
+                    </span>
+                  </button>
+
+                  {expandedIdeas.has(idea.id) && (() => {
+                    const aiDetails = parseAIDetails(idea.detallesIA)
+                    if (!aiDetails) {
+                      return (
+                        <div className="mt-3 p-4 rounded-lg bg-input-dark border border-border-dark">
+                          <p className="text-text-muted text-sm">{idea.detallesIA}</p>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div className="mt-3 space-y-4">
+                        {/* BOM Modificado */}
+                        {aiDetails.bomModificado && Array.isArray(aiDetails.bomModificado) && aiDetails.bomModificado.length > 0 && (
+                          <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">list</span>
+                              BOM Modificado
+                            </h4>
+                            <div className="space-y-2">
+                              {aiDetails.bomModificado.map((item, idx) => (
+                                <div key={idx} className="p-3 rounded-lg bg-card-dark border border-border-dark">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <span className="text-text-light font-medium">{item.ingrediente || 'Ingrediente'}</span>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    <div>
+                                      <span className="text-text-muted">Cantidad Actual:</span>
+                                      <p className="text-text-light font-medium">{item.cantidadActual || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-text-muted">Cantidad Propuesta:</span>
+                                      <p className="text-primary font-medium">{item.cantidadPropuesta || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-text-muted">% Actual:</span>
+                                      <p className="text-text-light">{item.porcentajeActual || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-text-muted">% Propuesto:</span>
+                                      <p className="text-primary">{item.porcentajePropuesto || 'N/A'}</p>
+                                    </div>
+                                    {item.disponibleEnInventario !== undefined && (
+                                      <div>
+                                        <span className="text-text-muted">Disponible:</span>
+                                        <p className={`font-medium ${item.disponibleEnInventario ? 'text-green-400' : 'text-red-400'}`}>
+                                          {item.disponibleEnInventario ? 'Sí' : 'No'}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {item.razon && (
+                                    <p className="text-text-muted text-xs mt-2 italic">Razón: {item.razon}</p>
+                                  )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+                        {/* Escenarios Positivos */}
+                        {aiDetails.escenariosPositivos && Array.isArray(aiDetails.escenariosPositivos) && aiDetails.escenariosPositivos.length > 0 && (
+                          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">trending_up</span>
+                              Escenarios Positivos
+                            </h4>
+                            <ul className="space-y-2">
+                              {aiDetails.escenariosPositivos.map((escenario, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-text-light text-sm">
+                                  <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
+                                  <span>{escenario}</span>
+                                </li>
+                              ))}
+                            </ul>
+          </div>
+                        )}
+
+                        {/* Escenarios Negativos */}
+                        {aiDetails.escenariosNegativos && Array.isArray(aiDetails.escenariosNegativos) && aiDetails.escenariosNegativos.length > 0 && (
+                          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">warning</span>
+                              Escenarios Negativos / Consideraciones
+                            </h4>
+                            <ul className="space-y-2">
+                              {aiDetails.escenariosNegativos.map((escenario, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-text-light text-sm">
+                                  <span className="material-symbols-outlined text-red-400 text-sm mt-0.5">info</span>
+                                  <span>{escenario}</span>
+                                </li>
+                              ))}
+                            </ul>
+          </div>
+                        )}
+
+                        {/* Verificación de Inventario */}
+                        {aiDetails.verificacionInventario && (
+                          <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">inventory_2</span>
+                              Verificación de Inventario
+                            </h4>
+                            <p className="text-text-light text-sm leading-relaxed">{aiDetails.verificacionInventario}</p>
+                          </div>
+                        )}
+
+                        {/* Materiales Nuevos - Siempre visible */}
+                        <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                          <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-sm">add_circle</span>
+                            Materiales Nuevos Agregados
+                          </h4>
+                          {aiDetails.materialesNuevos && Array.isArray(aiDetails.materialesNuevos) && aiDetails.materialesNuevos.length > 0 ? (
+                            <ul className="space-y-2">
+                              {aiDetails.materialesNuevos.map((material, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-text-light text-sm">
+                                  <span className="material-symbols-outlined text-emerald-400 text-sm mt-0.5">add</span>
+                                  <span>{material}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-text-muted text-sm italic">No se agregaron materiales nuevos a esta fórmula.</p>
+                          )}
+                        </div>
+
+                        {/* Materiales Eliminados */}
+                        {aiDetails.materialesEliminados && Array.isArray(aiDetails.materialesEliminados) && aiDetails.materialesEliminados.length > 0 && (
+                          <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">remove_circle</span>
+                              Materiales Eliminados
+                            </h4>
+                            <ul className="space-y-2">
+                              {aiDetails.materialesEliminados.map((material, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-text-light text-sm">
+                                  <span className="material-symbols-outlined text-orange-400 text-sm mt-0.5">remove</span>
+                                  <span>{material}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Justificación */}
+                        {aiDetails.justificacion && (
+                          <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                            <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm">science</span>
+                              Justificación Técnica
+                            </h4>
+                            <p className="text-text-light text-sm leading-relaxed">{aiDetails.justificacion}</p>
+                          </div>
+                        )}
+            </div>
+                    )
+                  })()}
+          </div>
+              )}
 
               {/* Acciones según estado */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-dark">
@@ -259,18 +455,18 @@ const Ideas = () => {
                   </button>
                 )}
                 {idea.estado === 'PRUEBA_APROBADA' && (
-                  <button
+          <button
                     onClick={() => handleChangeEstado(idea, 'en_produccion')}
                     className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 text-sm font-medium hover:bg-indigo-500/30"
-                  >
+          >
                     <span className="material-symbols-outlined text-sm mr-1">precision_manufacturing</span>
                     Enviar a Producción
-                  </button>
+          </button>
                 )}
               </div>
             </div>
           ))}
-        </div>
+      </div>
       )}
     </div>
   )

@@ -1,10 +1,22 @@
 package com.plm.plm.Controllers;
 
 import com.plm.plm.Config.exception.UnauthorizedException;
+import com.plm.plm.Enums.EstadoBOM;
 import com.plm.plm.Enums.EstadoIdea;
+import com.plm.plm.Models.BOM;
+import com.plm.plm.Models.BOMItem;
+import com.plm.plm.Models.Product;
+import com.plm.plm.Reposotory.BOMItemRepository;
+import com.plm.plm.Reposotory.BOMRepository;
+import com.plm.plm.Reposotory.ProductRepository;
+import com.plm.plm.Reposotory.MaterialRepository;
+import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.dto.IdeaDTO;
 import com.plm.plm.security.JwtTokenProvider;
 import com.plm.plm.services.IdeaService;
+import com.plm.plm.services.OpenAIService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/ideas")
@@ -24,6 +37,24 @@ public class IdeaController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private OpenAIService openAIService;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private BOMRepository bomRepository;
+
+    @Autowired
+    private BOMItemRepository bomItemRepository;
+
+    @Autowired
+    private MaterialRepository materialRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createIdea(
@@ -45,22 +76,131 @@ public class IdeaController {
             HttpServletRequest request) {
         Integer userId = getUserIdFromRequest(request);
         
-        // TODO: Aquí se implementaría la lógica de IA real
-        // Por ahora, creamos una idea básica
+        try {
+            // Obtener el producto
+            Product product = productRepository.findById(productoId)
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+            
+            // Obtener el BOM aprobado del producto
+            Optional<BOM> bomOpt = bomRepository.findFirstByProductoIdAndEstadoOrderByVersionDesc(
+                    productoId, EstadoBOM.APROBADO);
+            
+            BOM bom = bomOpt.orElse(null);
+            List<BOMItem> bomItems = null;
+            
+            if (bom != null) {
+                bomItems = bomItemRepository.findByBomIdOrderBySecuenciaAsc(bom.getId());
+            }
+            
+            // Obtener inventario de materiales disponibles
+            List<com.plm.plm.Models.Material> materialesDisponibles = materialRepository.findByEstado(EstadoUsuario.ACTIVO);
+            System.out.println("CONTROLLER: Materiales disponibles en inventario: " + materialesDisponibles.size());
+            
+            // Llamar a la API de OpenAI
+            System.out.println("==========================================");
+            System.out.println("CONTROLLER: Llamando a OpenAI Service");
+            System.out.println("==========================================");
+            String aiResponse = openAIService.generateIdeaFromProduct(product, objetivo, bom, bomItems, materialesDisponibles);
+            System.out.println("CONTROLLER: Respuesta recibida de OpenAI. Longitud: " + 
+                (aiResponse != null ? aiResponse.length() : 0) + " caracteres");
+            
+            // Parsear la respuesta JSON de OpenAI
+            IdeaDTO ideaDTO = parseAIResponse(aiResponse, productoId, objetivo, product);
+            System.out.println("CONTROLLER: IdeaDTO parseado. Título: " + ideaDTO.getTitulo());
+            
+            // Crear la idea
+            IdeaDTO idea = ideaService.createIdea(ideaDTO, userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            Map<String, IdeaDTO> data = new HashMap<>();
+            data.put("idea", idea);
+            response.put("data", data);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            
+        } catch (Exception e) {
+            System.err.println("Error al generar idea con IA: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Si falla la IA, crear una idea básica
+            IdeaDTO ideaDTO = new IdeaDTO();
+            ideaDTO.setProductoOrigenId(productoId);
+            ideaDTO.setObjetivo(objetivo);
+            ideaDTO.setTitulo("Nueva fórmula generada por IA - " + objetivo);
+            ideaDTO.setDescripcion("Fórmula generada automáticamente por IA basada en el producto seleccionado y el objetivo especificado. " +
+                    "Nota: Hubo un problema al procesar con IA, se creó una idea básica.");
+            ideaDTO.setCategoria("Nutracéutico");
+            ideaDTO.setPrioridad("Alta");
+            
+            IdeaDTO idea = ideaService.createIdea(ideaDTO, userId);
+            Map<String, Object> response = new HashMap<>();
+            Map<String, IdeaDTO> data = new HashMap<>();
+            data.put("idea", idea);
+            response.put("data", data);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
+    }
+
+    private IdeaDTO parseAIResponse(String aiResponse, Integer productoId, String objetivo, Product product) {
+        System.out.println("==========================================");
+        System.out.println("PARSING AI RESPONSE");
+        System.out.println("==========================================");
+        System.out.println("Respuesta completa (primeros 500 caracteres): " + 
+            (aiResponse != null ? aiResponse.substring(0, Math.min(500, aiResponse.length())) : "null"));
+        
         IdeaDTO ideaDTO = new IdeaDTO();
         ideaDTO.setProductoOrigenId(productoId);
         ideaDTO.setObjetivo(objetivo);
-        ideaDTO.setTitulo("Nueva fórmula generada por IA");
-        ideaDTO.setDescripcion("Fórmula generada automáticamente por IA basada en el producto seleccionado y el objetivo especificado.");
-        ideaDTO.setCategoria("Nutracéutico");
-        ideaDTO.setPrioridad("Media");
+        ideaDTO.setCategoria(product.getCategoria() != null ? product.getCategoria() : "Nutracéutico");
+        ideaDTO.setPrioridad("Alta");
         
-        IdeaDTO idea = ideaService.createIdea(ideaDTO, userId);
-        Map<String, Object> response = new HashMap<>();
-        Map<String, IdeaDTO> data = new HashMap<>();
-        data.put("idea", idea);
-        response.put("data", data);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        try {
+            // Limpiar la respuesta si tiene markdown code blocks
+            String cleanedResponse = aiResponse;
+            if (cleanedResponse.contains("```json")) {
+                cleanedResponse = cleanedResponse.substring(cleanedResponse.indexOf("```json") + 7);
+                if (cleanedResponse.contains("```")) {
+                    cleanedResponse = cleanedResponse.substring(0, cleanedResponse.indexOf("```"));
+                }
+            } else if (cleanedResponse.contains("```")) {
+                cleanedResponse = cleanedResponse.replace("```", "");
+            }
+            cleanedResponse = cleanedResponse.trim();
+            
+            System.out.println("Respuesta limpiada. Intentando parsear JSON...");
+            
+            // Intentar parsear como JSON
+            JsonNode jsonNode = objectMapper.readTree(cleanedResponse);
+            System.out.println("JSON parseado exitosamente. Keys: " + jsonNode.fieldNames());
+            
+            if (jsonNode.has("titulo")) {
+                ideaDTO.setTitulo(jsonNode.get("titulo").asText());
+                System.out.println("Título extraído: " + ideaDTO.getTitulo());
+            } else {
+                ideaDTO.setTitulo("Nueva fórmula generada por IA - " + objetivo);
+            }
+            
+            if (jsonNode.has("descripcion")) {
+                ideaDTO.setDescripcion(jsonNode.get("descripcion").asText());
+                System.out.println("Descripción extraída (longitud): " + ideaDTO.getDescripcion().length());
+            } else {
+                ideaDTO.setDescripcion(aiResponse);
+            }
+            
+            // Guardar la respuesta completa de la IA en detallesIA
+            ideaDTO.setDetallesIA(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
+            System.out.println("Detalles IA guardados (longitud): " + ideaDTO.getDetallesIA().length());
+            
+        } catch (Exception e) {
+            // Si no es JSON válido, usar la respuesta completa como descripción
+            System.out.println("ERROR: La respuesta de IA no es JSON válido: " + e.getMessage());
+            System.out.println("Usando respuesta completa como texto");
+            ideaDTO.setTitulo("Nueva fórmula generada por IA - " + objetivo);
+            ideaDTO.setDescripcion(aiResponse);
+            ideaDTO.setDetallesIA(aiResponse); // Guardar la respuesta completa
+        }
+        
+        System.out.println("==========================================");
+        return ideaDTO;
     }
 
     @GetMapping

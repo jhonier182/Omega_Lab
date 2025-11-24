@@ -110,23 +110,40 @@ public class DataInitializer implements CommandLineRunner {
                 System.out.println("Columna 'asignado_a' agregada exitosamente");
             }
 
+            // Verificar si la columna detalles_ia existe
+            String checkDetallesIA = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'detalles_ia'";
+            Integer detallesIAExists = jdbcTemplate.queryForObject(checkDetallesIA, Integer.class);
+            
+            if (detallesIAExists == null || detallesIAExists == 0) {
+                System.out.println("Agregando columna 'detalles_ia' a la tabla ideas...");
+                jdbcTemplate.execute("ALTER TABLE ideas ADD COLUMN detalles_ia LONGTEXT AFTER descripcion");
+                System.out.println("Columna 'detalles_ia' agregada exitosamente");
+            }
+
             // Verificar y actualizar el ENUM de estado
             try {
                 String checkEstado = "SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'estado'";
                 String estadoType = jdbcTemplate.queryForObject(checkEstado, String.class);
                 
-                if (estadoType != null && !estadoType.contains("'generada'")) {
+                if (estadoType != null) {
                     System.out.println("Actualizando ENUM de estado en la tabla ideas...");
-                    // MySQL no permite modificar ENUM directamente, necesitamos usar MODIFY
-                    jdbcTemplate.execute("ALTER TABLE ideas MODIFY COLUMN estado ENUM('generada', 'en_revision', 'aprobada', 'en_prueba', 'prueba_aprobada', 'rechazada', 'en_produccion') DEFAULT 'generada'");
-                    System.out.println("ENUM de estado actualizado exitosamente");
+                    // Cambiar el tipo de columna a VARCHAR para permitir valores mayúsculas
+                    jdbcTemplate.execute("ALTER TABLE ideas MODIFY COLUMN estado VARCHAR(20) DEFAULT 'GENERADA'");
+                    System.out.println("Columna estado cambiada a VARCHAR exitosamente");
                     
-                    // Actualizar valores antiguos
-                    jdbcTemplate.update("UPDATE ideas SET estado = 'generada' WHERE estado = 'borrador'");
-                    jdbcTemplate.update("UPDATE ideas SET estado = 'en_produccion' WHERE estado = 'convertida'");
+                    // Actualizar valores en minúsculas a mayúsculas para coincidir con el enum
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'GENERADA' WHERE LOWER(estado) = 'generada' OR estado = 'borrador'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'EN_REVISION' WHERE LOWER(estado) = 'en_revision'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'APROBADA' WHERE LOWER(estado) = 'aprobada'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'EN_PRUEBA' WHERE LOWER(estado) = 'en_prueba'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'PRUEBA_APROBADA' WHERE LOWER(estado) = 'prueba_aprobada'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'RECHAZADA' WHERE LOWER(estado) = 'rechazada'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'EN_PRODUCCION' WHERE LOWER(estado) = 'en_produccion' OR estado = 'convertida'");
+                    System.out.println("Valores de estado actualizados a mayúsculas exitosamente");
                 }
             } catch (Exception e) {
                 System.out.println("Advertencia: No se pudo actualizar el ENUM de estado: " + e.getMessage());
+                e.printStackTrace();
             }
 
             // Verificar y agregar índices

@@ -38,6 +38,9 @@ public class Idea {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    @Column(name = "detalles_ia", columnDefinition = "LONGTEXT")
+    private String detallesIA; // Respuesta completa de la IA con BOM modificado, escenarios, etc.
+
     @Column(length = 100)
     private String categoria;
 
@@ -83,6 +86,7 @@ public class Idea {
         dto.setId(id);
         dto.setTitulo(titulo);
         dto.setDescripcion(descripcion);
+        dto.setDetallesIA(detallesIA);
         dto.setCategoria(categoria);
         dto.setPrioridad(prioridad);
         dto.setObjetivo(objetivo);

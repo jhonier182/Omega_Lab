@@ -54,23 +54,10 @@ const IA = () => {
     setMessage({ type: '', text: '' })
 
     try {
-      // Simular generación de ideas con IA
-      // En producción, esto llamaría a un endpoint que analiza el producto y su BOM
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Simular delay
-
-      // Crear la idea completa con todos los detalles
-      const ideaCompleta = {
-        titulo: `Nueva fórmula de ${selectedProduct.nombre} - ${objetivo}`,
-        descripcion: `Fórmula adaptada basada en ${selectedProduct.nombre} para cumplir con el objetivo: ${objetivo}. La IA ha analizado el BOM completo y sugiere modificaciones en los ingredientes para lograr el objetivo deseado.`,
-        categoria: selectedProduct.categoria || 'Nutracéutico',
-        prioridad: 'Alta',
-        objetivo: objetivo,
-        productoOrigenId: selectedProduct.id
-      }
-      
-      const ideaGuardada = await ideaService.createIdea(ideaCompleta)
+      // Llamar al endpoint que usa OpenAI para generar la idea
+      const ideaGuardada = await ideaService.generateFromProduct(selectedProduct.id, objetivo)
       setGeneratedIdeas([ideaGuardada])
-      setMessage({ type: 'success', text: 'Idea generada exitosamente. Revisa el módulo de Ideas para verla y revisarla.' })
+      setMessage({ type: 'success', text: 'Idea generada exitosamente con IA. Revisa el módulo de Ideas para ver los detalles completos, incluyendo el BOM modificado y escenarios.' })
       
       // Limpiar formulario
       setSelectedProduct(null)
