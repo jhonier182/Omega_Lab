@@ -93,13 +93,13 @@ const Historial = () => {
   const getEstadoColor = (estado) => {
     switch (estado) {
       case 'COMPLETADA':
-        return 'bg-success/20 text-success'
+        return 'bg-success/20 text-success border-success/30'
       case 'OOS':
-        return 'bg-danger/20 text-danger'
+        return 'bg-danger/20 text-danger border-danger/30'
       case 'RECHAZADA':
-        return 'bg-warning/20 text-warning'
+        return 'bg-warning/20 text-warning border-warning/30'
       default:
-        return 'bg-gray-500/20 text-gray-400'
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
     }
   }
 
@@ -108,7 +108,7 @@ const Historial = () => {
       case 'COMPLETADA':
         return 'Completada'
       case 'OOS':
-        return 'Fuera de Especificación'
+        return 'OOS'
       case 'RECHAZADA':
         return 'Rechazada'
       default:
@@ -117,99 +117,104 @@ const Historial = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-light">Historial de Pruebas</h1>
-          <p className="text-text-muted text-sm mt-1">
-            Pruebas completadas y finalizadas
+          <p className="text-text-muted text-xs mt-1">
+            Pruebas completadas y finalizadas ({pruebas.length})
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-text-muted text-xs font-medium">Filtrar:</label>
+          <select
+            value={filterEstado}
+            onChange={(e) => setFilterEstado(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-input-dark border border-border-dark text-text-light text-xs"
+          >
+            <option value="TODAS">Todas</option>
+            <option value="COMPLETADA">Completadas</option>
+            <option value="OOS">OOS</option>
+            <option value="RECHAZADA">Rechazadas</option>
+          </select>
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex items-center gap-4">
-        <label className="text-text-light text-sm font-medium">Filtrar por estado:</label>
-        <select
-          value={filterEstado}
-          onChange={(e) => setFilterEstado(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-input-dark border border-border-dark text-text-light"
-        >
-          <option value="TODAS">Todas</option>
-          <option value="COMPLETADA">Completadas</option>
-          <option value="OOS">Fuera de Especificación</option>
-          <option value="RECHAZADA">Rechazadas</option>
-        </select>
-      </div>
-
-      {/* Tabla de Pruebas */}
+      {/* Lista Horizontal Compacta */}
       <div className="bg-card-dark rounded-lg border border-border-dark overflow-hidden">
         {loadingPruebas ? (
-          <div className="text-center py-8">
-            <p className="text-text-muted">Cargando...</p>
+          <div className="text-center py-12">
+            <p className="text-text-muted text-sm">Cargando...</p>
           </div>
         ) : pruebas.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-text-muted">No hay pruebas completadas</p>
+          <div className="text-center py-12">
+            <span className="material-symbols-outlined text-text-muted text-4xl mb-2">inbox</span>
+            <p className="text-text-muted text-sm">No hay pruebas completadas</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-input-dark border-b border-border-dark">
+              <thead className="bg-input-dark/50 border-b border-border-dark">
                 <tr>
-                  <th className="px-4 py-3 text-left text-text-light text-sm font-semibold">Código Muestra</th>
-                  <th className="px-4 py-3 text-left text-text-light text-sm font-semibold">Tipo de Prueba</th>
-                  <th className="px-4 py-3 text-left text-text-light text-sm font-semibold">Idea Asociada</th>
-                  <th className="px-4 py-3 text-left text-text-light text-sm font-semibold">Estado</th>
-                  <th className="px-4 py-3 text-left text-text-light text-sm font-semibold">Fecha Finalización</th>
-                  <th className="px-4 py-3 text-left text-text-light text-sm font-semibold">Acciones</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Código</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Tipo</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Idea</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Estado</th>
+                  <th className="px-3 py-2 text-left text-text-muted text-xs font-semibold uppercase tracking-wider">Fecha</th>
+                  <th className="px-3 py-2 text-center text-text-muted text-xs font-semibold uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border-dark">
                 {pruebas.map((prueba) => (
                   <tr
                     key={prueba.id}
-                    className="border-b border-border-dark hover:bg-input-dark/50 transition-colors"
+                    className="hover:bg-input-dark/30 transition-colors"
                   >
-                    <td className="px-4 py-3 text-text-light text-sm">{prueba.codigoMuestra}</td>
-                    <td className="px-4 py-3 text-text-muted text-sm">{prueba.tipoPrueba}</td>
-                    <td className="px-4 py-3 text-text-muted text-sm">
+                    <td className="px-3 py-2.5">
+                      <span className="text-text-light text-xs font-medium">{prueba.codigoMuestra}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className="text-text-muted text-xs">{prueba.tipoPrueba}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
                       {prueba.ideaTitulo ? (
-                        <span className="truncate block max-w-xs" title={prueba.ideaTitulo}>
+                        <span className="text-text-muted text-xs truncate block max-w-[200px]" title={prueba.ideaTitulo}>
                           {prueba.ideaTitulo}
                         </span>
                       ) : (
-                        <span className="text-text-muted">-</span>
+                        <span className="text-text-muted/50 text-xs">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getEstadoColor(prueba.estado)}`}>
+                    <td className="px-3 py-2.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getEstadoColor(prueba.estado)}`}>
                         {getEstadoLabel(prueba.estado)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-text-muted text-sm">
-                      {prueba.fechaFin
-                        ? new Date(prueba.fechaFin).toLocaleDateString('es-ES')
-                        : prueba.fechaMuestreo
-                        ? new Date(prueba.fechaMuestreo).toLocaleDateString('es-ES')
-                        : '-'}
+                    <td className="px-3 py-2.5">
+                      <span className="text-text-muted text-xs">
+                        {prueba.fechaFin
+                          ? new Date(prueba.fechaFin).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                          : prueba.fechaMuestreo
+                          ? new Date(prueba.fechaMuestreo).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                          : '-'}
+                      </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleVerDetalles(prueba.id)}
-                          className="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-xs font-medium hover:bg-primary/30 flex items-center gap-1"
+                          className="px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          title="Ver detalles"
                         >
                           <span className="material-symbols-outlined text-sm">visibility</span>
-                          Detalles
                         </button>
                         {prueba.ideaId && prueba.ideaEstado === 'PRUEBA_APROBADA' && (
                           <button
                             onClick={() => handleEnviarASupervisor(prueba)}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/30 flex items-center gap-1"
+                            className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                            title="Enviar a Supervisor QA"
                           >
                             <span className="material-symbols-outlined text-sm">send</span>
-                            Enviar a Supervisor QA
                           </button>
                         )}
                       </div>
@@ -243,7 +248,7 @@ const Historial = () => {
                   <p className="text-text-muted text-sm">{selectedPrueba.tipoPrueba}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded text-sm font-medium ${getEstadoColor(selectedPrueba.estado)}`}>
+                  <span className={`px-3 py-1 rounded text-sm font-medium border ${getEstadoColor(selectedPrueba.estado)}`}>
                     {getEstadoLabel(selectedPrueba.estado)}
                   </span>
                   <button
@@ -262,7 +267,7 @@ const Historial = () => {
                 {selectedPrueba.fechaMuestreo && (
                   <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
                     <p className="text-text-muted text-xs mb-1">Fecha de Muestreo</p>
-                    <p className="text-text-light">
+                    <p className="text-text-light text-sm">
                       {new Date(selectedPrueba.fechaMuestreo).toLocaleDateString('es-ES')}
                     </p>
                   </div>
@@ -270,7 +275,7 @@ const Historial = () => {
                 {selectedPrueba.fechaFin && (
                   <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
                     <p className="text-text-muted text-xs mb-1">Fecha de Finalización</p>
-                    <p className="text-text-light">
+                    <p className="text-text-light text-sm">
                       {new Date(selectedPrueba.fechaFin).toLocaleDateString('es-ES')}
                     </p>
                   </div>
@@ -278,7 +283,7 @@ const Historial = () => {
                 {selectedPrueba.ideaTitulo && (
                   <div className="p-4 rounded-lg bg-input-dark border border-border-dark col-span-2">
                     <p className="text-text-muted text-xs mb-1">Idea Asociada</p>
-                    <p className="text-text-light">{selectedPrueba.ideaTitulo}</p>
+                    <p className="text-text-light text-sm">{selectedPrueba.ideaTitulo}</p>
                   </div>
                 )}
               </div>
@@ -286,7 +291,7 @@ const Historial = () => {
               {selectedPrueba.descripcion && (
                 <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
                   <p className="text-text-muted text-xs mb-1">Descripción</p>
-                  <p className="text-text-light">{selectedPrueba.descripcion}</p>
+                  <p className="text-text-light text-sm">{selectedPrueba.descripcion}</p>
                 </div>
               )}
 
@@ -295,8 +300,8 @@ const Historial = () => {
                   <div className="flex items-start gap-2 mb-3">
                     <span className="material-symbols-outlined text-primary text-lg">assignment</span>
                     <div className="flex-1">
-                      <p className="text-text-light font-semibold mb-1">Pruebas Requeridas</p>
-                      <div className="whitespace-pre-line text-text-light text-sm leading-relaxed bg-card-dark p-3 rounded-lg border border-border-dark mt-2">
+                      <p className="text-text-light font-semibold mb-1 text-sm">Pruebas Requeridas</p>
+                      <div className="whitespace-pre-line text-text-light text-xs leading-relaxed bg-card-dark p-3 rounded-lg border border-border-dark mt-2">
                         {selectedPrueba.pruebasRequeridas}
                       </div>
                     </div>
@@ -307,7 +312,7 @@ const Historial = () => {
               {/* Resultados */}
               {selectedPrueba.resultados && selectedPrueba.resultados.length > 0 && (
                 <div>
-                  <h3 className="text-text-light font-semibold mb-4">Resultados Analíticos</h3>
+                  <h3 className="text-text-light font-semibold mb-4 text-sm">Resultados Analíticos</h3>
                   <div className="space-y-3">
                     {selectedPrueba.resultados.map((result) => (
                       <div
@@ -320,7 +325,7 @@ const Historial = () => {
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
-                            <p className="text-text-light font-medium">{result.parametro}</p>
+                            <p className="text-text-light font-medium text-sm">{result.parametro}</p>
                             {result.especificacion && (
                               <p className="text-text-muted text-xs mt-1">
                                 Especificación: {result.especificacion}
@@ -338,7 +343,7 @@ const Historial = () => {
                           </span>
                         </div>
                         <div className="mt-2">
-                          <p className="text-text-light font-semibold">
+                          <p className="text-text-light font-semibold text-sm">
                             Resultado: <span className="text-primary">{result.resultado}</span> {result.unidad || ''}
                           </p>
                           {result.observaciones && (
