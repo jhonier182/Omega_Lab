@@ -19,16 +19,18 @@ public class MaterialController {
     private MaterialService materialService;
 
     @PostMapping
-    public ResponseEntity<Map<String, MaterialDTO>> createMaterial(
+    public ResponseEntity<Map<String, Object>> createMaterial(
             @RequestBody MaterialDTO materialDTO) {
         MaterialDTO material = materialService.createMaterial(materialDTO);
+        Map<String, Object> response = new HashMap<>();
         Map<String, MaterialDTO> data = new HashMap<>();
         data.put("material", material);
-        return ResponseEntity.status(HttpStatus.CREATED).body(data);
+        response.put("data", data);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, List<MaterialDTO>>> getAllMaterials(
+    public ResponseEntity<Map<String, Object>> getAllMaterials(
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) String search) {
         List<MaterialDTO> materials;
@@ -41,35 +43,43 @@ public class MaterialController {
             materials = materialService.getAllMaterials();
         }
 
+        Map<String, Object> response = new HashMap<>();
         Map<String, List<MaterialDTO>> data = new HashMap<>();
         data.put("materials", materials);
-        return ResponseEntity.ok(data);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, MaterialDTO>> getMaterialById(
+    public ResponseEntity<Map<String, Object>> getMaterialById(
             @PathVariable Integer id) {
         MaterialDTO material = materialService.getMaterialById(id);
+        Map<String, Object> response = new HashMap<>();
         Map<String, MaterialDTO> data = new HashMap<>();
         data.put("material", material);
-        return ResponseEntity.ok(data);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, MaterialDTO>> updateMaterial(
+    public ResponseEntity<Map<String, Object>> updateMaterial(
             @PathVariable Integer id,
             @RequestBody MaterialDTO materialDTO) {
         MaterialDTO material = materialService.updateMaterial(id, materialDTO);
+        Map<String, Object> response = new HashMap<>();
         Map<String, MaterialDTO> data = new HashMap<>();
         data.put("material", material);
-        return ResponseEntity.ok(data);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteMaterial(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> deleteMaterial(@PathVariable Integer id) {
         materialService.deleteMaterial(id);
+        Map<String, Object> response = new HashMap<>();
         Map<String, String> data = new HashMap<>();
         data.put("message", "Material eliminado correctamente");
-        return ResponseEntity.ok(data);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
     }
 }

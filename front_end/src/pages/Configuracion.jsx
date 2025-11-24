@@ -4,9 +4,10 @@ const Configuracion = () => {
   const [activeTab, setActiveTab] = useState('usuarios')
 
   const [usuarios, setUsuarios] = useState([
-    { id: 1, nombre: 'Dr. Juan Pérez', email: 'juan.perez@proscience.com', rol: 'QA Manager', estado: 'Activo' },
-    { id: 2, nombre: 'Ana García', email: 'ana.garcia@proscience.com', rol: 'Analista de Calidad', estado: 'Activo' },
-    { id: 3, nombre: 'Carlos Rodríguez', email: 'carlos.rodriguez@proscience.com', rol: 'Supervisor Producción', estado: 'Activo' }
+    { id: 1, nombre: 'Dr. Juan Pérez', email: 'juan.perez@proscience.com', rol: 'ADMINISTRADOR', estado: 'Activo' },
+    { id: 2, nombre: 'Ana García', email: 'ana.garcia@proscience.com', rol: 'SUPERVISOR_QA', estado: 'Activo' },
+    { id: 3, nombre: 'Carlos Rodríguez', email: 'carlos.rodriguez@proscience.com', rol: 'SUPERVISOR_CALIDAD', estado: 'Activo' },
+    { id: 4, nombre: 'María López', email: 'maria.lopez@proscience.com', rol: 'ANALISTA_LABORATORIO', estado: 'Activo' }
   ])
 
   const [equipos, setEquipos] = useState([
@@ -116,9 +117,10 @@ const Configuracion = () => {
             </p>
             <div className="space-y-3">
               {[
-                { rol: 'QA Manager', actividades: ['Liberación de Lotes', 'Aprobación de Documentos'], requiere: 'Químico Farmacéutico' },
-                { rol: 'Analista de Calidad', actividades: ['Análisis de Muestras', 'Registro de Resultados'], requiere: 'Técnico o Profesional' },
-                { rol: 'Supervisor Producción', actividades: ['Dispensación', 'Line Clearance'], requiere: 'Técnico Calificado' }
+                { rol: 'Administrador / Usuario Avanzado', actividades: ['Soporte Técnico', 'Otorgar Roles', 'Acceso Completo'], requiere: 'Administrador del Sistema' },
+                { rol: 'Supervisor QA', actividades: ['Acceso a Fórmulas Reales', 'Visión Total del Sistema', 'Notificaciones de Stock/Lotes', 'Trazabilidad Completa', 'Documentos y Reportes'], requiere: 'Formulador, Analista QA, Administrador de Documentos' },
+                { rol: 'Supervisor Calidad', actividades: ['Recibir Materias Primas', 'Ingresar Datos de Proveedor', 'Gestionar Lotes', 'Trazabilidad', 'Análisis de Materias Primas', 'Devoluciones'], requiere: 'Jefe de Calidad, Analista de Trazabilidad, Supervisor' },
+                { rol: 'Analista de Laboratorio', actividades: ['Recibir Órdenes de Formulación', 'Desarrollo de Formulaciones', 'Análisis Sensorial'], requiere: 'Auxiliar de I+D' }
               ].map((rol, idx) => (
                 <div key={idx} className="p-4 rounded-lg bg-input-dark border border-border-dark">
                   <div className="flex items-start justify-between mb-2">

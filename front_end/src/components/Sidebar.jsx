@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getRoleName } from '../utils/rolePermissions'
 
 const Sidebar = ({ isOpen, onToggle, currentPath }) => {
   const navigate = useNavigate()
@@ -70,7 +71,7 @@ const Sidebar = ({ isOpen, onToggle, currentPath }) => {
                 <p className="text-text-light text-sm font-medium truncate">{user.nombre}</p>
                 <p className="text-text-muted text-xs truncate">{user.email}</p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                  {user.rol}
+                  {getRoleName(user.rol)}
                 </span>
               </div>
             )}

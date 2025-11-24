@@ -197,10 +197,12 @@ El sistema PLM/LIMS para Proscience Lab es una solución integral que combina ge
 
 **Arquitectura Tecnológica:**
 - **Frontend**: React 18 con Vite, Tailwind CSS, React Router
-- **Backend**: java Spring Boot , hibernate ORM
+- **Backend**: Java Spring Boot 4.0.0 con Java 21, Spring Data JPA (Hibernate), Spring Security
 - **Base de Datos**: MySQL 8.0+ con UTF8MB4
 - **Interfaz**: Responsive design, PWA (Progressive Web App) con funcionalidad offline
 - **API**: RESTful para integración con sistemas externos
+- **Autenticación**: JWT (JSON Web Tokens) con Spring Security
+- **ORM**: Spring Data JPA con Hibernate
 
 **Seguridad y Cumplimiento:**
 - Autenticación basada en tokens JWT
@@ -479,12 +481,14 @@ Personal de producción básico que realiza actividades operativas rutinarias.
 - Visualización de dashboard
 - Consulta de trazabilidad (solo lectura)
 - Acceso a base de conocimiento (solo lectura)
+- Gestión de materiales y categorías
 
 **Módulos accesibles:**
 - Dashboard (lectura)
 - Producción (registro de actividades básicas)
 - Trazabilidad (solo lectura)
 - Base de Conocimiento (solo lectura)
+- Inventario (materias primas)
 
 **Restricciones:**
 - No puede crear o modificar formulaciones
@@ -494,89 +498,96 @@ Personal de producción básico que realiza actividades operativas rutinarias.
 
 ---
 
-### 4.2 Analista
+### 4.2 Analista de Laboratorio
 
 **Descripción:**
-Personal de control de calidad que realiza pruebas analíticas y gestiona muestras.
+Auxiliar de I+D que recibe órdenes de formulación. No tiene acceso a base de datos con fórmulas reales. Solo cumple requerimientos especificados en órdenes, desarrollo de la misma e ingreso del análisis sensorial.
 
 **Permisos:**
 - Registro de pruebas analíticas
 - Gestión de muestras
 - Registro de resultados OOS
-- Lectura de formulaciones
+- Lectura de formulaciones (solo órdenes asignadas)
 - Consulta de trazabilidad
 - Acceso a investigación (Ideas/Research)
+- Gestión de materiales y categorías
 
 **Módulos accesibles:**
 - Dashboard
 - Ideas/Research
-- Formulación (solo lectura)
+- Formulación (solo órdenes asignadas)
 - Pruebas/LIMS (acceso completo)
 - Trazabilidad
 - Base de Conocimiento
+- Inventario (materias primas)
 
 **Restricciones:**
-- No puede crear o modificar formulaciones
+- No puede crear o modificar formulaciones reales en la base de datos
 - No puede aprobar lotes
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema
 
 ---
 
-### 4.3 Supervisor
+### 4.3 Supervisor de Calidad
 
 **Descripción:**
-Supervisores de producción y calidad que supervisan procesos operativos.
+Recibe materias primas, ingresa datos de proveedor, lotes, trazabilidad. Lleva el informe del estado del análisis de materias primas antes de pasar a formulación. Hace devoluciones de materias primas no aptas. No tiene permisos sobre análisis de formulaciones.
 
 **Permisos:**
-- Supervisión de procesos de producción
-- Aprobación de actividades operativas
-- Visualización de todas las métricas
-- Gestión de desviaciones menores
-- Acceso a todos los módulos excepto configuración y aprobación final
+- Supervisión de procesos de calidad
+- Gestión de materias primas y recepción
+- Ingreso de datos de proveedores y lotes
+- Gestión de trazabilidad de materias primas
+- Análisis de materias primas
+- Devolución de materias primas no aptas
+- Visualización de métricas de calidad
 
 **Módulos accesibles:**
 - Dashboard (acceso completo)
 - Ideas/Research
-- Formulación (lectura y comentarios)
-- IA/Simulación
-- Producción (acceso completo)
+- Formulación (solo lectura de materias primas)
+- Producción (gestión de materias primas)
 - Pruebas/LIMS (acceso completo)
 - Trazabilidad (acceso completo)
 - Base de Conocimiento
+- Inventario (materias primas - acceso completo)
 
 **Restricciones:**
 - No puede aprobar liberación final de productos
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema
-- No puede gestionar NC/CAPA críticas
+- No tiene permisos sobre análisis de formulaciones
 
 ---
 
-### 4.4 QA Manager
+### 4.4 Supervisor QA
 
 **Descripción:**
-Gerente de calidad y cumplimiento con responsabilidades de aprobación y cumplimiento regulatorio.
+Acceso completo a fórmulas reales en la base de datos. Visión total del sistema, recibe notificaciones de stock, lotes, trazabilidad, documentos, reportes, alertas. Puede ver el estado de formulación y quién está operando.
 
 **Permisos:**
 - Aprobación de productos con firma digital
 - Gestión completa de No Conformidades (NC)
 - Gestión completa de CAPA
 - Liberación de lotes
-- Acceso completo a todos los módulos
+- Acceso completo a todas las fórmulas en la base de datos
+- Visualización completa del estado del sistema
+- Recepción de notificaciones de stock, lotes, trazabilidad
 - Generación de reportes regulatorios
 
 **Módulos accesibles:**
 - Todos los módulos con permisos de aprobación
-- Dashboard
+- Dashboard (acceso completo)
 - Ideas/Research
-- Formulación (acceso completo)
+- Formulación (acceso completo a fórmulas reales)
 - IA/Simulación
 - Producción
 - Pruebas/LIMS
 - Aprobación/QA (acceso completo)
 - Trazabilidad
 - Base de Conocimiento
+- Inventario (acceso completo)
 
 **Restricciones:**
 - No puede gestionar usuarios
@@ -587,7 +598,7 @@ Gerente de calidad y cumplimiento con responsabilidades de aprobación y cumplim
 ### 4.5 Administrador
 
 **Descripción:**
-Administrador del sistema con acceso completo y responsabilidades de configuración y mantenimiento.
+Administrador / Usuario Avanzado: Soporte técnico del sistema, puede otorgar roles. Tiene acceso completo al sistema.
 
 **Permisos:**
 - Acceso completo a todos los módulos sin restricciones
@@ -597,6 +608,7 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 - Configuración de parámetros
 - Acceso a logs y auditoría
 - Gestión de backups
+- Otorgar y modificar roles de usuarios
 
 **Módulos accesibles:**
 - Todos los módulos sin restricciones
@@ -614,12 +626,12 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 
 ### **5.1.1 Clasificación de Requisitos Funcionales**
 
-| **FUNCIONALIDAD** | **TIPO (Esencial, Ideal, Opcional)** |
-| --- | --- |
-| RF01 - Registro de usuarios | Esencial |
-| RF02 - Inicio de sesión | Esencial |
-| RF03 - Gestión de sesión con JWT | Esencial |
-| RF04 - Control de acceso basado en roles | Esencial |
+| **FUNCIONALIDAD** | **TIPO (Esencial, Ideal, Opcional)** | **ESTADO** |
+| --- | --- | --- |
+| RF01 - Registro de usuarios | Esencial | ✅ Implementado |
+| RF02 - Inicio de sesión | Esencial | ✅ Implementado |
+| RF03 - Gestión de sesión con JWT | Esencial | ✅ Implementado |
+| RF04 - Control de acceso basado en roles | Esencial | ✅ Implementado |
 | RF05 - Recuperación de contraseña | Ideal |
 | RF06 - Visualización de KPIs en tiempo real | Esencial |
 | RF07 - Visualización de lotes pendientes | Esencial |
@@ -628,10 +640,10 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 | RF10 - Búsqueda en bases de datos moleculares | Esencial |
 | RF11 - Guardado de resultados de investigación | Ideal |
 | RF12 - Historial de búsquedas | Ideal |
-| RF13 - Creación de nuevas fórmulas | Esencial |
-| RF14 - Asistencia de IA para sugerir combinaciones de productos del inventario | Esencial |
-| RF15 - Análisis de inventario disponible | Esencial |
-| RF16 - Gestión de BOM con control de versiones | Esencial |
+| RF13 - Creación de nuevas fórmulas | Esencial | ✅ Implementado |
+| RF14 - Asistencia de IA para sugerir combinaciones de productos del inventario | Esencial | ⏳ Pendiente |
+| RF15 - Análisis de inventario disponible | Esencial | ✅ Implementado |
+| RF16 - Gestión de BOM con control de versiones | Esencial | ✅ Implementado |
 | RF17 - Justificación técnica de formulaciones | Esencial |
 | RF18 - Historial de cambios con trazabilidad | Esencial |
 | RF19 - Validación de proporciones | Esencial |
@@ -675,7 +687,7 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 | **Prioridad** | Esencial |
 | **Módulo** | Autenticación y Autorización |
 | **Casos de uso** | - Administrador crea nuevo usuario<br>- Validación de email único<br>- Encriptación de contraseña |
-| **Criterios de aceptación** | - El sistema valida que el email sea único<br>- La contraseña se encripta con bcrypt antes de almacenarse<br>- Se asigna un rol válido (usuario, analista, supervisor, qa_manager, admin)<br>- Se registra timestamp de creación<br>- Solo administradores pueden crear usuarios |
+| **Criterios de aceptación** | - El sistema valida que el email sea único<br>- La contraseña se encripta con bcrypt antes de almacenarse<br>- Se asigna un rol válido (administrador, supervisor_qa, supervisor_calidad, analista_laboratorio)<br>- Se registra timestamp de creación<br>- Solo administradores pueden crear usuarios |
 
 ---
 
@@ -714,7 +726,7 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 | **Prioridad** | Esencial |
 | **Módulo** | Autenticación y Autorización |
 | **Casos de uso** | - Usuario intenta acceder a módulo restringido<br>- Validación de permisos por rol<br>- Bloqueo de acceso no autorizado |
-| **Criterios de aceptación** | - El sistema valida el rol del usuario antes de permitir acceso<br>- Los roles definidos son: usuario, analista, supervisor, qa_manager, admin<br>- Cada rol tiene permisos específicos definidos<br>- Se registra intento de acceso no autorizado<br>- Se muestra mensaje apropiado al usuario |
+| **Criterios de aceptación** | - El sistema valida el rol del usuario antes de permitir acceso<br>- Los roles definidos son: administrador, supervisor_qa, supervisor_calidad, analista_laboratorio<br>- Cada rol tiene permisos específicos definidos<br>- Se registra intento de acceso no autorizado<br>- Se muestra mensaje apropiado al usuario |
 
 ---
 
@@ -1442,8 +1454,9 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 ### **Restricciones Técnicas**
 
 - **Base de Datos**: MySQL 8.0 o superior
-- **Runtime**: Node.js 18 o superior
-- **Framework Frontend**: React 18 o superior
+- **Runtime Backend**: Java 21 o superior
+- **Framework Backend**: Spring Boot 4.0.0 o superior
+- **Framework Frontend**: React 18 o superior con Vite
 - **Navegadores**: Últimas 2 versiones de Chrome, Firefox, Safari, Edge
 - **Sistema Operativo Servidor**: Linux recomendado, Windows Server soportado
 - **Memoria RAM**: Mínimo 4GB para servidor, 2GB para cliente

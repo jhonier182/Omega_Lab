@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     nombre VARCHAR(255) NOT NULL,
-    rol ENUM('usuario', 'analista', 'supervisor', 'qa_manager', 'admin') DEFAULT 'usuario',
+    rol ENUM('administrador', 'supervisor_qa', 'supervisor_calidad', 'analista_laboratorio') DEFAULT 'analista_laboratorio',
     estado ENUM('activo', 'inactivo') DEFAULT 'activo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

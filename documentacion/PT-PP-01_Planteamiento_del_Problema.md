@@ -185,26 +185,27 @@ El sistema está diseñado con una arquitectura moderna de tres capas:
 - Interfaz: Responsive design para desktop y móvil
 
 **Backend (Servidor)**:
-- Runtime: Node.js
-- Framework: Express.js
-- ORM: Sequelize para gestión de base de datos
-- Base de Datos: MySQL
-- Autenticación: JWT (JSON Web Tokens)
-- Seguridad: Helmet, CORS, Rate Limiting, Bcrypt
+- Runtime: Java 21
+- Framework: Spring Boot 4.0.0
+- ORM: Spring Data JPA con Hibernate
+- Base de Datos: MySQL 8.0+
+- Autenticación: JWT (JSON Web Tokens) con Spring Security
+- Seguridad: Spring Security, CORS, Rate Limiting, Bcrypt
+- Validación: Spring Validation
 
 **Base de Datos**:
 - Motor: MySQL 8.0+
 - Características: UTF8MB4 para soporte completo de caracteres
 - Integridad: Constraints y validaciones a nivel de base de datos
-- Sincronización: Automática mediante Sequelize ORM
+- Sincronización: Automática mediante Spring Data JPA y Hibernate
 
 **Arquitectura de Seguridad**:
-- Autenticación basada en tokens JWT
-- Autorización basada en roles (RBAC)
+- Autenticación basada en tokens JWT con Spring Security
+- Autorización basada en roles (RBAC) con Spring Security
 - Encriptación de contraseñas con bcrypt
-- Headers de seguridad HTTP (Helmet)
+- Headers de seguridad HTTP configurados en Spring Security
 - Rate limiting para prevención de ataques
-- Validación de inputs en todas las capas
+- Validación de inputs en todas las capas con Spring Validation
 
 ### **Beneficios Esperados**
 
@@ -541,7 +542,7 @@ Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
 ### **Sostenibilidad y Futuro del Proyecto**
 
 **Sostenibilidad Técnica**:
-- **Arquitectura Moderna**: Tecnologías actuales y mantenidas (React, Node.js, MySQL)
+- **Arquitectura Moderna**: Tecnologías actuales y mantenidas (React, Java Spring Boot, MySQL)
 - **Escalabilidad**: Diseño que permite crecer con las necesidades de la empresa
 - **Mantenibilidad**: Código limpio y bien documentado facilita mantenimiento
 - **Actualizaciones**: Capacidad de actualizar y mejorar continuamente

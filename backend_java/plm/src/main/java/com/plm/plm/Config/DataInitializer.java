@@ -63,7 +63,7 @@ public class DataInitializer implements CommandLineRunner {
         String email = "admin@proscience.com";
         String password = "admin123";
         String nombre = "Administrador";
-        Rol rol = Rol.ADMIN;
+        Rol rol = Rol.ADMINISTRADOR;
 
         if (userRepository.findByEmail(email).isPresent()) {
             System.out.println("El usuario administrador ya existe");

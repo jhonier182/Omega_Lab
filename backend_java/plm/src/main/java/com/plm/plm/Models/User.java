@@ -42,8 +42,8 @@ public class User {
     private String nombre;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Rol rol = Rol.USUARIO;
+    @Column(nullable = false, length = 30)
+    private Rol rol = Rol.ANALISTA_LABORATORIO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

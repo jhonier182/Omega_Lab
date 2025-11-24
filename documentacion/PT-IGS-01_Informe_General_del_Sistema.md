@@ -315,10 +315,11 @@ Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
 - **Plataforma:** Web (Progressive Web App - PWA)
 - **Tecnologías:**
   - Frontend: React 18 con Vite, Tailwind CSS, React Router
-  - Backend: Node.js con Express.js, Sequelize ORM
+  - Backend: Java Spring Boot 4.0.0 con Java 21, Spring Data JPA (Hibernate), Spring Security
   - Base de Datos: MySQL 8.0+ con UTF8MB4
-  - Autenticación: JWT (JSON Web Tokens)
-  - Seguridad: Helmet, CORS, Rate Limiting, Bcrypt
+  - Autenticación: JWT (JSON Web Tokens) con Spring Security
+  - Seguridad: Spring Security, CORS, Rate Limiting, Bcrypt
+  - ORM: Spring Data JPA con Hibernate
 - **Dispositivos Soportados:** Desktop, Tablet, Móvil (iOS y Android)
 - **Orientación:** Horizontal y Vertical (responsive)
 - **Soporte para diferentes densidades:** Sí, mediante diseño responsive y PWA
@@ -336,13 +337,51 @@ Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
 - Integración con APIs Moleculares: Búsqueda en bases de datos científicas (PubChem, ChEMBL, DrugBank, ZINC) para investigación de ingredientes
 - Simulación e IA Avanzada: Predicción de parámetros fisicoquímicos, análisis de compatibilidad de ingredientes y sugerencias inteligentes de formulación basadas en productos del inventario
 
+### **Estado de Implementación Actual**
+
+**Controladores Implementados:**
+- ✅ **AuthController**: Registro de usuarios, inicio de sesión, perfil de usuario
+- ✅ **ProductController**: Gestión de productos, creación y actualización de BOM, historial de versiones de BOM
+- ✅ **MaterialController**: Gestión de materiales (materias primas), búsqueda y filtrado
+- ✅ **CategoryController**: Gestión de categorías de productos y materiales
+- ✅ **HealthController**: Endpoint de salud del sistema
+
+**Modelos de Datos Implementados:**
+- ✅ **User**: Usuarios del sistema con roles y autenticación
+- ✅ **Product**: Productos terminados
+- ✅ **Material**: Materias primas
+- ✅ **Category**: Categorías de productos y materiales
+- ✅ **BOM**: Listas de materiales con control de versiones
+- ✅ **BOMItem**: Items individuales de las listas de materiales
+
+**Funcionalidades Implementadas:**
+- ✅ Sistema de autenticación y autorización con JWT
+- ✅ Gestión de usuarios y roles
+- ✅ Gestión de productos terminados
+- ✅ Gestión de materias primas (materiales)
+- ✅ Gestión de categorías
+- ✅ Creación y gestión de BOM (Bill of Materials)
+- ✅ Control de versiones de BOM con historial
+- ✅ Gestión de items de BOM con cantidades y porcentajes
+- ✅ Búsqueda y filtrado de productos y materiales
+
+**Funcionalidades Pendientes:**
+- ⏳ Módulo Dashboard con KPIs
+- ⏳ Módulo Ideas/Research con integración a APIs moleculares
+- ⏳ Asistencia de IA para formulación
+- ⏳ Módulo de Producción
+- ⏳ Módulo de Pruebas/Control de Calidad (LIMS)
+- ⏳ Módulo de Aprobación/QA
+- ⏳ Módulo de Trazabilidad
+- ⏳ Módulo de Base de Conocimiento
+
 ## 8. USUARIOS – ROLES
 
-### 8.1 Usuario
+### 8.1 Analista de Laboratorio
 
 **Descripción:**
 
-Personal de producción básico que realiza actividades operativas rutinarias.
+Auxiliar de I+D que recibe órdenes de formulación. No tiene acceso a base de datos con fórmulas reales. Solo cumple requerimientos especificados en órdenes, desarrollo de la misma e ingreso del análisis sensorial.
 
 **Permisos:**
 
@@ -351,6 +390,8 @@ Personal de producción básico que realiza actividades operativas rutinarias.
 - Visualización de dashboard
 - Consulta de trazabilidad (solo lectura)
 - Acceso a base de conocimiento (solo lectura)
+- Gestión de materiales y categorías
+- Lectura de formulaciones (solo órdenes asignadas)
 
 **Módulos accesibles:**
 
@@ -358,82 +399,55 @@ Personal de producción básico que realiza actividades operativas rutinarias.
 - Producción (registro de actividades básicas)
 - Trazabilidad (solo lectura)
 - Base de Conocimiento (solo lectura)
+- Inventario (materias primas)
+- Formulación (solo órdenes asignadas)
 
 **Restricciones:**
 
-- No puede crear o modificar formulaciones
+- No puede crear o modificar formulaciones reales en la base de datos
 - No puede aprobar lotes
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema
 
-### 8.2 Analista
+### 8.2 Supervisor de Calidad
 
 **Descripción:**
 
-Personal de control de calidad que realiza pruebas analíticas y gestiona muestras.
+Recibe materias primas, ingresa datos de proveedor, lotes, trazabilidad. Lleva el informe del estado del análisis de materias primas antes de pasar a formulación. Hace devoluciones de materias primas no aptas. No tiene permisos sobre análisis de formulaciones.
 
 **Permisos:**
 
-- Registro de pruebas analíticas
-- Gestión de muestras
-- Registro de resultados OOS
-- Lectura de formulaciones
-- Consulta de trazabilidad
-- Acceso a investigación (Ideas/Research)
-
-**Módulos accesibles:**
-
-- Dashboard
-- Ideas/Research
-- Formulación (solo lectura)
-- Pruebas/LIMS (acceso completo)
-- Trazabilidad
-- Base de Conocimiento
-
-**Restricciones:**
-
-- No puede crear o modificar formulaciones
-- No puede aprobar lotes
-- No puede gestionar usuarios
-- No puede acceder a configuración del sistema
-
-### 8.3 Supervisor
-
-**Descripción:**
-
-Supervisores de producción y calidad que supervisan procesos operativos.
-
-**Permisos:**
-
-- Supervisión de procesos de producción
-- Aprobación de actividades operativas
-- Visualización de todas las métricas
-- Gestión de desviaciones menores
-- Acceso a todos los módulos excepto configuración y aprobación final
+- Supervisión de procesos de calidad
+- Gestión de materias primas y recepción
+- Ingreso de datos de proveedores y lotes
+- Gestión de trazabilidad de materias primas
+- Análisis de materias primas
+- Devolución de materias primas no aptas
+- Visualización de métricas de calidad
 
 **Módulos accesibles:**
 
 - Dashboard (acceso completo)
 - Ideas/Research
-- Formulación (lectura y comentarios)
-- IA/Simulación
-- Producción (acceso completo)
+- Formulación (solo lectura de materias primas)
+- Producción (gestión de materias primas)
 - Pruebas/LIMS (acceso completo)
 - Trazabilidad (acceso completo)
 - Base de Conocimiento
+- Inventario (materias primas - acceso completo)
 
 **Restricciones:**
 
 - No puede aprobar liberación final de productos
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema
-- No puede gestionar NC/CAPA críticas
+- No tiene permisos sobre análisis de formulaciones
 
-### 8.4 QA Manager
+### 8.3 Supervisor QA
 
 **Descripción:**
 
-Gerente de calidad y cumplimiento con responsabilidades de aprobación y cumplimiento regulatorio.
+Acceso completo a fórmulas reales en la base de datos. Visión total del sistema, recibe notificaciones de stock, lotes, trazabilidad, documentos, reportes, alertas. Puede ver el estado de formulación y quién está operando.
 
 **Permisos:**
 
@@ -441,32 +455,35 @@ Gerente de calidad y cumplimiento con responsabilidades de aprobación y cumplim
 - Gestión completa de No Conformidades (NC)
 - Gestión completa de CAPA
 - Liberación de lotes
-- Acceso completo a todos los módulos
+- Acceso completo a todas las fórmulas en la base de datos
+- Visualización completa del estado del sistema
+- Recepción de notificaciones de stock, lotes, trazabilidad
 - Generación de reportes regulatorios
 
 **Módulos accesibles:**
 
 - Todos los módulos con permisos de aprobación
-- Dashboard
+- Dashboard (acceso completo)
 - Ideas/Research
-- Formulación (acceso completo)
+- Formulación (acceso completo a fórmulas reales)
 - IA/Simulación
 - Producción
 - Pruebas/LIMS
 - Aprobación/QA (acceso completo)
 - Trazabilidad
 - Base de Conocimiento
+- Inventario (acceso completo)
 
 **Restricciones:**
 
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema (excepto parámetros de QA)
 
-### 8.5 Administrador
+### 8.4 Administrador
 
 **Descripción:**
 
-Administrador del sistema con acceso completo y responsabilidades de configuración y mantenimiento.
+Administrador / Usuario Avanzado: Soporte técnico del sistema, puede otorgar roles. Tiene acceso completo al sistema.
 
 **Permisos:**
 
@@ -477,6 +494,7 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 - Configuración de parámetros
 - Acceso a logs y auditoría
 - Gestión de backups
+- Otorgar y modificar roles de usuarios
 
 **Módulos accesibles:**
 
@@ -487,6 +505,7 @@ Administrador del sistema con acceso completo y responsabilidades de configuraci
 
 - Debe seguir procedimientos de validación para cambios críticos
 - Debe documentar todos los cambios en configuración
+
 
 ## 9. Diagrama de Casos de Uso
 
