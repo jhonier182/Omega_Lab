@@ -1,8 +1,17 @@
 package com.plm.plm.Config.exception;
 
-public class UnauthorizedException extends AppException {
+/**
+ * Excepción lanzada cuando el usuario no está autenticado o las credenciales son inválidas.
+ * Retorna HTTP 401 (UNAUTHORIZED)
+ */
+public class UnauthorizedException extends RuntimeException {
+    
     public UnauthorizedException(String message) {
-        super(message, 401);
+        super(message);
+    }
+    
+    public UnauthorizedException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
 

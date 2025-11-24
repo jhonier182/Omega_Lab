@@ -11,5 +11,4 @@ public class PlmApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(PlmApplication.class, args);
 	}
-
 }

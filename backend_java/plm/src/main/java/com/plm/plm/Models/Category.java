@@ -2,6 +2,7 @@ package com.plm.plm.Models;
 
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.Enums.TipoProducto;
+import com.plm.plm.dto.CategoryDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -59,5 +60,17 @@ public class Category {
 
     @OneToMany(mappedBy = "categoriaEntity", fetch = FetchType.LAZY)
     private List<Product> productos = new ArrayList<>();
+
+    public CategoryDTO getDTO() {
+        CategoryDTO dto = new CategoryDTO();
+        dto.setId(id);
+        dto.setNombre(nombre);
+        dto.setDescripcion(descripcion);
+        dto.setTipoProducto(tipoProducto);
+        dto.setEstado(estado);
+        dto.setCreatedAt(createdAt);
+        dto.setUpdatedAt(updatedAt);
+        return dto;
+    }
 }
 

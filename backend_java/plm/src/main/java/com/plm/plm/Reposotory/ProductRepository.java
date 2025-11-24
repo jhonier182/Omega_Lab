@@ -17,6 +17,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     
     boolean existsByCodigo(String codigo);
     
+    boolean existsByNombre(String nombre);
+    
     List<Product> findByCategoriaAndEstado(String categoria, EstadoUsuario estado);
     
     @Query("SELECT p FROM Product p WHERE p.estado = :estado AND " +
