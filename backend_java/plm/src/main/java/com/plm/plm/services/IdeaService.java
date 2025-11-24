@@ -11,8 +11,9 @@ public interface IdeaService {
     IdeaDTO getIdeaById(Integer id);
     IdeaDTO updateIdea(Integer id, IdeaDTO ideaDTO);
     void deleteIdea(Integer id);
-    IdeaDTO changeEstado(Integer id, EstadoIdea nuevoEstado, Integer userId);
+    IdeaDTO changeEstado(Integer id, EstadoIdea nuevoEstado, Integer userId, Integer analistaId);
     IdeaDTO approveIdea(Integer id, Integer userId);
     IdeaDTO rejectIdea(Integer id, Integer userId);
+    List<IdeaDTO> getIdeasAsignadas(Integer userId);
 }
 

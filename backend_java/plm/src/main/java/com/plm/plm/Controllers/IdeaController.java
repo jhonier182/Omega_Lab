@@ -15,6 +15,9 @@ import com.plm.plm.dto.IdeaDTO;
 import com.plm.plm.security.JwtTokenProvider;
 import com.plm.plm.services.IdeaService;
 import com.plm.plm.services.OpenAIService;
+import com.plm.plm.services.UserService;
+import com.plm.plm.Enums.Rol;
+import com.plm.plm.dto.UserDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +58,9 @@ public class IdeaController {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserService userService;
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createIdea(
@@ -283,14 +289,36 @@ public class IdeaController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/analistas")
+    public ResponseEntity<Map<String, Object>> getAnalistas() {
+        List<UserDTO> analistas = userService.getUsersByRol(Rol.ANALISTA_LABORATORIO);
+        Map<String, Object> response = new HashMap<>();
+        Map<String, List<UserDTO>> data = new HashMap<>();
+        data.put("analistas", analistas);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/mis-ideas")
+    public ResponseEntity<Map<String, Object>> getMisIdeas(HttpServletRequest request) {
+        Integer userId = getUserIdFromRequest(request);
+        List<IdeaDTO> ideas = ideaService.getIdeasAsignadas(userId);
+        Map<String, Object> response = new HashMap<>();
+        Map<String, List<IdeaDTO>> data = new HashMap<>();
+        data.put("ideas", ideas);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{id}/change-estado")
     public ResponseEntity<Map<String, Object>> changeEstado(
             @PathVariable Integer id,
             @RequestParam String nuevoEstado,
+            @RequestParam(required = false) Integer analistaId,
             HttpServletRequest request) {
         Integer userId = getUserIdFromRequest(request);
         EstadoIdea estadoEnum = EstadoIdea.fromString(nuevoEstado);
-        IdeaDTO idea = ideaService.changeEstado(id, estadoEnum, userId);
+        IdeaDTO idea = ideaService.changeEstado(id, estadoEnum, userId, analistaId);
         Map<String, Object> response = new HashMap<>();
         Map<String, IdeaDTO> data = new HashMap<>();
         data.put("idea", idea);

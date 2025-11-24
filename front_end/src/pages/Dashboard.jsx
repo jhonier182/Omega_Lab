@@ -1,9 +1,13 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { hasAnyRole, hasFullSystemView, canViewFormulationStatus, canViewTraceability, canManageRawMaterialAnalysis } from '../utils/rolePermissions'
+import ideaService from '../services/ideaService'
 
 const Dashboard = () => {
   const { user } = useAuth()
+  const [ideasAsignadas, setIdeasAsignadas] = useState([])
+  const [loadingIdeas, setLoadingIdeas] = useState(false)
   
   // Si no hay usuario, no mostrar nada
   if (!user) {
@@ -48,9 +52,89 @@ const Dashboard = () => {
     if (isAdmin) return 'Vista completa del sistema y gestión administrativa'
     if (isSupervisorQA) return 'Vista consolidada de QA, fórmulas y cumplimiento BPM'
     if (isSupervisorCalidad) return 'Gestión de materias primas, análisis y trazabilidad'
-    if (isAnalistaLab) return 'Órdenes de formulación y análisis sensorial'
+    if (isAnalistaLab) return 'Ideas asignadas para pruebas de laboratorio'
     return 'Vista consolidada del estado operativo'
   }
+
+  // Cargar ideas asignadas al analista
+  useEffect(() => {
+    if (isAnalistaLab && user) {
+      loadIdeasAsignadas()
+    }
+  }, [isAnalistaLab, user])
+
+  const loadIdeasAsignadas = async () => {
+    setLoadingIdeas(true)
+    try {
+      const ideas = await ideaService.getMisIdeas()
+      setIdeasAsignadas(ideas)
+    } catch (error) {
+      console.error('Error al cargar ideas asignadas:', error)
+    } finally {
+      setLoadingIdeas(false)
+    }
+  }
+
+  const handleAprobarPrueba = async (ideaId) => {
+    try {
+      await ideaService.changeEstado(ideaId, 'prueba_aprobada')
+      loadIdeasAsignadas()
+    } catch (error) {
+      console.error('Error al aprobar prueba:', error)
+      alert('Error al aprobar prueba: ' + (error.message || 'Error desconocido'))
+    }
+  }
+
+  const handleRechazarPrueba = async (ideaId) => {
+    if (!confirm('¿Estás seguro de rechazar esta prueba? La idea será archivada.')) {
+      return
+    }
+    try {
+      await ideaService.changeEstado(ideaId, 'rechazada')
+      loadIdeasAsignadas()
+    } catch (error) {
+      console.error('Error al rechazar prueba:', error)
+      alert('Error al rechazar prueba: ' + (error.message || 'Error desconocido'))
+    }
+  }
+
+  const getEstadoColor = (estado) => {
+    switch (estado?.toLowerCase()) {
+      case 'en_prueba':
+        return 'bg-purple-500/20 text-purple-400'
+      case 'prueba_aprobada':
+        return 'bg-emerald-500/20 text-emerald-400'
+      case 'rechazada':
+        return 'bg-red-500/20 text-red-400'
+      default:
+        return 'bg-gray-500/20 text-gray-400'
+    }
+  }
+
+  const getEstadoLabel = (estado) => {
+    switch (estado?.toLowerCase()) {
+      case 'en_prueba':
+        return 'En Prueba'
+      case 'prueba_aprobada':
+        return 'Prueba Aprobada'
+      case 'rechazada':
+        return 'Rechazada'
+      default:
+        return estado || 'N/A'
+    }
+  }
+
+  // Calcular estadísticas para el analista
+  const ideasEnPrueba = ideasAsignadas.filter(i => i.estado === 'EN_PRUEBA').length
+  const ideasAprobadas = ideasAsignadas.filter(i => i.estado === 'PRUEBA_APROBADA').length
+  const ideasCompletadasHoy = ideasAsignadas.filter(i => {
+    if (i.estado === 'PRUEBA_APROBADA' && i.updatedAt) {
+      const fecha = new Date(i.updatedAt)
+      const hoy = new Date()
+      return fecha.toDateString() === hoy.toDateString()
+    }
+    return false
+  }).length
 
   // Si no se detecta el rol, mostrar mensaje de error
   if (!userRole) {
@@ -100,15 +184,15 @@ const Dashboard = () => {
       )}
 
       {/* Alerta para Analista de Laboratorio */}
-      {userRole === 'ANALISTA_LABORATORIO' && (
-        <div className="mb-6 rounded-lg bg-primary/20 border border-primary/50 p-4 flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary text-2xl">assignment</span>
+      {userRole === 'ANALISTA_LABORATORIO' && ideasEnPrueba > 0 && (
+        <div className="mb-6 rounded-lg bg-purple-500/20 border border-purple-500/50 p-4 flex items-center gap-3">
+          <span className="material-symbols-outlined text-purple-400 text-2xl">science</span>
           <div className="flex-1">
-            <p className="text-text-light font-semibold">5 Órdenes de Formulación Pendientes</p>
-            <p className="text-text-muted text-sm">Requieren desarrollo y análisis sensorial</p>
+            <p className="text-text-light font-semibold">{ideasEnPrueba} {ideasEnPrueba === 1 ? 'Idea' : 'Ideas'} Pendiente{ideasEnPrueba === 1 ? '' : 's'} de Pruebas</p>
+            <p className="text-text-muted text-sm">Requieren pruebas de laboratorio y análisis</p>
           </div>
-          <Link to="/produccion" className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90">
-            Ver Órdenes
+          <Link to="/ideas" className="px-4 py-2 rounded-lg bg-purple-500 text-white text-sm font-medium hover:bg-purple-600">
+            Ver Ideas
           </Link>
         </div>
       )}
@@ -207,45 +291,45 @@ const Dashboard = () => {
           <>
             <div className="flex flex-col gap-2 rounded-lg p-6 bg-card-dark border border-border-dark">
               <div className="flex items-center justify-between">
-                <p className="text-text-muted text-sm font-medium">Órdenes Pendientes</p>
-                <span className="material-symbols-outlined text-warning text-xl">assignment</span>
+                <p className="text-text-muted text-sm font-medium">Ideas en Prueba</p>
+                <span className="material-symbols-outlined text-warning text-xl">science</span>
               </div>
-              <p className="text-text-light text-3xl font-bold tracking-tight">5</p>
-              <p className="text-warning text-sm font-medium">Requieren desarrollo</p>
+              <p className="text-text-light text-3xl font-bold tracking-tight">{ideasEnPrueba}</p>
+              <p className="text-warning text-sm font-medium">Requieren pruebas</p>
             </div>
 
             <div className="flex flex-col gap-2 rounded-lg p-6 bg-card-dark border border-border-dark">
               <div className="flex items-center justify-between">
-                <p className="text-text-muted text-sm font-medium">Formulaciones en Desarrollo</p>
-                <span className="material-symbols-outlined text-primary text-xl">science</span>
+                <p className="text-text-muted text-sm font-medium">Pruebas Aprobadas</p>
+                <span className="material-symbols-outlined text-success text-xl">check_circle</span>
               </div>
-              <p className="text-text-light text-3xl font-bold tracking-tight">3</p>
-              <p className="text-success text-sm font-medium">En progreso</p>
+              <p className="text-text-light text-3xl font-bold tracking-tight">{ideasAprobadas}</p>
+              <p className="text-success text-sm font-medium">Listas para producción</p>
             </div>
 
             <div className="flex flex-col gap-2 rounded-lg p-6 bg-card-dark border border-border-dark">
               <div className="flex items-center justify-between">
-                <p className="text-text-muted text-sm font-medium">Análisis Sensorial Pendientes</p>
-                <span className="material-symbols-outlined text-info text-xl">biotech</span>
+                <p className="text-text-muted text-sm font-medium">Total Asignadas</p>
+                <span className="material-symbols-outlined text-primary text-xl">assignment</span>
               </div>
-              <p className="text-text-light text-3xl font-bold tracking-tight">7</p>
-              <p className="text-text-muted text-sm">Por completar</p>
+              <p className="text-text-light text-3xl font-bold tracking-tight">{ideasAsignadas.length}</p>
+              <p className="text-text-muted text-sm">Ideas asignadas</p>
             </div>
 
             <div className="flex flex-col gap-2 rounded-lg p-6 bg-card-dark border border-border-dark">
               <div className="flex items-center justify-between">
                 <p className="text-text-muted text-sm font-medium">Completadas Hoy</p>
-                <span className="material-symbols-outlined text-success text-xl">check_circle</span>
+                <span className="material-symbols-outlined text-emerald-400 text-xl">today</span>
               </div>
-              <p className="text-text-light text-3xl font-bold tracking-tight">2</p>
-              <p className="text-success text-sm font-medium">Entregadas</p>
+              <p className="text-text-light text-3xl font-bold tracking-tight">{ideasCompletadasHoy}</p>
+              <p className="text-emerald-400 text-sm font-medium">Finalizadas hoy</p>
             </div>
           </>
         )}
         </div>
       )}
 
-      {/* Gráficos y Tablas - Solo para roles con visión completa */}
+      {/* Gráficos y Tablas - Solo para roles con visión completa (ocultar para analista) */}
       {(userRole === 'ADMINISTRADOR' || userRole === 'SUPERVISOR_QA') && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Gráfico de Producción */}
@@ -497,73 +581,113 @@ const Dashboard = () => {
         {/* Tablas para Analista de Laboratorio */}
         {userRole === 'ANALISTA_LABORATORIO' && (
           <>
-            {/* Órdenes de Formulación Pendientes */}
+            {/* Ideas Asignadas para Pruebas */}
             <div className="rounded-lg bg-card-dark border border-border-dark">
               <div className="flex items-center justify-between p-6 border-b border-border-dark">
-                <h2 className="text-text-light text-base font-semibold">Órdenes Pendientes</h2>
-                <span className="bg-warning/20 text-warning px-2 py-1 rounded-full text-xs font-medium">5</span>
+                <h2 className="text-text-light text-base font-semibold">Ideas Asignadas para Pruebas</h2>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  ideasEnPrueba > 0 ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'
+                }`}>
+                  {ideasEnPrueba} {ideasEnPrueba === 1 ? 'pendiente' : 'pendientes'}
+                </span>
               </div>
-              <div className="divide-y divide-border-dark">
-                {[
-                  { id: 'ORD-2024-001', producto: 'Vitamina D3 2000UI', estado: 'Asignada', fecha: '20/01/2024', prioridad: 'Alta' },
-                  { id: 'ORD-2024-002', producto: 'Omega-3 1000mg', estado: 'En Desarrollo', fecha: '19/01/2024', prioridad: 'Media' },
-                  { id: 'ORD-2024-003', producto: 'Magnesio 400mg', estado: 'Pendiente', fecha: '18/01/2024', prioridad: 'Baja' }
-                ].map((orden) => (
-                  <div key={orden.id} className="px-6 py-4 text-sm hover:bg-border-dark/50 cursor-pointer">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-text-light font-medium">{orden.id}</p>
-                        <p className="text-text-muted text-xs">{orden.producto}</p>
+              {loadingIdeas ? (
+                <div className="p-6 text-center">
+                  <p className="text-text-muted text-sm">Cargando ideas...</p>
+                </div>
+              ) : ideasAsignadas.length === 0 ? (
+                <div className="p-6 text-center">
+                  <span className="material-symbols-outlined text-4xl text-text-muted mb-2">assignment</span>
+                  <p className="text-text-muted text-sm">No tienes ideas asignadas actualmente</p>
+                </div>
+              ) : (
+                <>
+                  <div className="divide-y divide-border-dark max-h-96 overflow-y-auto">
+                    {ideasAsignadas.slice(0, 5).map((idea) => (
+                      <div key={idea.id} className="px-6 py-4 text-sm hover:bg-border-dark/50">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="text-text-light font-medium mb-1">{idea.titulo}</p>
+                            {idea.productoOrigenNombre && (
+                              <p className="text-text-muted text-xs mb-1">
+                                <span className="material-symbols-outlined text-xs align-middle mr-1">inventory_2</span>
+                                Producto origen: {idea.productoOrigenNombre}
+                              </p>
+                            )}
+                            {idea.objetivo && (
+                              <p className="text-text-muted text-xs italic">"{idea.objetivo}"</p>
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ml-2 ${getEstadoColor(idea.estado)}`}>
+                            {getEstadoLabel(idea.estado)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-3">
+                          <p className="text-text-muted text-xs">
+                            Asignada: {idea.createdAt ? new Date(idea.createdAt).toLocaleDateString('es-ES') : 'N/A'}
+                          </p>
+                          {idea.estado === 'EN_PRUEBA' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleAprobarPrueba(idea.id)}
+                                className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/30 flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                Aprobar
+                              </button>
+                              <button
+                                onClick={() => handleRechazarPrueba(idea.id)}
+                                className="px-3 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/30 flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-sm">cancel</span>
+                                Rechazar
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        orden.prioridad === 'Alta' ? 'bg-danger/20 text-danger' : 
-                        orden.prioridad === 'Media' ? 'bg-warning/20 text-warning' : 
-                        'bg-info/20 text-info'
-                      }`}>
-                        {orden.estado}
-                      </span>
-                    </div>
-                    <p className="text-text-muted text-xs">Asignada: {orden.fecha}</p>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="p-6 border-t border-border-dark">
-                <Link to="/produccion" className="text-sm font-medium text-primary hover:underline">
-                  Ver todas las órdenes
-                </Link>
-              </div>
+                  {ideasAsignadas.length > 5 && (
+                    <div className="p-6 border-t border-border-dark">
+                      <Link to="/ideas" className="text-sm font-medium text-primary hover:underline">
+                        Ver todas las ideas ({ideasAsignadas.length})
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Análisis Sensorial Pendientes */}
+            {/* Información de Pruebas */}
             <div className="rounded-lg bg-card-dark border border-border-dark">
               <div className="flex items-center justify-between p-6 border-b border-border-dark">
-                <h2 className="text-text-light text-base font-semibold">Análisis Sensorial Pendientes</h2>
-                <span className="bg-info/20 text-info px-2 py-1 rounded-full text-xs font-medium">7</span>
+                <h2 className="text-text-light text-base font-semibold">Información de Pruebas</h2>
+                <span className="material-symbols-outlined text-primary">biotech</span>
               </div>
-              <div className="divide-y divide-border-dark">
-                {[
-                  { id: 'AS-2024-001', producto: 'Vitamina D3 2000UI', fecha: '20/01/2024', estado: 'Pendiente' },
-                  { id: 'AS-2024-002', producto: 'Omega-3 1000mg', fecha: '19/01/2024', estado: 'En Proceso' },
-                  { id: 'AS-2024-003', producto: 'Magnesio 400mg', fecha: '18/01/2024', estado: 'Pendiente' }
-                ].map((analisis) => (
-                  <div key={analisis.id} className="px-6 py-4 text-sm hover:bg-border-dark/50 cursor-pointer">
-                    <p className="text-text-light font-medium mb-1">{analisis.id}</p>
-                    <p className="text-text-muted text-xs mb-2">{analisis.producto}</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-text-muted text-xs">Fecha: {analisis.fecha}</p>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        analisis.estado === 'En Proceso' ? 'bg-primary/20 text-primary' : 'bg-warning/20 text-warning'
-                      }`}>
-                        {analisis.estado}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-6 border-t border-border-dark">
-                <Link to="/pruebas" className="text-sm font-medium text-primary hover:underline">
-                  Ver todos los análisis
-                </Link>
+              <div className="p-6 space-y-4">
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-text-light font-medium mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">info</span>
+                    Proceso de Pruebas
+                  </p>
+                  <p className="text-text-muted text-xs leading-relaxed">
+                    Revisa los detalles de cada idea asignada, realiza las pruebas de laboratorio según las especificaciones,
+                    y registra los resultados. Una vez completadas las pruebas, puedes aprobar o rechazar la idea.
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
+                  <p className="text-text-light font-medium mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">science</span>
+                    Módulo de Pruebas
+                  </p>
+                  <p className="text-text-muted text-xs mb-3">
+                    Accede al módulo de Pruebas para crear pruebas específicas vinculadas a cada idea.
+                  </p>
+                  <Link to="/pruebas" className="text-sm font-medium text-primary hover:underline">
+                    Ir a Pruebas →
+                  </Link>
+                </div>
               </div>
             </div>
           </>

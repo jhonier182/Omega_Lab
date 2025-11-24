@@ -14,15 +14,24 @@ const Ideas = () => {
     prioridad: '',
     search: ''
   })
+  const [showAnalystDialog, setShowAnalystDialog] = useState(false)
+  const [selectedIdea, setSelectedIdea] = useState(null)
+  const [analistas, setAnalistas] = useState([])
+  const [loadingAnalistas, setLoadingAnalistas] = useState(false)
+  const [selectedAnalistaId, setSelectedAnalistaId] = useState(null)
 
-  // Verificar que solo Supervisor QA y Administrador puedan acceder
-  if (!user || (!hasAnyRole(user, 'SUPERVISOR_QA') && !hasAnyRole(user, 'ADMINISTRADOR'))) {
+  // Verificar permisos de acceso
+  const isSupervisorQA = hasAnyRole(user, 'SUPERVISOR_QA')
+  const isAdmin = hasAnyRole(user, 'ADMINISTRADOR')
+  const isAnalista = hasAnyRole(user, 'ANALISTA_LABORATORIO')
+  
+  if (!user || (!isSupervisorQA && !isAdmin && !isAnalista)) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <span className="material-symbols-outlined text-6xl text-danger mb-4">lock</span>
           <p className="text-text-light text-lg font-semibold mb-2">Acceso Restringido</p>
-          <p className="text-text-muted text-sm">Solo Supervisor QA y Administrador pueden acceder a Ideas / Research</p>
+          <p className="text-text-muted text-sm">No tienes permisos para acceder a Ideas / Research</p>
         </div>
       </div>
     )
@@ -35,8 +44,15 @@ const Ideas = () => {
   const loadIdeas = async () => {
     setLoadingIdeas(true)
     try {
-      const data = await ideaService.getIdeas(filters)
-      setIdeas(data)
+      // Si es analista, cargar solo sus ideas asignadas
+      if (isAnalista) {
+        const data = await ideaService.getMisIdeas()
+        setIdeas(data)
+      } else {
+        // Si es Supervisor QA o Admin, cargar todas las ideas con filtros
+        const data = await ideaService.getIdeas(filters)
+        setIdeas(data)
+      }
     } catch (error) {
       console.error('Error al cargar ideas:', error)
     } finally {
@@ -44,22 +60,55 @@ const Ideas = () => {
     }
   }
 
+  const loadAnalistas = async () => {
+    setLoadingAnalistas(true)
+    try {
+      const data = await ideaService.getAnalistas()
+      setAnalistas(data)
+    } catch (error) {
+      console.error('Error al cargar analistas:', error)
+    } finally {
+      setLoadingAnalistas(false)
+    }
+  }
+
   const handleChangeEstado = async (idea, nuevoEstado) => {
+    // Si el nuevo estado es EN_PRUEBA, mostrar diálogo de selección de analista
+    if (nuevoEstado === 'en_prueba') {
+      setSelectedIdea(idea)
+      setSelectedAnalistaId(null)
+      if (analistas.length === 0) {
+        await loadAnalistas()
+      }
+      setShowAnalystDialog(true)
+      return
+    }
+
+    // Para otros estados, cambiar directamente
     try {
       await ideaService.changeEstado(idea.id, nuevoEstado)
       loadIdeas()
     } catch (error) {
       console.error('Error al cambiar estado:', error)
+      alert('Error al cambiar estado: ' + (error.message || 'Error desconocido'))
     }
   }
 
-  const handleAssignToAnalyst = async (idea, analystId) => {
+  const handleAssignToAnalyst = async () => {
+    if (!selectedAnalistaId) {
+      alert('Por favor selecciona un analista')
+      return
+    }
+
     try {
-      // TODO: Implementar asignación a analista
-      await ideaService.changeEstado(idea.id, 'en_prueba')
+      await ideaService.changeEstado(selectedIdea.id, 'en_prueba', selectedAnalistaId)
+      setShowAnalystDialog(false)
+      setSelectedIdea(null)
+      setSelectedAnalistaId(null)
       loadIdeas()
     } catch (error) {
       console.error('Error al asignar a analista:', error)
+      alert('Error al asignar analista: ' + (error.message || 'Error desconocido'))
     }
   }
 
@@ -126,53 +175,44 @@ const Ideas = () => {
 
   return (
     <div className="w-full h-full">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-text-light text-3xl font-bold tracking-tight">Ideas / Research</h1>
-          <p className="text-text-muted text-sm mt-1">Historial de ideas generadas con IA y su estado</p>
+      {/* Filtros - Solo para Supervisor QA y Admin */}
+      {!isAnalista && (
+        <div className="rounded-lg bg-card-dark border border-border-dark p-6 mb-6">
+          <div className="flex flex-wrap gap-4">
+            <input
+              type="text"
+              placeholder="Buscar ideas..."
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              className="flex-1 min-w-[200px] h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+            />
+            <select
+              value={filters.estado}
+              onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+              className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="">Todos los estados</option>
+              <option value="generada">Generada</option>
+              <option value="en_revision">En Revisión</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="en_prueba">En Prueba</option>
+              <option value="prueba_aprobada">Prueba Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+              <option value="en_produccion">En Producción</option>
+            </select>
+            <select
+              value={filters.categoria}
+              onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
+              className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="">Todas las categorías</option>
+              <option value="Nutracéutico">Nutracéutico</option>
+              <option value="Suplemento Dietario">Suplemento Dietario</option>
+              <option value="Ingrediente Funcional">Ingrediente Funcional</option>
+            </select>
+          </div>
         </div>
-        <div className="text-text-muted text-sm">
-          <span className="material-symbols-outlined text-sm mr-1">info</span>
-          Las ideas se generan en el módulo <strong>IA / Simulación</strong>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="rounded-lg bg-card-dark border border-border-dark p-6 mb-6">
-        <div className="flex flex-wrap gap-4">
-          <input
-            type="text"
-            placeholder="Buscar ideas..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="flex-1 min-w-[200px] h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-          />
-          <select
-            value={filters.estado}
-            onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-            className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
-          >
-            <option value="">Todos los estados</option>
-            <option value="generada">Generada</option>
-            <option value="en_revision">En Revisión</option>
-            <option value="aprobada">Aprobada</option>
-            <option value="en_prueba">En Prueba</option>
-            <option value="prueba_aprobada">Prueba Aprobada</option>
-            <option value="rechazada">Rechazada</option>
-            <option value="en_produccion">En Producción</option>
-          </select>
-          <select
-            value={filters.categoria}
-            onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
-            className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
-          >
-            <option value="">Todas las categorías</option>
-            <option value="Nutracéutico">Nutracéutico</option>
-            <option value="Suplemento Dietario">Suplemento Dietario</option>
-            <option value="Ingrediente Funcional">Ingrediente Funcional</option>
-          </select>
-        </div>
-      </div>
+      )}
 
       {/* Lista de Ideas */}
       {loadingIdeas ? (
@@ -199,8 +239,8 @@ const Ideas = () => {
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getEstadoColor(idea.estado)}`}>
                       {getEstadoLabel(idea.estado)}
                     </span>
-                  </div>
-                  
+        </div>
+
                   <p className="text-text-muted text-sm mb-3">{idea.descripcion}</p>
                   
                   {idea.objetivo && (
@@ -230,8 +270,8 @@ const Ideas = () => {
                       <span>Aprobado por: {idea.approvedByName}</span>
                     )}
                   </div>
-                </div>
-              </div>
+        </div>
+      </div>
 
               {/* Detalles de IA */}
               {idea.detallesIA && (
@@ -270,23 +310,23 @@ const Ideas = () => {
                             <div className="space-y-2">
                               {aiDetails.bomModificado.map((item, idx) => (
                                 <div key={idx} className="p-3 rounded-lg bg-card-dark border border-border-dark">
-                                  <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between mb-2">
                                     <span className="text-text-light font-medium">{item.ingrediente || 'Ingrediente'}</span>
                                   </div>
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                    <div>
+                  <div>
                                       <span className="text-text-muted">Cantidad Actual:</span>
                                       <p className="text-text-light font-medium">{item.cantidadActual || 'N/A'}</p>
-                                    </div>
-                                    <div>
+                </div>
+                  <div>
                                       <span className="text-text-muted">Cantidad Propuesta:</span>
                                       <p className="text-primary font-medium">{item.cantidadPropuesta || 'N/A'}</p>
-                                    </div>
-                                    <div>
+                  </div>
+                  <div>
                                       <span className="text-text-muted">% Actual:</span>
                                       <p className="text-text-light">{item.porcentajeActual || 'N/A'}</p>
-                                    </div>
-                                    <div>
+                  </div>
+                  <div>
                                       <span className="text-text-muted">% Propuesto:</span>
                                       <p className="text-primary">{item.porcentajePropuesto || 'N/A'}</p>
                                     </div>
@@ -296,9 +336,9 @@ const Ideas = () => {
                                         <p className={`font-medium ${item.disponibleEnInventario ? 'text-green-400' : 'text-red-400'}`}>
                                           {item.disponibleEnInventario ? 'Sí' : 'No'}
                                         </p>
-                                      </div>
+                  </div>
                                     )}
-                                  </div>
+                </div>
                                   {item.razon && (
                                     <p className="text-text-muted text-xs mt-2 italic">Razón: {item.razon}</p>
                                   )}
@@ -409,67 +449,186 @@ const Ideas = () => {
           </div>
               )}
 
-              {/* Acciones según estado */}
+              {/* Acciones según estado y rol */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-dark">
-                {idea.estado === 'GENERADA' && (
+                {/* Acciones para Supervisor QA y Admin */}
+                {!isAnalista && (
                   <>
-                    <button
-                      onClick={() => handleChangeEstado(idea, 'en_revision')}
-                      className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30"
-                    >
-                      Enviar a Revisión
-                    </button>
-                    <button
-                      onClick={() => handleChangeEstado(idea, 'rechazada')}
-                      className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
-                    >
-                      Rechazar
-                    </button>
+                    {idea.estado === 'GENERADA' && (
+                      <>
+                        <button
+                          onClick={() => handleChangeEstado(idea, 'en_revision')}
+                          className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30"
+                        >
+                          Enviar a Revisión
+                        </button>
+                        <button
+                          onClick={() => handleChangeEstado(idea, 'rechazada')}
+                          className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
+                        >
+                          Rechazar
+                        </button>
+                      </>
+                    )}
+                    {idea.estado === 'EN_REVISION' && (
+                      <>
+                        <button
+                          onClick={() => handleChangeEstado(idea, 'aprobada')}
+                          className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-sm font-medium hover:bg-green-500/30"
+                        >
+                          <span className="material-symbols-outlined text-sm mr-1">check_circle</span>
+                          Aprobar para Pruebas
+                        </button>
+                        <button
+                          onClick={() => handleChangeEstado(idea, 'rechazada')}
+                          className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
+                        >
+                          <span className="material-symbols-outlined text-sm mr-1">cancel</span>
+                          Rechazar
+                        </button>
+                      </>
+                    )}
+                    {idea.estado === 'APROBADA' && (
+                      <button
+                        onClick={() => handleChangeEstado(idea, 'en_prueba')}
+                        className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30"
+                      >
+                        <span className="material-symbols-outlined text-sm mr-1">science</span>
+                        Enviar a Pruebas
+                      </button>
+                    )}
+                    {idea.estado === 'PRUEBA_APROBADA' && (
+                      <button
+                        onClick={() => handleChangeEstado(idea, 'en_produccion')}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 text-sm font-medium hover:bg-indigo-500/30"
+                      >
+                        <span className="material-symbols-outlined text-sm mr-1">precision_manufacturing</span>
+                        Enviar a Producción
+                      </button>
+                    )}
                   </>
                 )}
-                {idea.estado === 'EN_REVISION' && (
+                
+                {/* Acciones para Analista - Solo puede aprobar/rechazar pruebas */}
+                {isAnalista && idea.estado === 'EN_PRUEBA' && (
                   <>
                     <button
-                      onClick={() => handleChangeEstado(idea, 'aprobada')}
-                      className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-sm font-medium hover:bg-green-500/30"
+                      onClick={() => handleChangeEstado(idea, 'prueba_aprobada')}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-medium hover:bg-emerald-500/30"
                     >
                       <span className="material-symbols-outlined text-sm mr-1">check_circle</span>
-                      Aprobar para Pruebas
+                      Aprobar Pruebas
                     </button>
                     <button
                       onClick={() => handleChangeEstado(idea, 'rechazada')}
                       className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
                     >
                       <span className="material-symbols-outlined text-sm mr-1">cancel</span>
-                      Rechazar
+                      Rechazar Pruebas
                     </button>
                   </>
                 )}
-                {idea.estado === 'APROBADA' && (
-                  <button
-                    onClick={() => handleChangeEstado(idea, 'en_prueba')}
-                    className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30"
-                  >
-                    <span className="material-symbols-outlined text-sm mr-1">science</span>
-                    Enviar a Pruebas
-                  </button>
-                )}
-                {idea.estado === 'PRUEBA_APROBADA' && (
-          <button
-                    onClick={() => handleChangeEstado(idea, 'en_produccion')}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 text-sm font-medium hover:bg-indigo-500/30"
-          >
-                    <span className="material-symbols-outlined text-sm mr-1">precision_manufacturing</span>
-                    Enviar a Producción
-          </button>
+              </div>
+          </div>
+          ))}
+          </div>
+      )}
+
+      {/* Diálogo de selección de analista */}
+      {showAnalystDialog && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAnalystDialog(false)
+              setSelectedIdea(null)
+              setSelectedAnalistaId(null)
+            }
+          }}
+        >
+          <div className="bg-card-dark rounded-lg border border-border-dark max-w-md w-full shadow-xl">
+            <div className="p-6">
+              {/* Título */}
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/20">
+                  <span className="material-symbols-outlined text-2xl text-purple-400">science</span>
+            </div>
+                <div className="flex-1">
+                  <h3 className="text-text-light text-lg font-semibold mb-1">
+                    Asignar Analista
+                  </h3>
+                  <p className="text-text-muted text-sm">
+                    Selecciona el analista de laboratorio que realizará las pruebas de esta idea.
+                  </p>
+            </div>
+          </div>
+
+              {/* Lista de analistas */}
+              <div className="mb-4">
+                {loadingAnalistas ? (
+                  <div className="text-center py-4">
+                    <p className="text-text-muted text-sm">Cargando analistas...</p>
+                  </div>
+                ) : analistas.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-text-muted text-sm">No hay analistas disponibles</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {analistas.map((analista) => (
+                      <label
+                        key={analista.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedAnalistaId === analista.id
+                            ? 'bg-purple-500/20 border-purple-500/50'
+                            : 'bg-input-dark border-border-dark hover:bg-border-dark'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="analista"
+                          value={analista.id}
+                          checked={selectedAnalistaId === analista.id}
+                          onChange={(e) => setSelectedAnalistaId(parseInt(e.target.value))}
+                          className="w-4 h-4 text-purple-500"
+                        />
+                        <div className="flex-1">
+                          <p className="text-text-light font-medium">{analista.nombre}</p>
+                          <p className="text-text-muted text-xs">{analista.email}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                 )}
               </div>
+
+              {/* Botones */}
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  onClick={() => {
+                    setShowAnalystDialog(false)
+                    setSelectedIdea(null)
+                    setSelectedAnalistaId(null)
+                  }}
+                  className="px-4 py-2 rounded-lg bg-input-dark text-text-light text-sm font-medium hover:bg-border-dark transition-colors"
+                >
+                  Cancelar
+                </button>
+          <button
+                  onClick={handleAssignToAnalyst}
+                  disabled={!selectedAnalistaId || loadingAnalistas}
+                  className="px-4 py-2 rounded-lg bg-purple-500 text-white text-sm font-medium hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+                  Asignar y Enviar a Pruebas
+          </button>
+              </div>
             </div>
-          ))}
       </div>
+        </div>
       )}
     </div>
   )
 }
 
 export default Ideas
+

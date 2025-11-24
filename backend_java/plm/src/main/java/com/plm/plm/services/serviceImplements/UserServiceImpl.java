@@ -4,6 +4,7 @@ import com.plm.plm.Config.Exception.BadRequestException;
 import com.plm.plm.Config.Exception.DuplicateResourceException;
 import com.plm.plm.Config.exception.ResourceNotFoundException;
 import com.plm.plm.Enums.EstadoUsuario;
+import com.plm.plm.Enums.Rol;
 import com.plm.plm.Models.User;
 import com.plm.plm.Reposotory.UserRepository;
 import com.plm.plm.dto.UserDTO;
@@ -71,6 +72,12 @@ public class UserServiceImpl implements UserService {
                 .getDTO();
     }
 
+    @Override
+    public List<UserDTO> getUsersByRol(Rol rol) {
+        return userRepository.findByRolAndEstado(rol, EstadoUsuario.ACTIVO).stream()
+                .map(User::getDTO)
+                .toList();
+    }
 
 }
 

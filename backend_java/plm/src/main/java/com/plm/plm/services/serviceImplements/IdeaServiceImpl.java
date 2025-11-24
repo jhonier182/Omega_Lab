@@ -130,7 +130,7 @@ public class IdeaServiceImpl implements IdeaService {
 
     @Override
     @Transactional
-    public IdeaDTO changeEstado(Integer id, EstadoIdea nuevoEstado, Integer userId) {
+    public IdeaDTO changeEstado(Integer id, EstadoIdea nuevoEstado, Integer userId, Integer analistaId) {
         Idea idea = ideaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Idea no encontrada"));
 
@@ -150,19 +150,37 @@ public class IdeaServiceImpl implements IdeaService {
             idea.setApprovedAt(LocalDateTime.now());
         }
 
+        // Si se envía a pruebas, asignar analista
+        if (nuevoEstado == EstadoIdea.EN_PRUEBA) {
+            if (analistaId == null) {
+                throw new BadRequestException("Se debe asignar un analista al enviar la idea a pruebas");
+            }
+            User analista = userRepository.findById(analistaId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Analista no encontrado"));
+            idea.setAsignadoA(analista);
+        }
+
         return ideaRepository.save(idea).getDTO();
     }
 
     @Override
     @Transactional
     public IdeaDTO approveIdea(Integer id, Integer userId) {
-        return changeEstado(id, EstadoIdea.APROBADA, userId);
+        return changeEstado(id, EstadoIdea.APROBADA, userId, null);
     }
 
     @Override
     @Transactional
     public IdeaDTO rejectIdea(Integer id, Integer userId) {
-        return changeEstado(id, EstadoIdea.RECHAZADA, userId);
+        return changeEstado(id, EstadoIdea.RECHAZADA, userId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IdeaDTO> getIdeasAsignadas(Integer userId) {
+        return ideaRepository.findByAsignadoAId(userId).stream()
+                .map(Idea::getDTO)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     private void validateIdeaData(IdeaDTO ideaDTO) {

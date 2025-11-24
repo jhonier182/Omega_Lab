@@ -20,6 +20,10 @@ public interface IdeaRepository extends JpaRepository<Idea, Integer> {
     
     List<Idea> findByCreadorId(Integer creadorId);
     
+    List<Idea> findByAsignadoAId(Integer asignadoAId);
+    
+    List<Idea> findByAsignadoAIdAndEstado(Integer asignadoAId, EstadoIdea estado);
+    
     @Query("SELECT i FROM Idea i WHERE " +
            "(:estado IS NULL OR i.estado = :estado) AND " +
            "(:categoria IS NULL OR i.categoria = :categoria) AND " +

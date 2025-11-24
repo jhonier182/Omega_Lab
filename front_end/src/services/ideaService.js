@@ -70,9 +70,31 @@ class IdeaService {
     }
   }
 
-  async changeEstado(id, nuevoEstado) {
+  async getAnalistas() {
     try {
-      const response = await api.post(`/ideas/${id}/change-estado?nuevoEstado=${nuevoEstado}`);
+      const response = await api.get('/ideas/analistas');
+      return response.data.data.analistas || [];
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getMisIdeas() {
+    try {
+      const response = await api.get('/ideas/mis-ideas');
+      return response.data.data.ideas || [];
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async changeEstado(id, nuevoEstado, analistaId = null) {
+    try {
+      let url = `/ideas/${id}/change-estado?nuevoEstado=${nuevoEstado}`;
+      if (analistaId) {
+        url += `&analistaId=${analistaId}`;
+      }
+      const response = await api.post(url);
       return response.data.data.idea;
     } catch (error) {
       throw this.handleError(error);
