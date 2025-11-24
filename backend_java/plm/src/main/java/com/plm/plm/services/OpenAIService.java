@@ -16,7 +16,7 @@ import java.util.Map;
 @Service
 public class OpenAIService {
 
-    @Value("${openai.api.key}")
+    @Value("${openai.api.key:}")
     private String apiKey;
 
     private final RestTemplate restTemplate;
@@ -106,7 +106,14 @@ public class OpenAIService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(apiKey);
             
-            System.out.println("API Key configurada: " + (apiKey != null && !apiKey.isEmpty() ? "Sí (longitud: " + apiKey.length() + ")" : "NO"));
+            if (apiKey == null || apiKey.isEmpty()) {
+                System.err.println("==========================================");
+                System.err.println("ERROR: API Key de OpenAI no configurada");
+                System.err.println("==========================================");
+                System.err.println("Configura la variable de entorno OPENAI_API_KEY o crea application-local.properties");
+                throw new RuntimeException("API Key de OpenAI no configurada. Configura OPENAI_API_KEY como variable de entorno.");
+            }
+            System.out.println("API Key configurada: Sí (longitud: " + apiKey.length() + ")");
             System.out.println("URL de API: " + OPENAI_API_URL);
             System.out.println("Enviando solicitud a OpenAI...");
 
