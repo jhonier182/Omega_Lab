@@ -113,3 +113,31 @@ CREATE TABLE IF NOT EXISTS bom_items (
     CONSTRAINT fk_bom_item_material FOREIGN KEY (material_id) REFERENCES materiales(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de ideas
+CREATE TABLE IF NOT EXISTS ideas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    categoria VARCHAR(100),
+    prioridad VARCHAR(20),
+    objetivo TEXT,
+    producto_origen_id INT,
+    asignado_a INT,
+    estado ENUM('generada', 'en_revision', 'aprobada', 'en_prueba', 'prueba_aprobada', 'rechazada', 'en_produccion') DEFAULT 'generada',
+    created_by INT,
+    approved_by INT,
+    approved_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_estado (estado),
+    INDEX idx_categoria (categoria),
+    INDEX idx_prioridad (prioridad),
+    INDEX idx_created_by (created_by),
+    INDEX idx_producto_origen_id (producto_origen_id),
+    INDEX idx_asignado_a (asignado_a),
+    CONSTRAINT fk_idea_creador FOREIGN KEY (created_by) REFERENCES usuarios(id) ON DELETE SET NULL,
+    CONSTRAINT fk_idea_aprobador FOREIGN KEY (approved_by) REFERENCES usuarios(id) ON DELETE SET NULL,
+    CONSTRAINT fk_idea_producto_origen FOREIGN KEY (producto_origen_id) REFERENCES productos(id) ON DELETE SET NULL,
+    CONSTRAINT fk_idea_asignado FOREIGN KEY (asignado_a) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

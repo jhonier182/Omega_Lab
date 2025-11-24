@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getRoleName } from '../utils/rolePermissions'
+import { getRoleName, hasAnyRole } from '../utils/rolePermissions'
 
 const Sidebar = ({ isOpen, onToggle, currentPath }) => {
   const navigate = useNavigate()
@@ -11,18 +11,25 @@ const Sidebar = ({ isOpen, onToggle, currentPath }) => {
     navigate('/login')
   }
 
-  const modules = [
-    { key: 'dashboard', name: 'Dashboard', icon: 'dashboard', path: '/' },
-    { key: 'ideas', name: 'Ideas / Research', icon: 'lightbulb', path: '/ideas' },
-    { key: 'inventario', name: 'Inventario', icon: 'inventory_2', path: '/inventario' },
-    { key: 'ia', name: 'IA / Simulación', icon: 'psychology', path: '/ia' },
-    { key: 'produccion', name: 'Producción / Proceso', icon: 'precision_manufacturing', path: '/produccion' },
-    { key: 'pruebas', name: 'Pruebas / C. Calidad', icon: 'biotech', path: '/pruebas' },
-    { key: 'aprobacion', name: 'Aprobación / QA', icon: 'verified', path: '/aprobacion' },
-    { key: 'trazabilidad', name: 'Trazabilidad Lote', icon: 'timeline', path: '/trazabilidad' },
-    { key: 'conocimiento', name: 'Base de Conocimiento', icon: 'menu_book', path: '/conocimiento' },
-    { key: 'configuracion', name: 'Configuración', icon: 'settings', path: '/configuracion' }
+  // Todos los módulos disponibles
+  const allModules = [
+    { key: 'dashboard', name: 'Dashboard', icon: 'dashboard', path: '/', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'SUPERVISOR_CALIDAD', 'ANALISTA_LABORATORIO'] },
+    { key: 'ideas', name: 'Ideas', icon: 'lightbulb', path: '/ideas', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA'] },
+    { key: 'inventario', name: 'Inventario', icon: 'inventory_2', path: '/inventario', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'SUPERVISOR_CALIDAD'] },
+    { key: 'ia', name: 'IA / Simulación', icon: 'psychology', path: '/ia', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'ANALISTA_LABORATORIO'] },
+    { key: 'produccion', name: 'Producción / Proceso', icon: 'precision_manufacturing', path: '/produccion', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'ANALISTA_LABORATORIO'] },
+    { key: 'pruebas', name: 'Pruebas / C. Calidad', icon: 'biotech', path: '/pruebas', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'SUPERVISOR_CALIDAD', 'ANALISTA_LABORATORIO'] },
+    { key: 'aprobacion', name: 'Aprobación / QA', icon: 'verified', path: '/aprobacion', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'SUPERVISOR_CALIDAD'] },
+    { key: 'trazabilidad', name: 'Trazabilidad Lote', icon: 'timeline', path: '/trazabilidad', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'SUPERVISOR_CALIDAD'] },
+    { key: 'conocimiento', name: 'Base de Conocimiento', icon: 'menu_book', path: '/conocimiento', roles: ['ADMINISTRADOR', 'SUPERVISOR_QA', 'SUPERVISOR_CALIDAD'] },
+    { key: 'configuracion', name: 'Configuración', icon: 'settings', path: '/configuracion', roles: ['ADMINISTRADOR'] }
   ]
+
+  // Filtrar módulos según el rol del usuario
+  const modules = user ? allModules.filter(module => {
+    if (!module.roles || module.roles.length === 0) return true
+    return module.roles.some(role => hasAnyRole(user, role))
+  }) : []
 
   const isActive = (path) => {
     if (path === '/') {

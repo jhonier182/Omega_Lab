@@ -198,10 +198,21 @@ public class GlobalExceptionHandler {
         
         // Log del error completo para debugging (en producción usar un logger)
         ex.printStackTrace();
+        System.err.println("Error en: " + request.getRequestURI());
+        System.err.println("Mensaje: " + ex.getMessage());
+        if (ex.getCause() != null) {
+            System.err.println("Causa: " + ex.getCause().getMessage());
+        }
+        
+        // En desarrollo, mostrar más detalles del error
+        String message = "Error interno del servidor. Por favor, contacte al administrador.";
+        if (ex.getMessage() != null && !ex.getMessage().isEmpty()) {
+            message += " Detalle: " + ex.getMessage();
+        }
         
         ErrorResponseDTO errorResponse = ErrorResponseDTO.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("Error interno del servidor. Por favor, contacte al administrador.")
+                .message(message)
                 .timestamp(LocalDateTime.now())
                 .path(request.getRequestURI())
                 .error("Internal Server Error")

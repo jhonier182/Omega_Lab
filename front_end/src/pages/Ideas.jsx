@@ -1,37 +1,106 @@
-import { useState } from 'react'
-import axios from 'axios'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { hasAnyRole } from '../utils/rolePermissions'
+import ideaService from '../services/ideaService'
 
 const Ideas = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchType, setSearchType] = useState('name')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
+  const [ideas, setIdeas] = useState([])
+  const [loadingIdeas, setLoadingIdeas] = useState(false)
+  const [filters, setFilters] = useState({
+    estado: '',
+    categoria: '',
+    prioridad: '',
+    search: ''
+  })
 
-  const searchDatabases = async () => {
-    if (!searchQuery.trim()) return
+  // Verificar que solo Supervisor QA y Administrador puedan acceder
+  if (!user || (!hasAnyRole(user, 'SUPERVISOR_QA') && !hasAnyRole(user, 'ADMINISTRADOR'))) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center">
+          <span className="material-symbols-outlined text-6xl text-danger mb-4">lock</span>
+          <p className="text-text-light text-lg font-semibold mb-2">Acceso Restringido</p>
+          <p className="text-text-muted text-sm">Solo Supervisor QA y Administrador pueden acceder a Ideas / Research</p>
+        </div>
+      </div>
+    )
+  }
 
-    setLoading(true)
+  useEffect(() => {
+    loadIdeas()
+  }, [filters])
+
+  const loadIdeas = async () => {
+    setLoadingIdeas(true)
     try {
-      // Simulación de búsqueda en APIs moleculares
-      // En producción, esto se conectaría a PubChem, ChEMBL, DrugBank, ZINC
-      const mockResults = [
-        {
-          name: 'Colecalciferol',
-          formula: 'C27H44O',
-          molecularWeight: '384.64 g/mol',
-          source: 'PubChem',
-          properties: {
-            logP: '8.5',
-            solubility: 'Insoluble en agua',
-            bioactivity: 'Vitamina D3 - Metabolismo del calcio'
-          }
-        }
-      ]
-      setResults(mockResults)
+      const data = await ideaService.getIdeas(filters)
+      setIdeas(data)
     } catch (error) {
-      console.error('Error en búsqueda:', error)
+      console.error('Error al cargar ideas:', error)
     } finally {
-      setLoading(false)
+      setLoadingIdeas(false)
+    }
+  }
+
+  const handleChangeEstado = async (idea, nuevoEstado) => {
+    try {
+      await ideaService.changeEstado(idea.id, nuevoEstado)
+      loadIdeas()
+    } catch (error) {
+      console.error('Error al cambiar estado:', error)
+    }
+  }
+
+  const handleAssignToAnalyst = async (idea, analystId) => {
+    try {
+      // TODO: Implementar asignación a analista
+      await ideaService.changeEstado(idea.id, 'en_prueba')
+      loadIdeas()
+    } catch (error) {
+      console.error('Error al asignar a analista:', error)
+    }
+  }
+
+  const getEstadoColor = (estado) => {
+    switch (estado?.toLowerCase()) {
+      case 'generada':
+        return 'bg-blue-500/20 text-blue-400'
+      case 'en_revision':
+        return 'bg-yellow-500/20 text-yellow-400'
+      case 'aprobada':
+        return 'bg-green-500/20 text-green-400'
+      case 'en_prueba':
+        return 'bg-purple-500/20 text-purple-400'
+      case 'prueba_aprobada':
+        return 'bg-emerald-500/20 text-emerald-400'
+      case 'rechazada':
+        return 'bg-red-500/20 text-red-400'
+      case 'en_produccion':
+        return 'bg-indigo-500/20 text-indigo-400'
+      default:
+        return 'bg-gray-500/20 text-gray-400'
+    }
+  }
+
+  const getEstadoLabel = (estado) => {
+    switch (estado?.toLowerCase()) {
+      case 'generada':
+        return 'Generada'
+      case 'en_revision':
+        return 'En Revisión'
+      case 'aprobada':
+        return 'Aprobada'
+      case 'en_prueba':
+        return 'En Prueba'
+      case 'prueba_aprobada':
+        return 'Prueba Aprobada'
+      case 'rechazada':
+        return 'Rechazada'
+      case 'en_produccion':
+        return 'En Producción'
+      default:
+        return estado
     }
   }
 
@@ -40,140 +109,171 @@ const Ideas = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-text-light text-3xl font-bold tracking-tight">Ideas / Research</h1>
-          <p className="text-text-muted text-sm mt-1">Búsqueda en bases de datos moleculares y registro de nuevos conceptos</p>
+          <p className="text-text-muted text-sm mt-1">Historial de ideas generadas con IA y su estado</p>
+        </div>
+        <div className="text-text-muted text-sm">
+          <span className="material-symbols-outlined text-sm mr-1">info</span>
+          Las ideas se generan en el módulo <strong>IA / Simulación</strong>
         </div>
       </div>
 
-      {/* Búsqueda en APIs Moleculares */}
+      {/* Filtros */}
       <div className="rounded-lg bg-card-dark border border-border-dark p-6 mb-6">
-        <h2 className="text-text-light text-xl font-semibold mb-4">Búsqueda en Bases de Datos Moleculares</h2>
-        
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <select
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
-            className="h-12 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
-          >
-            <option value="name">Por Nombre</option>
-            <option value="formula">Por Fórmula Molecular</option>
-            <option value="structure">Por Estructura</option>
-            <option value="properties">Por Propiedades</option>
-            <option value="bioactivity">Por Actividad Biológica</option>
-          </select>
-
+        <div className="flex flex-wrap gap-4">
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchDatabases()}
-            placeholder="Buscar en PubChem, ChEMBL, DrugBank, ZINC..."
-            className="flex-1 h-12 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
+            placeholder="Buscar ideas..."
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            className="flex-1 min-w-[200px] h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
           />
-
-          <button
-            onClick={searchDatabases}
-            disabled={loading}
-            className="h-12 px-6 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
+          <select
+            value={filters.estado}
+            onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+            className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
           >
-            <span className="material-symbols-outlined">search</span>
-            {loading ? 'Buscando...' : 'Buscar'}
-          </button>
-        </div>
-
-        <div className="flex gap-2 text-xs text-text-muted">
-          <span className="px-2 py-1 rounded bg-primary/10">PubChem</span>
-          <span className="px-2 py-1 rounded bg-primary/10">ChEMBL</span>
-          <span className="px-2 py-1 rounded bg-primary/10">DrugBank</span>
-          <span className="px-2 py-1 rounded bg-primary/10">ZINC</span>
+            <option value="">Todos los estados</option>
+            <option value="generada">Generada</option>
+            <option value="en_revision">En Revisión</option>
+            <option value="aprobada">Aprobada</option>
+            <option value="en_prueba">En Prueba</option>
+            <option value="prueba_aprobada">Prueba Aprobada</option>
+            <option value="rechazada">Rechazada</option>
+            <option value="en_produccion">En Producción</option>
+          </select>
+          <select
+            value={filters.categoria}
+            onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
+            className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="">Todas las categorías</option>
+            <option value="Nutracéutico">Nutracéutico</option>
+            <option value="Suplemento Dietario">Suplemento Dietario</option>
+            <option value="Ingrediente Funcional">Ingrediente Funcional</option>
+          </select>
         </div>
       </div>
 
-      {/* Resultados */}
-      {results.length > 0 && (
-        <div className="rounded-lg bg-card-dark border border-border-dark p-6 mb-6">
-          <h3 className="text-text-light text-lg font-semibold mb-4">Resultados de Búsqueda</h3>
-          <div className="space-y-4">
-            {results.map((result, index) => (
-              <div key={index} className="p-4 rounded-lg bg-input-dark border border-border-dark">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h4 className="text-text-light font-semibold">{result.name}</h4>
-                    <p className="text-text-muted text-sm">{result.formula} - {result.molecularWeight}</p>
+      {/* Lista de Ideas */}
+      {loadingIdeas ? (
+        <div className="flex items-center justify-center py-8">
+          <span className="material-symbols-outlined animate-spin text-primary">sync</span>
+          <p className="text-text-muted ml-2">Cargando ideas...</p>
+        </div>
+      ) : ideas.length === 0 ? (
+        <div className="text-center py-12 rounded-lg bg-card-dark border border-border-dark">
+          <span className="material-symbols-outlined text-6xl text-text-muted mb-4">lightbulb_outline</span>
+          <p className="text-text-light text-lg font-semibold mb-2">No hay ideas registradas</p>
+          <p className="text-text-muted text-sm">
+            Ve al módulo <strong>IA / Simulación</strong> para generar nuevas ideas desde productos del inventario
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {ideas.map((idea) => (
+            <div key={idea.id} className="p-6 rounded-lg bg-card-dark border border-border-dark">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-text-light font-semibold text-lg">{idea.titulo}</h3>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getEstadoColor(idea.estado)}`}>
+                      {getEstadoLabel(idea.estado)}
+                    </span>
                   </div>
-                  <span className="px-2 py-1 rounded bg-primary/20 text-primary text-xs">{result.source}</span>
+                  
+                  <p className="text-text-muted text-sm mb-3">{idea.descripcion}</p>
+                  
+                  {idea.objetivo && (
+                    <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                      <p className="text-text-muted text-xs mb-1">Objetivo:</p>
+                      <p className="text-text-light text-sm font-medium">{idea.objetivo}</p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-4 text-xs text-text-muted">
+                    {idea.productoOrigenNombre && (
+                      <span>
+                        <span className="material-symbols-outlined text-xs mr-1">inventory_2</span>
+                        Producto origen: {idea.productoOrigenNombre}
+                      </span>
+                    )}
+                    <span>Categoría: {idea.categoria || 'N/A'}</span>
+                    <span>Creado por: {idea.createdByName || 'N/A'}</span>
+                    <span>Creado: {idea.createdAt ? new Date(idea.createdAt).toLocaleDateString('es-ES') : 'N/A'}</span>
+                    {idea.asignadoANombre && (
+                      <span>
+                        <span className="material-symbols-outlined text-xs mr-1">person</span>
+                        Asignado a: {idea.asignadoANombre}
+                      </span>
+                    )}
+                    {idea.approvedByName && (
+                      <span>Aprobado por: {idea.approvedByName}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <p className="text-text-muted text-xs mb-1">LogP</p>
-                    <p className="text-text-light">{result.properties.logP}</p>
-                  </div>
-                  <div>
-                    <p className="text-text-muted text-xs mb-1">Solubilidad</p>
-                    <p className="text-text-light">{result.properties.solubility}</p>
-                  </div>
-                  <div>
-                    <p className="text-text-muted text-xs mb-1">Bioactividad</p>
-                    <p className="text-text-light">{result.properties.bioactivity}</p>
-                  </div>
-                </div>
-                <button className="mt-4 px-4 py-2 rounded-lg bg-primary/20 text-primary text-sm font-medium hover:bg-primary/30">
-                  Agregar a Ideas
-                </button>
               </div>
-            ))}
-          </div>
+
+              {/* Acciones según estado */}
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-dark">
+                {idea.estado === 'GENERADA' && (
+                  <>
+                    <button
+                      onClick={() => handleChangeEstado(idea, 'en_revision')}
+                      className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30"
+                    >
+                      Enviar a Revisión
+                    </button>
+                    <button
+                      onClick={() => handleChangeEstado(idea, 'rechazada')}
+                      className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
+                    >
+                      Rechazar
+                    </button>
+                  </>
+                )}
+                {idea.estado === 'EN_REVISION' && (
+                  <>
+                    <button
+                      onClick={() => handleChangeEstado(idea, 'aprobada')}
+                      className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-sm font-medium hover:bg-green-500/30"
+                    >
+                      <span className="material-symbols-outlined text-sm mr-1">check_circle</span>
+                      Aprobar para Pruebas
+                    </button>
+                    <button
+                      onClick={() => handleChangeEstado(idea, 'rechazada')}
+                      className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
+                    >
+                      <span className="material-symbols-outlined text-sm mr-1">cancel</span>
+                      Rechazar
+                    </button>
+                  </>
+                )}
+                {idea.estado === 'APROBADA' && (
+                  <button
+                    onClick={() => handleChangeEstado(idea, 'en_prueba')}
+                    className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30"
+                  >
+                    <span className="material-symbols-outlined text-sm mr-1">science</span>
+                    Enviar a Pruebas
+                  </button>
+                )}
+                {idea.estado === 'PRUEBA_APROBADA' && (
+                  <button
+                    onClick={() => handleChangeEstado(idea, 'en_produccion')}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 text-sm font-medium hover:bg-indigo-500/30"
+                  >
+                    <span className="material-symbols-outlined text-sm mr-1">precision_manufacturing</span>
+                    Enviar a Producción
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
-
-      {/* Registro de Nuevas Ideas */}
-      <div className="rounded-lg bg-card-dark border border-border-dark p-6">
-        <h2 className="text-text-light text-xl font-semibold mb-4">Registro de Nuevas Ideas</h2>
-        <form className="space-y-4">
-          <div>
-            <label className="block text-text-light text-sm font-medium mb-2">Título de la Idea</label>
-            <input
-              type="text"
-              className="w-full h-12 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-              placeholder="Ej: Nuevo suplemento con sinergia de ingredientes..."
-            />
-          </div>
-          <div>
-            <label className="block text-text-light text-sm font-medium mb-2">Descripción</label>
-            <textarea
-              rows={4}
-              className="w-full px-4 py-3 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-              placeholder="Describe la idea, objetivos, ingredientes potenciales..."
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-text-light text-sm font-medium mb-2">Categoría</label>
-              <select className="w-full h-12 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50">
-                <option>Nutracéutico</option>
-                <option>Suplemento Dietario</option>
-                <option>Ingrediente Funcional</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-text-light text-sm font-medium mb-2">Prioridad</label>
-              <select className="w-full h-12 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50">
-                <option>Alta</option>
-                <option>Media</option>
-                <option>Baja</option>
-              </select>
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="w-full md:w-auto px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90"
-          >
-            Guardar Idea
-          </button>
-        </form>
-      </div>
     </div>
   )
 }
 
 export default Ideas
-

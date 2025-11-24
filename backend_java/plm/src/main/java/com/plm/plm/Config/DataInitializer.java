@@ -18,6 +18,7 @@ import com.plm.plm.Reposotory.ProductRepository;
 import com.plm.plm.Reposotory.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -50,13 +51,128 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Override
     public void run(String... args) throws Exception {
+        updateIdeasTableSchema();
         initializeUsers();
         initializeCategories();
         initializeMaterials();
         initializeProducts();
         initializeBOMs();
+    }
+
+    /**
+     * Actualiza la estructura de la tabla ideas si es necesario
+     */
+    private void updateIdeasTableSchema() {
+        try {
+            System.out.println("Verificando y actualizando estructura de la tabla ideas...");
+            
+            // Verificar si la tabla existe
+            String checkTable = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'ideas'";
+            Integer tableExists = jdbcTemplate.queryForObject(checkTable, Integer.class);
+            
+            if (tableExists == null || tableExists == 0) {
+                System.out.println("La tabla ideas no existe. Se creará automáticamente por JPA.");
+                return;
+            }
+
+            // Verificar si la columna objetivo existe
+            String checkObjetivo = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'objetivo'";
+            Integer objetivoExists = jdbcTemplate.queryForObject(checkObjetivo, Integer.class);
+            
+            if (objetivoExists == null || objetivoExists == 0) {
+                System.out.println("Agregando columna 'objetivo' a la tabla ideas...");
+                jdbcTemplate.execute("ALTER TABLE ideas ADD COLUMN objetivo TEXT AFTER prioridad");
+                System.out.println("Columna 'objetivo' agregada exitosamente");
+            }
+
+            // Verificar si la columna producto_origen_id existe
+            String checkProductoOrigen = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'producto_origen_id'";
+            Integer productoOrigenExists = jdbcTemplate.queryForObject(checkProductoOrigen, Integer.class);
+            
+            if (productoOrigenExists == null || productoOrigenExists == 0) {
+                System.out.println("Agregando columna 'producto_origen_id' a la tabla ideas...");
+                jdbcTemplate.execute("ALTER TABLE ideas ADD COLUMN producto_origen_id INT AFTER objetivo");
+                System.out.println("Columna 'producto_origen_id' agregada exitosamente");
+            }
+
+            // Verificar si la columna asignado_a existe
+            String checkAsignadoA = "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'asignado_a'";
+            Integer asignadoAExists = jdbcTemplate.queryForObject(checkAsignadoA, Integer.class);
+            
+            if (asignadoAExists == null || asignadoAExists == 0) {
+                System.out.println("Agregando columna 'asignado_a' a la tabla ideas...");
+                jdbcTemplate.execute("ALTER TABLE ideas ADD COLUMN asignado_a INT AFTER producto_origen_id");
+                System.out.println("Columna 'asignado_a' agregada exitosamente");
+            }
+
+            // Verificar y actualizar el ENUM de estado
+            try {
+                String checkEstado = "SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'ideas' AND column_name = 'estado'";
+                String estadoType = jdbcTemplate.queryForObject(checkEstado, String.class);
+                
+                if (estadoType != null && !estadoType.contains("'generada'")) {
+                    System.out.println("Actualizando ENUM de estado en la tabla ideas...");
+                    // MySQL no permite modificar ENUM directamente, necesitamos usar MODIFY
+                    jdbcTemplate.execute("ALTER TABLE ideas MODIFY COLUMN estado ENUM('generada', 'en_revision', 'aprobada', 'en_prueba', 'prueba_aprobada', 'rechazada', 'en_produccion') DEFAULT 'generada'");
+                    System.out.println("ENUM de estado actualizado exitosamente");
+                    
+                    // Actualizar valores antiguos
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'generada' WHERE estado = 'borrador'");
+                    jdbcTemplate.update("UPDATE ideas SET estado = 'en_produccion' WHERE estado = 'convertida'");
+                }
+            } catch (Exception e) {
+                System.out.println("Advertencia: No se pudo actualizar el ENUM de estado: " + e.getMessage());
+            }
+
+            // Verificar y agregar índices
+            try {
+                String checkIndex1 = "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'ideas' AND index_name = 'idx_producto_origen_id'";
+                Integer index1Exists = jdbcTemplate.queryForObject(checkIndex1, Integer.class);
+                if (index1Exists == null || index1Exists == 0) {
+                    System.out.println("Agregando índice 'idx_producto_origen_id'...");
+                    jdbcTemplate.execute("CREATE INDEX idx_producto_origen_id ON ideas(producto_origen_id)");
+                }
+
+                String checkIndex2 = "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'ideas' AND index_name = 'idx_asignado_a'";
+                Integer index2Exists = jdbcTemplate.queryForObject(checkIndex2, Integer.class);
+                if (index2Exists == null || index2Exists == 0) {
+                    System.out.println("Agregando índice 'idx_asignado_a'...");
+                    jdbcTemplate.execute("CREATE INDEX idx_asignado_a ON ideas(asignado_a)");
+                }
+            } catch (Exception e) {
+                System.out.println("Advertencia: No se pudieron crear índices: " + e.getMessage());
+            }
+
+            // Verificar y agregar foreign keys
+            try {
+                String checkFK1 = "SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND constraint_name = 'fk_idea_producto_origen' AND table_name = 'ideas'";
+                Integer fk1Exists = jdbcTemplate.queryForObject(checkFK1, Integer.class);
+                if (fk1Exists == null || fk1Exists == 0) {
+                    System.out.println("Agregando foreign key 'fk_idea_producto_origen'...");
+                    jdbcTemplate.execute("ALTER TABLE ideas ADD CONSTRAINT fk_idea_producto_origen FOREIGN KEY (producto_origen_id) REFERENCES productos(id) ON DELETE SET NULL");
+                }
+
+                String checkFK2 = "SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND constraint_name = 'fk_idea_asignado' AND table_name = 'ideas'";
+                Integer fk2Exists = jdbcTemplate.queryForObject(checkFK2, Integer.class);
+                if (fk2Exists == null || fk2Exists == 0) {
+                    System.out.println("Agregando foreign key 'fk_idea_asignado'...");
+                    jdbcTemplate.execute("ALTER TABLE ideas ADD CONSTRAINT fk_idea_asignado FOREIGN KEY (asignado_a) REFERENCES usuarios(id) ON DELETE SET NULL");
+                }
+            } catch (Exception e) {
+                System.out.println("Advertencia: No se pudieron crear foreign keys (puede que ya existan): " + e.getMessage());
+            }
+
+            System.out.println("Estructura de la tabla ideas verificada y actualizada correctamente.\n");
+        } catch (Exception e) {
+            System.err.println("Error al actualizar la estructura de la tabla ideas: " + e.getMessage());
+            e.printStackTrace();
+            // No lanzar excepción para que la aplicación pueda continuar
+        }
     }
 
     private void initializeUsers() {
