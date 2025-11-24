@@ -8,6 +8,7 @@ import java.util.List;
 public interface CategoryService {
     CategoryDTO createCategory(CategoryDTO categoryDTO);
     List<CategoryDTO> getAllCategories();
+    List<CategoryDTO> getAllCategoriesForAdmin();
     List<CategoryDTO> getCategoriesByTipoProducto(TipoProducto tipoProducto);
     CategoryDTO getCategoryById(Integer id);
     CategoryDTO updateCategory(Integer id, CategoryDTO categoryDTO);

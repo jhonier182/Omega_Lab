@@ -61,6 +61,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<CategoryDTO> getAllCategoriesForAdmin() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(Category::getDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<CategoryDTO> getCategoriesByTipoProducto(TipoProducto tipoProducto) {
         return categoryRepository.findByTipoProductoAndEstado(tipoProducto, EstadoUsuario.ACTIVO)
                 .stream()
@@ -74,10 +83,6 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
         
-        if (category.getEstado() != EstadoUsuario.ACTIVO) {
-            throw new ResourceNotFoundException("Categoría no encontrada");
-        }
-        
         return category.getDTO();
     }
 
@@ -86,6 +91,16 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDTO updateCategory(Integer id, CategoryDTO categoryDTO) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
+
+        // Validar que el nombre no esté duplicado (excluyendo la categoría actual)
+        if (categoryDTO.getNombre() != null && !categoryDTO.getNombre().equals(category.getNombre())) {
+            if (categoryRepository.existsByNombre(categoryDTO.getNombre())) {
+                throw new DuplicateResourceException("La categoría con ese nombre ya existe");
+            }
+        }
+
+        // Validar datos básicos
+        validateCategoryData(categoryDTO.getNombre(), categoryDTO.getTipoProducto());
 
         category.setNombre(categoryDTO.getNombre());
         category.setDescripcion(categoryDTO.getDescripcion() != null ? categoryDTO.getDescripcion() : "");

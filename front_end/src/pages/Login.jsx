@@ -40,7 +40,7 @@ const Login = () => {
           <div className="bg-primary/20 rounded-full size-16 flex items-center justify-center mb-2">
             <span className="material-symbols-outlined text-primary text-4xl">science</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-light">Bienvenido a PROSCIENCE LAB</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-text-light">Bienvenido a OMEGA LAB</h1>
           <p className="text-base text-text-muted">Sistema PLM/LIMS - Accede a tu espacio de trabajo</p>
         </div>
 

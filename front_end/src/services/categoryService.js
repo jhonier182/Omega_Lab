@@ -4,11 +4,14 @@ class CategoryService {
   async getCategories(filters = {}) {
     try {
       const params = new URLSearchParams();
-      if (filters.tipo) params.append('tipo', filters.tipo);
+      if (filters.tipo) params.append('tipoProducto', filters.tipo);
+      if (filters.tipoProducto) params.append('tipoProducto', filters.tipoProducto);
       if (filters.search) params.append('search', filters.search);
+      if (filters.all) params.append('all', 'true');
 
       const response = await api.get(`/categories?${params.toString()}`);
-      return response.data.data.categories;
+      // CategoryController devuelve directamente { categories: [...] } sin envolver en "data"
+      return response.data.categories || [];
     } catch (error) {
       throw this.handleError(error);
     }
@@ -17,7 +20,8 @@ class CategoryService {
   async getCategoryById(id) {
     try {
       const response = await api.get(`/categories/${id}`);
-      return response.data.data.category;
+      // CategoryController devuelve directamente { category: {...} } sin envolver en "data"
+      return response.data.category;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -26,7 +30,8 @@ class CategoryService {
   async createCategory(categoryData) {
     try {
       const response = await api.post('/categories', categoryData);
-      return response.data.data.category;
+      // CategoryController devuelve directamente { category: {...} } sin envolver en "data"
+      return response.data.category;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -35,7 +40,8 @@ class CategoryService {
   async updateCategory(id, categoryData) {
     try {
       const response = await api.put(`/categories/${id}`, categoryData);
-      return response.data.data.category;
+      // CategoryController devuelve directamente { category: {...} } sin envolver en "data"
+      return response.data.category;
     } catch (error) {
       throw this.handleError(error);
     }

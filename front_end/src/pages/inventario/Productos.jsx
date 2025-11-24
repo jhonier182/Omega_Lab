@@ -1,23 +1,34 @@
 import { useState, useEffect } from 'react'
 import productService from '../../services/productService'
 import materialService from '../../services/materialService'
+import categoryService from '../../services/categoryService'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 const Productos = () => {
   const [products, setProducts] = useState([])
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [bom, setBom] = useState(null)
   const [materials, setMaterials] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showAddMaterial, setShowAddMaterial] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    type: 'danger'
+  })
 
   const [newProduct, setNewProduct] = useState({
     codigo: '',
     nombre: '',
     descripcion: '',
     categoria: '',
+    categoriaId: null,
     unidadMedida: 'un'
   })
 
@@ -31,6 +42,7 @@ const Productos = () => {
   useEffect(() => {
     loadProducts()
     loadMaterials()
+    loadCategories()
   }, [searchTerm])
 
   useEffect(() => {
@@ -59,6 +71,48 @@ const Productos = () => {
       setMaterials(data)
     } catch (err) {
       console.error('Error cargando materiales:', err)
+    }
+  }
+
+  const loadCategories = async () => {
+    try {
+      // Primero intentamos cargar todas las categorías
+      const allCategories = await categoryService.getCategories()
+      console.log('Todas las categorías cargadas:', allCategories)
+      console.log('Número de categorías:', allCategories?.length || 0)
+      
+      if (!allCategories || allCategories.length === 0) {
+        console.warn('No se encontraron categorías en la base de datos')
+        setCategories([])
+        return
+      }
+      
+      // Filtrar solo las de tipo PRODUCTO_TERMINADO en el frontend
+      // El tipoProducto puede venir como enum (objeto) o como string
+      const filteredCategories = allCategories.filter(cat => {
+        const tipo = cat.tipoProducto
+        // Puede ser string "PRODUCTO_TERMINADO" o el nombre del enum
+        const tipoStr = typeof tipo === 'string' ? tipo : (tipo?.name || tipo?.toString() || '')
+        return tipoStr === 'PRODUCTO_TERMINADO' || 
+               tipoStr === 'producto_terminado' ||
+               tipoStr.toUpperCase() === 'PRODUCTO_TERMINADO'
+      })
+      
+      console.log('Categorías filtradas (PRODUCTO_TERMINADO):', filteredCategories)
+      console.log('Número de categorías filtradas:', filteredCategories.length)
+      
+      // Si no hay filtradas, mostrar todas para debug
+      if (filteredCategories.length === 0) {
+        console.warn('No se encontraron categorías de tipo PRODUCTO_TERMINADO')
+        console.log('Tipos de categorías encontradas:', allCategories.map(c => ({ nombre: c.nombre, tipo: c.tipoProducto })))
+      }
+      
+      setCategories(filteredCategories)
+    } catch (err) {
+      console.error('Error cargando categorías:', err)
+      console.error('Detalles del error:', err.response?.data || err.message)
+      console.error('Stack:', err.stack)
+      setCategories([])
     }
   }
 
@@ -92,6 +146,7 @@ const Productos = () => {
         nombre: '',
         descripcion: '',
         categoria: '',
+        categoriaId: null,
         unidadMedida: 'un'
       })
     } catch (err) {
@@ -101,21 +156,28 @@ const Productos = () => {
     }
   }
 
-  const handleDeleteProduct = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este producto?')) return
-    try {
-      setLoading(true)
-      await productService.deleteProduct(id)
-      if (selectedProduct?.id === id) {
-        setSelectedProduct(null)
-        setBom(null)
-      }
-      await loadProducts()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  const handleDeleteProduct = (id) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Producto',
+      message: '¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.',
+      onConfirm: async () => {
+        try {
+          setLoading(true)
+          await productService.deleteProduct(id)
+          if (selectedProduct?.id === id) {
+            setSelectedProduct(null)
+            setBom(null)
+          }
+          await loadProducts()
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      type: 'danger'
+    })
   }
 
   const handleCreateBOM = async () => {
@@ -188,18 +250,25 @@ const Productos = () => {
     }
   }
 
-  const handleDeleteMaterial = async (itemId) => {
-    if (!confirm('¿Estás seguro de eliminar este material de la lista?')) return
-    try {
-      setLoading(true)
-      setError('')
-      await productService.deleteBOMItem(itemId)
-      await loadProductBOM(selectedProduct.id)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  const handleDeleteMaterial = (itemId) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Material',
+      message: '¿Estás seguro de eliminar este material de la lista?',
+      onConfirm: async () => {
+        try {
+          setLoading(true)
+          setError('')
+          await productService.deleteBOMItem(itemId)
+          await loadProductBOM(selectedProduct.id)
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      type: 'danger'
+    })
   }
 
   return (
@@ -457,13 +526,33 @@ const Productos = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-text-light text-sm font-medium mb-2">Categoría</label>
-                  <input
-                    type="text"
-                    value={newProduct.categoria}
-                    onChange={(e) => setNewProduct({ ...newProduct, categoria: e.target.value })}
-                    className="w-full h-12 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-                    placeholder="Categoría"
-                  />
+                  <select
+                    value={newProduct.categoriaId || ''}
+                    onChange={(e) => {
+                      const selectedCategory = categories.find(cat => cat.id === parseInt(e.target.value))
+                      setNewProduct({ 
+                        ...newProduct, 
+                        categoriaId: e.target.value ? parseInt(e.target.value) : null,
+                        categoria: selectedCategory ? selectedCategory.nombre : ''
+                      })
+                    }}
+                    className="w-full h-12 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
+                    disabled={categories.length === 0}
+                  >
+                    <option value="">
+                      {categories.length === 0 ? 'Cargando categorías...' : 'Seleccionar categoría...'}
+                    </option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {categories.length === 0 && (
+                    <p className="text-text-muted text-xs mt-1">
+                      No hay categorías disponibles. Crea categorías en la sección de Categorías.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-text-light text-sm font-medium mb-2">Unidad de Medida</label>
@@ -591,6 +680,16 @@ const Productos = () => {
           </div>
         </div>
       )}
+
+      {/* Dialog de confirmación */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm || (() => {})}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+      />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import materialService from '../../services/materialService'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 const MateriaPrima = () => {
   const [materials, setMaterials] = useState([])
@@ -8,6 +9,13 @@ const MateriaPrima = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTipo, setFilterTipo] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    type: 'danger'
+  })
 
   const [newMaterial, setNewMaterial] = useState({
     codigo: '',
@@ -60,17 +68,24 @@ const MateriaPrima = () => {
     }
   }
 
-  const handleDeleteMaterial = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este material?')) return
-    try {
-      setLoading(true)
-      await materialService.deleteMaterial(id)
-      await loadMaterials()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  const handleDeleteMaterial = (id) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Material',
+      message: '¿Estás seguro de eliminar este material? Esta acción no se puede deshacer.',
+      onConfirm: async () => {
+        try {
+          setLoading(true)
+          await materialService.deleteMaterial(id)
+          await loadMaterials()
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      type: 'danger'
+    })
   }
 
   return (
@@ -278,6 +293,16 @@ const MateriaPrima = () => {
           </div>
         </div>
       )}
+
+      {/* Dialog de confirmación */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm || (() => {})}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+      />
     </div>
   )
 }

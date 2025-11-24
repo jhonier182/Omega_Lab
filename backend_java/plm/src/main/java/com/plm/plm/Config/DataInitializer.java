@@ -62,10 +62,10 @@ public class DataInitializer implements CommandLineRunner {
     private void initializeUsers() {
         // Configuración de usuarios para cada rol
         Object[][] usuariosConfig = {
-            {Rol.ADMINISTRADOR, "admin@proscience.com", "admin123", "Administrador"},
-            {Rol.SUPERVISOR_QA, "supervisor.qa@proscience.com", "supervisor123", "Supervisor QA"},
-            {Rol.SUPERVISOR_CALIDAD, "supervisor.calidad@proscience.com", "calidad123", "Supervisor Calidad"},
-            {Rol.ANALISTA_LABORATORIO, "analista.lab@proscience.com", "analista123", "Analista Laboratorio"}
+            {Rol.ADMINISTRADOR, "admin@omegalab.com", "admin123", "Administrador"},
+            {Rol.SUPERVISOR_QA, "supervisor.qa@omegalab.com", "supervisor123", "Supervisor QA"},
+            {Rol.SUPERVISOR_CALIDAD, "supervisor.calidad@omegalab.com", "calidad123", "Supervisor Calidad"},
+            {Rol.ANALISTA_LABORATORIO, "analista.lab@omegalab.com", "analista123", "Analista Laboratorio"}
         };
 
         List<User> usuariosCreados = new ArrayList<>();
@@ -334,7 +334,7 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // Obtener el usuario admin para asignar como creador
-        Optional<User> adminOpt = userRepository.findByEmail("admin@proscience.com");
+        Optional<User> adminOpt = userRepository.findByEmail("admin@omegalab.com");
         User admin = adminOpt.orElse(null);
 
         List<Product> allProducts = productRepository.findAll();

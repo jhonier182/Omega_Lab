@@ -1,7 +1,7 @@
 {
-  "name": "proscience-lab-plm-lims",
+  "name": "omega-lab-plm-lims",
   "version": "1.0.0",
-  "description": "Sistema PLM/LIMS para Proscience Lab - Gestión de calidad y formulación para nutracéuticos",
+  "description": "Sistema PLM/LIMS para Omega Lab - Gestión de calidad y formulación para nutracéuticos",
   "private": true,
   "scripts": {
     "dev": "vite",

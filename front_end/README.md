@@ -1,4 +1,4 @@
-# Proscience Lab - Sistema PLM/LIMS
+# Omega Lab - Sistema PLM/LIMS
 
 Sistema de gestión integral (híbrido PLM/LIMS) para empresa de nutracéuticos y suplementos dietarios, diseñado para cumplir con las Buenas Prácticas de Manufactura (BPM) colombianas según el Decreto 3249 de 2006.
 
@@ -79,5 +79,5 @@ La aplicación está configurada como PWA y puede instalarse en dispositivos mó
 
 ## 📄 Licencia
 
-Propietario - Proscience Lab
+Propietario - Omega Lab
 
