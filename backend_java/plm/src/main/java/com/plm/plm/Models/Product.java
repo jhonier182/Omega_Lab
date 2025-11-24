@@ -1,10 +1,8 @@
 package com.plm.plm.Models;
 
 import com.plm.plm.Enums.EstadoUsuario;
-import com.plm.plm.Enums.TipoProducto;
+import com.plm.plm.dto.ProductDTO;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +18,6 @@ import java.util.List;
 @Table(name = "productos",
     indexes = {
         @Index(name = "idx_codigo", columnList = "codigo"),
-        @Index(name = "idx_tipo", columnList = "tipo"),
         @Index(name = "idx_categoria", columnList = "categoria"),
         @Index(name = "idx_estado", columnList = "estado")
     },
@@ -39,31 +36,26 @@ public class Product {
     private Integer id;
 
     @Column(nullable = false, unique = true, length = 100)
-    @NotBlank(message = "El código del producto es requerido")
     private String codigo;
 
     @Column(nullable = false, length = 255)
-    @NotBlank(message = "El nombre del producto es requerido")
     private String nombre;
 
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id", foreignKey = @ForeignKey(name = "fk_producto_categoria"))
+    private Category categoriaEntity;
+
     @Column(length = 100)
     private String categoria;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    @NotNull(message = "El tipo de producto es requerido")
-    private TipoProducto tipo = TipoProducto.PRODUCTO_TERMINADO;
-
     @Column(name = "unidad_medida", nullable = false, length = 50)
-    @NotBlank(message = "La unidad de medida es requerida")
     private String unidadMedida = "un";
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @NotNull(message = "El estado es requerido")
     private EstadoUsuario estado = EstadoUsuario.ACTIVO;
 
     @CreatedDate
@@ -77,7 +69,24 @@ public class Product {
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BOM> boms = new ArrayList<>();
 
-    @OneToMany(mappedBy = "material", fetch = FetchType.LAZY)
-    private List<BOMItem> usadoEnBOMs = new ArrayList<>();
+    public String getCategoriaNombre() {
+        return categoriaEntity != null ? categoriaEntity.getNombre() : categoria;
+    }
+
+    public ProductDTO getDTO() {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(id);
+        dto.setCodigo(codigo);
+        dto.setNombre(nombre);
+        dto.setDescripcion(descripcion);
+        dto.setCategoria(categoria);
+        dto.setCategoriaId(categoriaEntity != null ? categoriaEntity.getId() : null);
+        dto.setTipo(categoriaEntity != null ? categoriaEntity.getTipoProducto() : null);
+        dto.setUnidadMedida(unidadMedida);
+        dto.setEstado(estado);
+        dto.setCreatedAt(createdAt);
+        dto.setUpdatedAt(updatedAt);
+        return dto;
+    }
 }
 

@@ -1,7 +1,6 @@
 package com.plm.plm.Reposotory;
 
 import com.plm.plm.Enums.EstadoUsuario;
-import com.plm.plm.Enums.TipoProducto;
 import com.plm.plm.Models.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,7 +17,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     
     boolean existsByCodigo(String codigo);
     
-    List<Product> findByTipoAndEstado(TipoProducto tipo, EstadoUsuario estado);
+    boolean existsByNombre(String nombre);
     
     List<Product> findByCategoriaAndEstado(String categoria, EstadoUsuario estado);
     

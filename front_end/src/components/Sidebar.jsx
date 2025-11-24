@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getRoleName } from '../utils/rolePermissions'
 
 const Sidebar = ({ isOpen, onToggle, currentPath }) => {
   const navigate = useNavigate()
@@ -13,7 +14,7 @@ const Sidebar = ({ isOpen, onToggle, currentPath }) => {
   const modules = [
     { key: 'dashboard', name: 'Dashboard', icon: 'dashboard', path: '/' },
     { key: 'ideas', name: 'Ideas / Research', icon: 'lightbulb', path: '/ideas' },
-    { key: 'formulacion', name: 'Formulación', icon: 'science', path: '/formulacion' },
+    { key: 'inventario', name: 'Inventario', icon: 'inventory_2', path: '/inventario' },
     { key: 'ia', name: 'IA / Simulación', icon: 'psychology', path: '/ia' },
     { key: 'produccion', name: 'Producción / Proceso', icon: 'precision_manufacturing', path: '/produccion' },
     { key: 'pruebas', name: 'Pruebas / C. Calidad', icon: 'biotech', path: '/pruebas' },
@@ -70,7 +71,7 @@ const Sidebar = ({ isOpen, onToggle, currentPath }) => {
                 <p className="text-text-light text-sm font-medium truncate">{user.nombre}</p>
                 <p className="text-text-muted text-xs truncate">{user.email}</p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                  {user.rol}
+                  {getRoleName(user.rol)}
                 </span>
               </div>
             )}

@@ -4,7 +4,11 @@ import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
 import Ideas from './pages/Ideas'
-import Formulacion from './pages/Formulacion'
+import Inventario from './pages/inventario/Inventario'
+import Productos from './pages/inventario/Productos'
+import MateriaPrima from './pages/inventario/MateriaPrima'
+import Categorias from './pages/inventario/Categorias'
+import UnidadesMedida from './pages/inventario/UnidadesMedida'
 import IA from './pages/IA'
 import Produccion from './pages/Produccion'
 import Pruebas from './pages/Pruebas'
@@ -30,7 +34,13 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="ideas" element={<Ideas />} />
-            <Route path="formulacion" element={<Formulacion />} />
+            <Route path="inventario" element={<Inventario />}>
+              <Route index element={<Navigate to="productos" replace />} />
+              <Route path="productos" element={<Productos />} />
+              <Route path="materia-prima" element={<MateriaPrima />} />
+              <Route path="categorias" element={<Categorias />} />
+              <Route path="unidades-medida" element={<UnidadesMedida />} />
+            </Route>
             <Route path="ia" element={<IA />} />
             <Route path="produccion" element={<Produccion />} />
             <Route path="pruebas" element={<Pruebas />} />

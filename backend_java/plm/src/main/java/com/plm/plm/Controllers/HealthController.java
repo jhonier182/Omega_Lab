@@ -1,6 +1,5 @@
 package com.plm.plm.Controllers;
 
-import com.plm.plm.DTO.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,11 +14,11 @@ import java.util.Map;
 public class HealthController {
 
     @GetMapping("/health")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> health() {
+    public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> data = new HashMap<>();
         data.put("message", "API funcionando correctamente");
         data.put("timestamp", LocalDateTime.now().toString());
-        return ResponseEntity.ok(ApiResponse.success(data));
+        return ResponseEntity.ok(data);
     }
 }
 

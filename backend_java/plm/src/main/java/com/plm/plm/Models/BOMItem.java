@@ -1,9 +1,7 @@
 package com.plm.plm.Models;
 
+import com.plm.plm.dto.BOMItemDTO;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,35 +31,46 @@ public class BOMItem {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "bom_id", nullable = false, foreignKey = @ForeignKey(name = "fk_bom_item_bom"))
-    @NotNull(message = "El BOM es requerido")
     private BOM bom;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "material_id", nullable = false, foreignKey = @ForeignKey(name = "fk_bom_item_material"))
-    @NotNull(message = "El material es requerido")
-    private Product material;
+    private Material material;
 
     @Column(nullable = false, precision = 15, scale = 4)
-    @NotNull(message = "La cantidad es requerida")
-    @DecimalMin(value = "0.0001", message = "La cantidad debe ser mayor a 0")
     private BigDecimal cantidad;
 
     @Column(nullable = false, length = 50)
-    @NotNull(message = "La unidad es requerida")
     private String unidad = "mg";
 
     @Column(nullable = false, precision = 5, scale = 2)
-    @NotNull(message = "El porcentaje es requerido")
-    @DecimalMin(value = "0.0", message = "El porcentaje no puede ser negativo")
-    @DecimalMax(value = "100.0", message = "El porcentaje no puede ser mayor a 100")
     private BigDecimal porcentaje = BigDecimal.ZERO;
 
     @Column(nullable = false)
-    @NotNull(message = "La secuencia es requerida")
     private Integer secuencia = 0;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public BOMItemDTO getDTO() {
+        BOMItemDTO dto = new BOMItemDTO();
+        dto.setId(id);
+        dto.setBomId(bom != null ? bom.getId() : null);
+        
+        if (material != null) {
+            dto.setMaterialId(material.getId());
+            dto.setMaterialNombre(material.getNombre());
+            dto.setMaterialCodigo(material.getCodigo());
+            dto.setMaterialUnidadMedida(material.getUnidadMedida());
+        }
+        
+        dto.setCantidad(cantidad);
+        dto.setUnidad(unidad);
+        dto.setPorcentaje(porcentaje);
+        dto.setSecuencia(secuencia);
+        dto.setCreatedAt(createdAt);
+        return dto;
+    }
 }
 

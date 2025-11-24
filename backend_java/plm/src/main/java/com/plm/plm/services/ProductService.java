@@ -1,21 +1,23 @@
 package com.plm.plm.services;
 
-import com.plm.plm.DTO.*;
+import com.plm.plm.dto.BOMDTO;
+import com.plm.plm.dto.BOMItemDTO;
+import com.plm.plm.dto.ProductDTO;
 
-
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
 public interface ProductService {
-    ProductResponse createProduct(ProductRequest request);
-    List<ProductResponse> getAllProducts(String tipo, String categoria, String search);
+    ProductDTO createProduct(ProductDTO productDTO);
+    List<ProductDTO> getAllProducts(String tipo, String categoria, String search);
     Map<String, Object> getProductById(Integer id);
-    ProductResponse updateProduct(Integer id, ProductRequest request);
-    BOMResponse createOrUpdateBOM(Integer productoId, BOMRequest request, Integer userId);
-    BOMItemResponse addMaterialToBOM(Integer bomId, BOMItemRequest request);
-    BOMResponse getBOMWithItems(Integer bomId);
-    BOMItemResponse updateBOMItem(Integer itemId, BOMItemRequest request);
+    ProductDTO updateProduct(Integer id, ProductDTO productDTO);
+    BOMDTO createOrUpdateBOM(Integer productoId, String justificacion, Integer userId);
+    BOMItemDTO addMaterialToBOM(Integer bomId, Integer materialId, BigDecimal cantidad, String unidad, BigDecimal porcentaje);
+    BOMDTO getBOMWithItems(Integer bomId);
+    BOMItemDTO updateBOMItem(Integer itemId, Integer materialId, BigDecimal cantidad, String unidad, BigDecimal porcentaje);
     void deleteBOMItem(Integer itemId);
-    BOMHistoryResponse getBOMHistory(Integer productoId);
+    List<BOMDTO> getBOMHistory(Integer productoId);
 }
 

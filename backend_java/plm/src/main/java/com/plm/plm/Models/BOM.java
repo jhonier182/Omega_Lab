@@ -1,9 +1,9 @@
 package com.plm.plm.Models;
 
 import com.plm.plm.Enums.EstadoBOM;
+import com.plm.plm.dto.BOMDTO;
+import com.plm.plm.dto.BOMItemDTO;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "boms",
@@ -38,16 +39,13 @@ public class BOM {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "producto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_bom_producto"))
-    @NotNull(message = "El producto es requerido")
     private Product producto;
 
     @Column(nullable = false, length = 20)
-    @NotBlank(message = "La versión es requerida")
     private String version;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @NotNull(message = "El estado es requerido")
     private EstadoBOM estado = EstadoBOM.BORRADOR;
 
     @Column(columnDefinition = "TEXT")
@@ -75,5 +73,28 @@ public class BOM {
     @OneToMany(mappedBy = "bom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("secuencia ASC")
     private List<BOMItem> items = new ArrayList<>();
+
+    public BOMDTO getDTO() {
+        BOMDTO dto = new BOMDTO();
+        dto.setId(id);
+        dto.setProductoId(producto != null ? producto.getId() : null);
+        dto.setVersion(version);
+        dto.setEstado(estado);
+        dto.setJustificacion(justificacion);
+        dto.setCreatedBy(creador != null ? creador.getId() : null);
+        dto.setApprovedBy(aprobador != null ? aprobador.getId() : null);
+        dto.setApprovedAt(approvedAt);
+        dto.setCreatedAt(createdAt);
+        dto.setUpdatedAt(updatedAt);
+
+        if (items != null) {
+            List<BOMItemDTO> itemsDTO = items.stream()
+                .map(BOMItem::getDTO)
+                .collect(Collectors.toList());
+            dto.setItems(itemsDTO);
+        }
+
+        return dto;
+    }
 }
 
