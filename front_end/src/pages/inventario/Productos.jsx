@@ -22,7 +22,7 @@ const Productos = () => {
   })
 
   const [newMaterial, setNewMaterial] = useState({
-    material_id: '',
+    materialId: '',
     cantidad: '',
     unidad: 'mg',
     porcentaje: ''
@@ -153,8 +153,22 @@ const Productos = () => {
     try {
       setLoading(true)
       setError('')
+      
+      if (!newMaterial.materialId || newMaterial.materialId === '') {
+        setError('Debes seleccionar un material')
+        setLoading(false)
+        return
+      }
+      
+      const materialId = parseInt(newMaterial.materialId)
+      if (isNaN(materialId)) {
+        setError('El ID del material no es válido')
+        setLoading(false)
+        return
+      }
+      
       await productService.addMaterialToBOM(bom.id, {
-        material_id: parseInt(newMaterial.material_id),
+        materialId: materialId,
         cantidad: parseFloat(newMaterial.cantidad),
         unidad: newMaterial.unidad,
         porcentaje: newMaterial.porcentaje ? parseFloat(newMaterial.porcentaje) : 0
@@ -162,7 +176,7 @@ const Productos = () => {
       await loadProductBOM(selectedProduct.id)
       setShowAddMaterial(false)
       setNewMaterial({
-        material_id: '',
+        materialId: '',
         cantidad: '',
         unidad: 'mg',
         porcentaje: ''
@@ -348,8 +362,8 @@ const Productos = () => {
                         {bom.items.map((item) => (
                           <tr key={item.id} className="border-b border-border-dark">
                             <td className="p-3 text-text-light">
-                              {item.material?.nombre || item.material_nombre || `Material ${item.material_id}`}
-                              <p className="text-text-muted text-xs">{item.material?.codigo || item.material_codigo}</p>
+                              {item.materialNombre || item.material?.nombre || `Material ${item.materialId || item.material_id}`}
+                              <p className="text-text-muted text-xs">{item.materialCodigo || item.material?.codigo || ''}</p>
                             </td>
                             <td className="p-3 text-text-light">{item.cantidad}</td>
                             <td className="p-3 text-text-muted">{item.unidad}</td>
@@ -505,8 +519,8 @@ const Productos = () => {
                 <label className="block text-text-light text-sm font-medium mb-2">Material *</label>
                 <select
                   required
-                  value={newMaterial.material_id}
-                  onChange={(e) => setNewMaterial({ ...newMaterial, material_id: e.target.value })}
+                  value={newMaterial.materialId}
+                  onChange={(e) => setNewMaterial({ ...newMaterial, materialId: e.target.value })}
                   className="w-full h-12 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
                 >
                   <option value="">Seleccionar material...</option>
