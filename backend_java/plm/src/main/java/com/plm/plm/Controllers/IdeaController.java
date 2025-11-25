@@ -156,7 +156,7 @@ public class IdeaController {
         IdeaDTO ideaDTO = new IdeaDTO();
         ideaDTO.setProductoOrigenId(productoId);
         ideaDTO.setObjetivo(objetivo);
-        ideaDTO.setCategoria(product.getCategoria() != null ? product.getCategoria() : "Nutracéutico");
+        ideaDTO.setCategoria(product.getCategoriaNombre() != null ? product.getCategoriaNombre() : "Nutracéutico");
         ideaDTO.setPrioridad("Alta");
         
         try {

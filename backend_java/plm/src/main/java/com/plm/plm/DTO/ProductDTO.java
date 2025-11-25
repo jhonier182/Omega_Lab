@@ -16,7 +16,6 @@ public class ProductDTO {
     private String codigo;
     private String nombre;
     private String descripcion;
-    private String categoria;
     private Integer categoriaId;
     private TipoProducto tipo;
     private String unidadMedida;

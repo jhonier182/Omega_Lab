@@ -39,7 +39,6 @@ public class MaterialServiceImpl implements MaterialService {
         material.setCodigo(materialDTO.getCodigo());
         material.setNombre(materialDTO.getNombre());
         material.setDescripcion(materialDTO.getDescripcion() != null ? materialDTO.getDescripcion() : "");
-        material.setCategoria(materialDTO.getCategoria() != null ? materialDTO.getCategoria() : "");
         material.setUnidadMedida(materialDTO.getUnidadMedida() != null ? materialDTO.getUnidadMedida() : "kg");
         material.setEstado(materialDTO.getEstado() != null ? materialDTO.getEstado() : EstadoUsuario.ACTIVO);
 
@@ -66,8 +65,10 @@ public class MaterialServiceImpl implements MaterialService {
     @Override
     @Transactional(readOnly = true)
     public List<MaterialDTO> getMaterialsByCategoria(String categoria) {
-        return materialRepository.findByCategoriaAndEstado(categoria, EstadoUsuario.ACTIVO)
+        return materialRepository.findByEstado(EstadoUsuario.ACTIVO)
                 .stream()
+                .filter(m -> m.getCategoriaEntity() != null && 
+                            m.getCategoriaEntity().getNombre().equalsIgnoreCase(categoria))
                 .map(Material::getDTO)
                 .collect(Collectors.toList());
     }
@@ -94,10 +95,11 @@ public class MaterialServiceImpl implements MaterialService {
         material.setCodigo(materialDTO.getCodigo());
         material.setNombre(materialDTO.getNombre());
         material.setDescripcion(materialDTO.getDescripcion());
-        material.setCategoria(materialDTO.getCategoria());
 
-        Category category = categoryRepository.findById(materialDTO.getCategoriaId()).orElse(null);
-        material.setCategoriaEntity(category);
+        if (materialDTO.getCategoriaId() != null) {
+            Category category = categoryRepository.findById(materialDTO.getCategoriaId()).orElse(null);
+            material.setCategoriaEntity(category);
+        }
 
         material.setUnidadMedida(materialDTO.getUnidadMedida());
         material.setEstado(materialDTO.getEstado());

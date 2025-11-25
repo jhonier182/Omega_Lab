@@ -15,7 +15,6 @@ public class MaterialDTO {
     private String codigo;
     private String nombre;
     private String descripcion;
-    private String categoria;
     private Integer categoriaId;
     private String unidadMedida;
     private EstadoUsuario estado;

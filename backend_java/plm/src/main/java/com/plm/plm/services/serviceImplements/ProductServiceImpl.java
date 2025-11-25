@@ -63,7 +63,6 @@ public class ProductServiceImpl implements ProductService {
         product.setCodigo(productDTO.getCodigo());
         product.setNombre(productDTO.getNombre());
         product.setDescripcion(productDTO.getDescripcion() != null ? productDTO.getDescripcion() : "");
-        product.setCategoria(productDTO.getCategoria() != null ? productDTO.getCategoria() : "");
         product.setUnidadMedida(productDTO.getUnidadMedida() != null ? productDTO.getUnidadMedida() : "un");
         
         if (productDTO.getCategoriaId() != null) {
@@ -100,7 +99,13 @@ public class ProductServiceImpl implements ProductService {
                 EstadoUsuario.ACTIVO
             );
         } else if (categoria != null) {
-            products = productRepository.findByCategoriaAndEstado(categoria, EstadoUsuario.ACTIVO);
+            // Buscar por nombre de categoría a través de la relación
+            products = productRepository.findAll()
+                .stream()
+                .filter(p -> p.getEstado() == EstadoUsuario.ACTIVO && 
+                            p.getCategoriaEntity() != null && 
+                            p.getCategoriaEntity().getNombre().equalsIgnoreCase(categoria))
+                .collect(Collectors.toList());
         } else {
             products = productRepository.findAll()
                 .stream()
@@ -178,10 +183,6 @@ public class ProductServiceImpl implements ProductService {
 
         if (productDTO.getDescripcion() != null) {
             product.setDescripcion(productDTO.getDescripcion());
-        }
-        
-        if (productDTO.getCategoria() != null) {
-            product.setCategoria(productDTO.getCategoria());
         }
         
         if (productDTO.getUnidadMedida() != null && !productDTO.getUnidadMedida().trim().isEmpty()) {

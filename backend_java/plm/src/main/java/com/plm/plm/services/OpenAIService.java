@@ -51,7 +51,7 @@ public class OpenAIService {
             promptBuilder.append("- Nombre: ").append(product.getNombre()).append("\n");
             promptBuilder.append("- Código: ").append(product.getCodigo()).append("\n");
             promptBuilder.append("- Descripción: ").append(product.getDescripcion() != null ? product.getDescripcion() : "Sin descripción").append("\n");
-            promptBuilder.append("- Categoría: ").append(product.getCategoria() != null ? product.getCategoria() : "Sin categoría").append("\n\n");
+            promptBuilder.append("- Categoría: ").append(product.getCategoriaNombre() != null ? product.getCategoriaNombre() : "Sin categoría").append("\n\n");
             promptBuilder.append(bomInfo).append("\n\n");
             promptBuilder.append(inventarioInfo).append("\n\n");
             promptBuilder.append("Objetivo del cliente: ").append(objetivo).append("\n\n");
@@ -220,7 +220,7 @@ public class OpenAIService {
         // Agrupar por categoría
         java.util.Map<String, java.util.List<Material>> porCategoria = new java.util.HashMap<>();
         for (Material material : materialesDisponibles) {
-            String categoria = material.getCategoria() != null ? material.getCategoria() : "Sin categoría";
+            String categoria = material.getCategoriaNombre() != null ? material.getCategoriaNombre() : "Sin categoría";
             porCategoria.computeIfAbsent(categoria, k -> new java.util.ArrayList<>()).add(material);
         }
 

@@ -426,7 +426,6 @@ public class DataInitializer implements CommandLineRunner {
             product.setCodigo("PT-" + String.format("%03d", i + 1));
             product.setNombre(productosTerminados[i]);
             product.setDescripcion(descripcionesPT[i]);
-            product.setCategoria(categoriasPT[i]);
             Category categoriaEntity = categoriasMap.get(categoriasPT[i]);
             if (categoriaEntity != null) {
                 product.setCategoriaEntity(categoriaEntity);
@@ -487,7 +486,6 @@ public class DataInitializer implements CommandLineRunner {
             material.setCodigo("MP-" + String.format("%03d", i + 1));
             material.setNombre(materiasPrimas[i]);
             material.setDescripcion(descripcionesMP[i]);
-            material.setCategoria(categoriasMP[i]);
             Category categoriaEntity = categoriasMap.get(categoriasMP[i]);
             if (categoriaEntity != null) {
                 material.setCategoriaEntity(categoriaEntity);

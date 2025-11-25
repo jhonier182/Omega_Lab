@@ -18,7 +18,7 @@ import java.util.List;
 @Table(name = "productos",
     indexes = {
         @Index(name = "idx_codigo", columnList = "codigo"),
-        @Index(name = "idx_categoria", columnList = "categoria"),
+        @Index(name = "idx_categoria_id", columnList = "categoria_id"),
         @Index(name = "idx_estado", columnList = "estado")
     },
     uniqueConstraints = {
@@ -48,9 +48,6 @@ public class Product {
     @JoinColumn(name = "categoria_id", foreignKey = @ForeignKey(name = "fk_producto_categoria"))
     private Category categoriaEntity;
 
-    @Column(length = 100)
-    private String categoria;
-
     @Column(name = "unidad_medida", nullable = false, length = 50)
     private String unidadMedida = "un";
 
@@ -70,7 +67,7 @@ public class Product {
     private List<BOM> boms = new ArrayList<>();
 
     public String getCategoriaNombre() {
-        return categoriaEntity != null ? categoriaEntity.getNombre() : categoria;
+        return categoriaEntity != null ? categoriaEntity.getNombre() : null;
     }
 
     public ProductDTO getDTO() {
@@ -79,7 +76,6 @@ public class Product {
         dto.setCodigo(codigo);
         dto.setNombre(nombre);
         dto.setDescripcion(descripcion);
-        dto.setCategoria(categoria);
         dto.setCategoriaId(categoriaEntity != null ? categoriaEntity.getId() : null);
         dto.setTipo(categoriaEntity != null ? categoriaEntity.getTipoProducto() : null);
         dto.setUnidadMedida(unidadMedida);
