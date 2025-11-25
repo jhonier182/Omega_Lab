@@ -51,10 +51,6 @@ const Login = () => {
             <span className="text-white text-sm font-medium">OMEGA LAB</span>
           </div>
         </div>
-        <nav className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1a2332]/80 backdrop-blur-sm border border-white/10">
-          <a href="#" className="text-white/80 hover:text-white text-sm font-medium px-3 py-1 transition-colors">Home</a>
-          <a href="#" className="text-white/80 hover:text-white text-sm font-medium px-3 py-1 transition-colors">Docs</a>
-        </nav>
       </header>
 
       {/* Orb Container with Login inside */}
