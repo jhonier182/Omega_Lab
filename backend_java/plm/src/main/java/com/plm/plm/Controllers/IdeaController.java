@@ -10,6 +10,7 @@ import com.plm.plm.Reposotory.BOMItemRepository;
 import com.plm.plm.Reposotory.BOMRepository;
 import com.plm.plm.Reposotory.ProductRepository;
 import com.plm.plm.Reposotory.MaterialRepository;
+import com.plm.plm.Reposotory.CategoryRepository;
 import com.plm.plm.Enums.EstadoUsuario;
 import com.plm.plm.dto.IdeaDTO;
 import com.plm.plm.security.JwtTokenProvider;
@@ -55,6 +56,9 @@ public class IdeaController {
 
     @Autowired
     private MaterialRepository materialRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -134,7 +138,8 @@ public class IdeaController {
             ideaDTO.setTitulo("Nueva fórmula generada por IA - " + objetivo);
             ideaDTO.setDescripcion("Fórmula generada automáticamente por IA basada en el producto seleccionado y el objetivo especificado. " +
                     "Nota: Hubo un problema al procesar con IA, se creó una idea básica.");
-            ideaDTO.setCategoria("Nutracéutico");
+            // Buscar categoría por nombre o usar null si no existe
+            categoryRepository.findByNombre("Nutracéutico").ifPresent(cat -> ideaDTO.setCategoriaId(cat.getId()));
             ideaDTO.setPrioridad("Alta");
             
             IdeaDTO idea = ideaService.createIdea(ideaDTO, userId);
@@ -156,7 +161,12 @@ public class IdeaController {
         IdeaDTO ideaDTO = new IdeaDTO();
         ideaDTO.setProductoOrigenId(productoId);
         ideaDTO.setObjetivo(objetivo);
-        ideaDTO.setCategoria(product.getCategoriaNombre() != null ? product.getCategoriaNombre() : "Nutracéutico");
+        // Si el producto tiene categoría, usar su ID, sino buscar "Nutracéutico"
+        if (product.getCategoriaEntity() != null) {
+            ideaDTO.setCategoriaId(product.getCategoriaEntity().getId());
+        } else {
+            categoryRepository.findByNombre("Nutracéutico").ifPresent(cat -> ideaDTO.setCategoriaId(cat.getId()));
+        }
         ideaDTO.setPrioridad("Alta");
         
         try {
@@ -229,7 +239,20 @@ public class IdeaController {
                 // Si el estado no es válido, se ignora
             }
         }
-        List<IdeaDTO> ideas = ideaService.getAllIdeas(estadoEnum, categoria, prioridad, search);
+        
+        // Convertir categoria (puede ser ID o nombre) a categoriaId
+        Integer categoriaId = null;
+        if (categoria != null && !categoria.trim().isEmpty()) {
+            try {
+                categoriaId = Integer.parseInt(categoria);
+            } catch (NumberFormatException e) {
+                categoriaId = categoryRepository.findByNombre(categoria)
+                        .map(cat -> cat.getId())
+                        .orElse(null);
+            }
+        }
+        
+        List<IdeaDTO> ideas = ideaService.getAllIdeas(estadoEnum, categoriaId, prioridad, search);
         Map<String, Object> response = new HashMap<>();
         Map<String, List<IdeaDTO>> data = new HashMap<>();
         data.put("ideas", ideas);

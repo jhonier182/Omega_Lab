@@ -19,8 +19,6 @@ public interface MaterialRepository extends JpaRepository<Material, Integer> {
     
     List<Material> findByEstado(EstadoUsuario estado);
     
-    List<Material> findByCategoriaAndEstado(String categoria, EstadoUsuario estado);
-    
     @Query("SELECT m FROM Material m WHERE (m.nombre LIKE %:search% OR m.codigo LIKE %:search%) AND m.estado = :estado")
     List<Material> findByNombreOrCodigoContaining(@Param("search") String search, @Param("estado") EstadoUsuario estado);
 }

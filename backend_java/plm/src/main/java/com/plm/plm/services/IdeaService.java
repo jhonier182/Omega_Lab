@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IdeaService {
     IdeaDTO createIdea(IdeaDTO ideaDTO, Integer userId);
-    List<IdeaDTO> getAllIdeas(EstadoIdea estado, String categoria, String prioridad, String search);
+    List<IdeaDTO> getAllIdeas(EstadoIdea estado, Integer categoriaId, String prioridad, String search);
     IdeaDTO getIdeaById(Integer id);
     IdeaDTO updateIdea(Integer id, IdeaDTO ideaDTO);
     void deleteIdea(Integer id);

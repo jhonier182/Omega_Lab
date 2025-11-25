@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS ideas (
     descripcion TEXT,
     detalles_ia LONGTEXT,
     pruebas_requeridas TEXT,
-    categoria VARCHAR(100),
+    categoria_id INT,
     prioridad VARCHAR(20),
     objetivo TEXT,
     producto_origen_id INT,
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS ideas (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_estado (estado),
-    INDEX idx_categoria (categoria),
+    INDEX idx_categoria_id (categoria_id),
     INDEX idx_prioridad (prioridad),
     INDEX idx_created_by (created_by),
     INDEX idx_producto_origen_id (producto_origen_id),
@@ -136,7 +136,8 @@ CREATE TABLE IF NOT EXISTS ideas (
     CONSTRAINT fk_idea_creador FOREIGN KEY (created_by) REFERENCES usuarios(id) ON DELETE SET NULL,
     CONSTRAINT fk_idea_aprobador FOREIGN KEY (approved_by) REFERENCES usuarios(id) ON DELETE SET NULL,
     CONSTRAINT fk_idea_producto_origen FOREIGN KEY (producto_origen_id) REFERENCES productos(id) ON DELETE SET NULL,
-    CONSTRAINT fk_idea_asignado FOREIGN KEY (asignado_a) REFERENCES usuarios(id) ON DELETE SET NULL
+    CONSTRAINT fk_idea_asignado FOREIGN KEY (asignado_a) REFERENCES usuarios(id) ON DELETE SET NULL,
+    CONSTRAINT fk_idea_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de pruebas de laboratorio

@@ -3,6 +3,7 @@ package com.plm.plm.Models;
 import com.plm.plm.Enums.EstadoIdea;
 import com.plm.plm.dto.IdeaDTO;
 import com.plm.plm.Models.Product;
+import com.plm.plm.Models.Category;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @Table(name = "ideas",
     indexes = {
         @Index(name = "idx_estado", columnList = "estado"),
-        @Index(name = "idx_categoria", columnList = "categoria"),
+        @Index(name = "idx_categoria_id", columnList = "categoria_id"),
         @Index(name = "idx_prioridad", columnList = "prioridad"),
         @Index(name = "idx_created_by", columnList = "created_by")
     }
@@ -44,8 +45,9 @@ public class Idea {
     @Column(name = "pruebas_requeridas", columnDefinition = "TEXT")
     private String pruebasRequeridas; // Lista de pruebas requeridas generadas por la IA
 
-    @Column(length = 100)
-    private String categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id", foreignKey = @ForeignKey(name = "fk_idea_categoria"))
+    private Category categoriaEntity;
 
     @Column(length = 20)
     private String prioridad;
@@ -91,7 +93,7 @@ public class Idea {
         dto.setDescripcion(descripcion);
         dto.setDetallesIA(detallesIA);
         dto.setPruebasRequeridas(pruebasRequeridas);
-        dto.setCategoria(categoria);
+        dto.setCategoriaId(categoriaEntity != null ? categoriaEntity.getId() : null);
         dto.setPrioridad(prioridad);
         dto.setObjetivo(objetivo);
         dto.setProductoOrigenId(productoOrigen != null ? productoOrigen.getId() : null);

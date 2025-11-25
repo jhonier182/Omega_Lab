@@ -16,7 +16,7 @@ public class IdeaDTO {
     private String descripcion;
     private String detallesIA; // Respuesta completa de la IA
     private String pruebasRequeridas; // Lista de pruebas requeridas generadas por la IA
-    private String categoria;
+    private Integer categoriaId;
     private String prioridad;
     private String objetivo; // Ej: "quiero crear una proteína para diabéticos"
     private Integer productoOrigenId; // ID del producto del inventario analizado

@@ -6,9 +6,11 @@ import com.plm.plm.Enums.EstadoIdea;
 import com.plm.plm.Models.Idea;
 import com.plm.plm.Models.User;
 import com.plm.plm.Models.Product;
+import com.plm.plm.Models.Category;
 import com.plm.plm.Reposotory.IdeaRepository;
 import com.plm.plm.Reposotory.ProductRepository;
 import com.plm.plm.Reposotory.UserRepository;
+import com.plm.plm.Reposotory.CategoryRepository;
 import com.plm.plm.dto.IdeaDTO;
 import com.plm.plm.services.IdeaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,9 @@ public class IdeaServiceImpl implements IdeaService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     @Override
     @Transactional
     public IdeaDTO createIdea(IdeaDTO ideaDTO, Integer userId) {
@@ -44,36 +49,37 @@ public class IdeaServiceImpl implements IdeaService {
         idea.setDescripcion(ideaDTO.getDescripcion());
         idea.setDetallesIA(ideaDTO.getDetallesIA());
         idea.setPruebasRequeridas(ideaDTO.getPruebasRequeridas());
-        idea.setCategoria(ideaDTO.getCategoria() != null ? ideaDTO.getCategoria() : "Nutracéutico");
+        
+        // Establecer categoría si se proporciona categoriaId
+        if (ideaDTO.getCategoriaId() != null) {
+            Category categoria = categoryRepository.findById(ideaDTO.getCategoriaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
+            idea.setCategoriaEntity(categoria);
+        }
+        
         idea.setPrioridad(ideaDTO.getPrioridad() != null ? ideaDTO.getPrioridad() : "Media");
         idea.setObjetivo(ideaDTO.getObjetivo());
         idea.setEstado(EstadoIdea.GENERADA);
         idea.setCreador(creador);
-
+        
         // Si hay producto origen, establecerlo
         if (ideaDTO.getProductoOrigenId() != null) {
-            try {
-                Product productoOrigen = productRepository.findById(ideaDTO.getProductoOrigenId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Producto origen no encontrado con ID: " + ideaDTO.getProductoOrigenId()));
-                idea.setProductoOrigen(productoOrigen);
-            } catch (Exception e) {
-                throw new BadRequestException("Error al buscar el producto origen: " + e.getMessage());
+            Product productoOrigen = productRepository.findById(ideaDTO.getProductoOrigenId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto origen no encontrado con ID: " + ideaDTO.getProductoOrigenId()));
+            idea.setProductoOrigen(productoOrigen);
+            // Si no hay categoriaId pero el producto tiene categoría, usar la categoría del producto
+            if (ideaDTO.getCategoriaId() == null && productoOrigen.getCategoriaEntity() != null) {
+                idea.setCategoriaEntity(productoOrigen.getCategoriaEntity());
             }
         }
-
-        try {
-            return ideaRepository.save(idea).getDTO();
-        } catch (Exception e) {
-            System.err.println("Error al guardar idea: " + e.getMessage());
-            e.printStackTrace();
-            throw new BadRequestException("Error al guardar la idea. Verifique que la base de datos esté actualizada. Detalle: " + e.getMessage());
-        }
+        
+        return ideaRepository.save(idea).getDTO();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<IdeaDTO> getAllIdeas(EstadoIdea estado, String categoria, String prioridad, String search) {
-        List<Idea> ideas = ideaRepository.findByFilters(estado, categoria, prioridad, search);
+    public List<IdeaDTO> getAllIdeas(EstadoIdea estado, Integer categoriaId, String prioridad, String search) {
+        List<Idea> ideas = ideaRepository.findByFilters(estado, categoriaId, prioridad, search);
         return ideas.stream()
                 .map(Idea::getDTO)
                 .collect(Collectors.toList());
@@ -102,9 +108,14 @@ public class IdeaServiceImpl implements IdeaService {
 
         idea.setTitulo(ideaDTO.getTitulo());
         idea.setDescripcion(ideaDTO.getDescripcion());
-        if (ideaDTO.getCategoria() != null) {
-            idea.setCategoria(ideaDTO.getCategoria());
+        
+        // Actualizar categoría si se proporciona categoriaId
+        if (ideaDTO.getCategoriaId() != null) {
+            Category categoria = categoryRepository.findById(ideaDTO.getCategoriaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
+            idea.setCategoriaEntity(categoria);
         }
+        
         if (ideaDTO.getPrioridad() != null) {
             idea.setPrioridad(ideaDTO.getPrioridad());
         }
@@ -191,22 +202,11 @@ public class IdeaServiceImpl implements IdeaService {
         if (ideaDTO.getDescripcion() == null || ideaDTO.getDescripcion().trim().isEmpty()) {
             throw new BadRequestException("La descripción es requerida");
         }
-        // Objetivo es opcional pero recomendado
-        // ProductoOrigenId es opcional (puede ser null si se crea manualmente)
     }
 
     private boolean isValidTransition(EstadoIdea estadoActual, EstadoIdea nuevoEstado) {
-        // Transiciones válidas del nuevo flujo:
-        // GENERADA -> EN_REVISION, RECHAZADA
-        // EN_REVISION -> APROBADA, RECHAZADA
-        // APROBADA -> EN_PRUEBA, RECHAZADA
-        // EN_PRUEBA -> PRUEBA_APROBADA, RECHAZADA
-        // PRUEBA_APROBADA -> EN_PRODUCCION
-        // RECHAZADA -> (no se puede cambiar)
-        // EN_PRODUCCION -> (no se puede cambiar)
-
         if (estadoActual == EstadoIdea.EN_PRODUCCION || estadoActual == EstadoIdea.RECHAZADA) {
-            return false; // Estados finales
+            return false;
         }
 
         switch (estadoActual) {

@@ -14,7 +14,7 @@ public interface IdeaRepository extends JpaRepository<Idea, Integer> {
     
     List<Idea> findByEstado(EstadoIdea estado);
     
-    List<Idea> findByCategoria(String categoria);
+    List<Idea> findByCategoriaEntityId(Integer categoriaId);
     
     List<Idea> findByPrioridad(String prioridad);
     
@@ -26,13 +26,13 @@ public interface IdeaRepository extends JpaRepository<Idea, Integer> {
     
     @Query("SELECT i FROM Idea i WHERE " +
            "(:estado IS NULL OR i.estado = :estado) AND " +
-           "(:categoria IS NULL OR i.categoria = :categoria) AND " +
+           "(:categoriaId IS NULL OR i.categoriaEntity.id = :categoriaId) AND " +
            "(:prioridad IS NULL OR i.prioridad = :prioridad) AND " +
            "(:search IS NULL OR LOWER(i.titulo) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(i.descripcion) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Idea> findByFilters(
         @Param("estado") EstadoIdea estado,
-        @Param("categoria") String categoria,
+        @Param("categoriaId") Integer categoriaId,
         @Param("prioridad") String prioridad,
         @Param("search") String search
     );
