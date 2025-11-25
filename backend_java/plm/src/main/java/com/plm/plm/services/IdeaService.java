@@ -15,5 +15,6 @@ public interface IdeaService {
     IdeaDTO approveIdea(Integer id, Integer userId);
     IdeaDTO rejectIdea(Integer id, Integer userId);
     List<IdeaDTO> getIdeasAsignadas(Integer userId);
+    IdeaDTO confirmarProduccion(Integer id, Integer supervisorCalidadId, Integer cantidad, Integer userId);
 }
 

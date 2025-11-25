@@ -79,6 +79,24 @@ class IdeaService {
     }
   }
 
+  async getSupervisoresCalidad() {
+    try {
+      const response = await api.get('/ideas/supervisores-calidad');
+      return response.data.data.supervisores || [];
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async confirmarProduccion(id, supervisorCalidadId, cantidad) {
+    try {
+      const response = await api.post(`/ideas/${id}/confirmar-produccion?supervisorCalidadId=${supervisorCalidadId}&cantidad=${cantidad}`);
+      return response.data.data.idea;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async getMisIdeas() {
     try {
       const response = await api.get('/ideas/mis-ideas');

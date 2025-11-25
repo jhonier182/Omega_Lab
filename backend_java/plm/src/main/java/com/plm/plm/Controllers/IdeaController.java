@@ -328,6 +328,16 @@ public class IdeaController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/supervisores-calidad")
+    public ResponseEntity<Map<String, Object>> getSupervisoresCalidad() {
+        List<UserDTO> supervisores = userService.getUsersByRol(Rol.SUPERVISOR_CALIDAD);
+        Map<String, Object> response = new HashMap<>();
+        Map<String, List<UserDTO>> data = new HashMap<>();
+        data.put("supervisores", supervisores);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/mis-ideas")
     public ResponseEntity<Map<String, Object>> getMisIdeas(HttpServletRequest request) {
         Integer userId = getUserIdFromRequest(request);
@@ -348,6 +358,21 @@ public class IdeaController {
         Integer userId = getUserIdFromRequest(request);
         EstadoIdea estadoEnum = EstadoIdea.fromString(nuevoEstado);
         IdeaDTO idea = ideaService.changeEstado(id, estadoEnum, userId, analistaId);
+        Map<String, Object> response = new HashMap<>();
+        Map<String, IdeaDTO> data = new HashMap<>();
+        data.put("idea", idea);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/confirmar-produccion")
+    public ResponseEntity<Map<String, Object>> confirmarProduccion(
+            @PathVariable Integer id,
+            @RequestParam Integer supervisorCalidadId,
+            @RequestParam Integer cantidad,
+            HttpServletRequest request) {
+        Integer userId = getUserIdFromRequest(request);
+        IdeaDTO idea = ideaService.confirmarProduccion(id, supervisorCalidadId, cantidad, userId);
         Map<String, Object> response = new HashMap<>();
         Map<String, IdeaDTO> data = new HashMap<>();
         data.put("idea", idea);

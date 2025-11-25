@@ -188,6 +188,44 @@ public class IdeaServiceImpl implements IdeaService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public IdeaDTO confirmarProduccion(Integer id, Integer supervisorCalidadId, Integer cantidad, Integer userId) {
+        Idea idea = ideaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Idea no encontrada"));
+
+        // Validar que la idea esté en estado PRUEBA_APROBADA
+        if (idea.getEstado() != EstadoIdea.PRUEBA_APROBADA) {
+            throw new BadRequestException("Solo se pueden confirmar para producción las fórmulas que han pasado las pruebas");
+        }
+
+        // Validar que se proporcione un supervisor de calidad
+        if (supervisorCalidadId == null) {
+            throw new BadRequestException("Debe asignar un supervisor de calidad");
+        }
+
+        // Validar que se proporcione una cantidad
+        if (cantidad == null || cantidad <= 0) {
+            throw new BadRequestException("Debe especificar una cantidad válida para producción");
+        }
+
+        // Asignar supervisor de calidad (usando el campo asignadoA)
+        User supervisor = userRepository.findById(supervisorCalidadId)
+                .orElseThrow(() -> new ResourceNotFoundException("Supervisor de calidad no encontrado"));
+        idea.setAsignadoA(supervisor);
+
+        // Cambiar estado a EN_PRODUCCION
+        idea.setEstado(EstadoIdea.EN_PRODUCCION);
+
+        // Registrar aprobador y fecha
+        User aprobador = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        idea.setAprobador(aprobador);
+        idea.setApprovedAt(LocalDateTime.now());
+
+        return ideaRepository.save(idea).getDTO();
+    }
+
     private void validateIdeaData(IdeaDTO ideaDTO) {
         if (ideaDTO.getTitulo() == null || ideaDTO.getTitulo().trim().isEmpty()) {
             throw new BadRequestException("El título de la idea es requerido");
