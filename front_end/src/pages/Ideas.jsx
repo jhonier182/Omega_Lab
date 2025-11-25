@@ -11,6 +11,7 @@ const Ideas = () => {
   const [ideas, setIdeas] = useState([])
   const [loadingIdeas, setLoadingIdeas] = useState(false)
   const [expandedIdeas, setExpandedIdeas] = useState(new Set())
+  const [selectedFormula, setSelectedFormula] = useState(null)
   const [filters, setFilters] = useState({
     estado: '',
     categoria: '',
@@ -35,7 +36,7 @@ const Ideas = () => {
         <div className="text-center">
           <span className="material-symbols-outlined text-6xl text-danger mb-4">lock</span>
           <p className="text-text-light text-lg font-semibold mb-2">Acceso Restringido</p>
-          <p className="text-text-muted text-sm">No tienes permisos para acceder a Ideas / Research</p>
+          <p className="text-text-muted text-sm">No tienes permisos para acceder a Nuevas Fórmulas</p>
         </div>
       </div>
     )
@@ -208,7 +209,7 @@ const Ideas = () => {
           <div className="flex flex-wrap gap-4">
             <input
               type="text"
-              placeholder="Buscar ideas..."
+              placeholder="Buscar fórmulas..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               className="flex-1 min-w-[200px] h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
@@ -245,63 +246,146 @@ const Ideas = () => {
       {loadingIdeas ? (
         <div className="flex items-center justify-center py-8">
           <span className="material-symbols-outlined animate-spin text-primary">sync</span>
-          <p className="text-text-muted ml-2">Cargando ideas...</p>
+          <p className="text-text-muted ml-2">Cargando fórmulas...</p>
                   </div>
       ) : ideas.length === 0 ? (
         <div className="text-center py-12 rounded-lg bg-card-dark border border-border-dark">
           <span className="material-symbols-outlined text-6xl text-text-muted mb-4">lightbulb_outline</span>
-          <p className="text-text-light text-lg font-semibold mb-2">No hay ideas registradas</p>
+          <p className="text-text-light text-lg font-semibold mb-2">No hay fórmulas registradas</p>
           <p className="text-text-muted text-sm">
-            Ve al módulo <strong>IA / Simulación</strong> para generar nuevas ideas desde productos del inventario
+            Ve al módulo <strong>IA / Simulación</strong> para generar nuevas fórmulas desde productos del inventario
           </p>
                 </div>
       ) : (
-        <div className="space-y-4">
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-max">
           {ideas.map((idea) => (
-            <div key={idea.id} className="p-6 rounded-lg bg-card-dark border border-border-dark">
-              <div className="flex items-start justify-between mb-4">
+              <div 
+                key={idea.id} 
+                onClick={() => setSelectedFormula(idea)}
+                className="flex-shrink-0 w-80 p-4 rounded-lg bg-card-dark border border-border-dark cursor-pointer hover:border-primary/50 hover:bg-card-dark/80 transition-all"
+              >
+                <div className="flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-text-light font-semibold text-lg">{idea.titulo}</h3>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getEstadoColor(idea.estado)}`}>
+                        <h3 className="text-text-light font-semibold text-base line-clamp-2">{idea.titulo}</h3>
+                      </div>
+                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getEstadoColor(idea.estado)}`}>
                       {getEstadoLabel(idea.estado)}
                     </span>
+                    </div>
         </div>
 
-                  <p className="text-text-muted text-sm mb-3">{idea.descripcion}</p>
+                  <p className="text-text-muted text-sm mb-3 line-clamp-3 flex-1">{idea.descripcion}</p>
                   
-                  {idea.objetivo && (
-                    <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                      <p className="text-text-muted text-xs mb-1">Objetivo:</p>
-                      <p className="text-text-light text-sm font-medium">{idea.objetivo}</p>
+                  <div className="space-y-1 text-xs text-text-muted mt-auto">
+                    {idea.categoria && (
+                      <div className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">category</span>
+                        <span>{idea.categoria}</span>
                   </div>
                   )}
+                    {idea.createdAt && (
+                      <div className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">calendar_today</span>
+                        <span>{new Date(idea.createdAt).toLocaleDateString('es-ES')}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-3 pt-3 border-t border-border-dark">
+                    <span className="text-primary text-xs font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">visibility</span>
+                      Ver detalles
+                      </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-                  <div className="flex flex-wrap gap-4 text-xs text-text-muted">
-                    {idea.productoOrigenNombre && (
-                      <span>
-                        <span className="material-symbols-outlined text-xs mr-1">inventory_2</span>
-                        Producto origen: {idea.productoOrigenNombre}
+      {/* Modal de Detalles de Fórmula */}
+      {selectedFormula && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedFormula(null)
+            }
+          }}
+        >
+          <div className="bg-card-dark rounded-lg border border-border-dark max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-xl my-8">
+            <div className="sticky top-0 bg-card-dark border-b border-border-dark p-6 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <h2 className="text-text-light text-2xl font-bold">{selectedFormula.titulo}</h2>
+                <span className={`px-3 py-1 rounded text-sm font-medium ${getEstadoColor(selectedFormula.estado)}`}>
+                  {getEstadoLabel(selectedFormula.estado)}
                       </span>
+              </div>
+              <button
+                onClick={() => setSelectedFormula(null)}
+                className="p-2 rounded-lg text-text-muted hover:text-text-light hover:bg-border-dark transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Información Básica */}
+              <div>
+                <h3 className="text-text-light font-semibold text-lg mb-3">Información General</h3>
+                <div className="p-4 rounded-lg bg-input-dark border border-border-dark space-y-2">
+                  <p className="text-text-muted text-sm mb-3">{selectedFormula.descripcion}</p>
+                  
+                  {selectedFormula.objetivo && (
+                    <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                      <p className="text-text-muted text-xs mb-1">Objetivo:</p>
+                      <p className="text-text-light text-sm font-medium">{selectedFormula.objetivo}</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    {selectedFormula.productoOrigenNombre && (
+                      <div>
+                        <span className="text-text-muted text-xs">Producto origen:</span>
+                        <p className="text-text-light font-medium">{selectedFormula.productoOrigenNombre}</p>
+                      </div>
                     )}
-                    <span>Categoría: {idea.categoria || 'N/A'}</span>
-                    <span>Creado por: {idea.createdByName || 'N/A'}</span>
-                    <span>Creado: {idea.createdAt ? new Date(idea.createdAt).toLocaleDateString('es-ES') : 'N/A'}</span>
-                    {idea.asignadoANombre && (
-                      <span>
-                        <span className="material-symbols-outlined text-xs mr-1">person</span>
-                        Asignado a: {idea.asignadoANombre}
-                      </span>
+                    <div>
+                      <span className="text-text-muted text-xs">Categoría:</span>
+                      <p className="text-text-light font-medium">{selectedFormula.categoria || 'N/A'}</p>
+                  </div>
+                    <div>
+                      <span className="text-text-muted text-xs">Creado por:</span>
+                      <p className="text-text-light font-medium">{selectedFormula.createdByName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-text-muted text-xs">Fecha:</span>
+                      <p className="text-text-light font-medium">
+                        {selectedFormula.createdAt ? new Date(selectedFormula.createdAt).toLocaleDateString('es-ES') : 'N/A'}
+                      </p>
+                    </div>
+                    {selectedFormula.asignadoANombre && (
+                      <div>
+                        <span className="text-text-muted text-xs">Asignado a:</span>
+                        <p className="text-text-light font-medium">{selectedFormula.asignadoANombre}</p>
+                      </div>
                     )}
-                    {idea.approvedByName && (
-                      <span>Aprobado por: {idea.approvedByName}</span>
+                    {selectedFormula.approvedByName && (
+                      <div>
+                        <span className="text-text-muted text-xs">Aprobado por:</span>
+                        <p className="text-text-light font-medium">{selectedFormula.approvedByName}</p>
+                      </div>
                     )}
                   </div>
         </div>
       </div>
 
-              {/* Pruebas Requeridas - Siempre visible, especialmente para analistas */}
-              {idea.pruebasRequeridas && (
+              {/* Pruebas Requeridas */}
+              {selectedFormula.pruebasRequeridas && (
                 <div className="mt-4 pt-4 border-t border-border-dark">
                   <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
                     <div className="flex items-start justify-between mb-3">
@@ -314,13 +398,13 @@ const Ideas = () => {
                           Lista de pruebas de laboratorio que deben realizarse para validar esta fórmula:
                         </p>
                         <div className="whitespace-pre-line text-text-light text-sm leading-relaxed bg-card-dark p-3 rounded-lg border border-border-dark">
-                          {idea.pruebasRequeridas}
+                          {selectedFormula.pruebasRequeridas}
                         </div>
                       </div>
                     </div>
-                    {isAnalista && idea.estado === 'EN_PRUEBA' && (() => {
-                      // Verificar si ya existe una prueba para esta idea
-                      const pruebasExistentes = pruebasPorIdea.get(idea.id) || []
+                    {isAnalista && selectedFormula.estado === 'EN_PRUEBA' && (() => {
+                      // Verificar si ya existe una prueba para esta fórmula
+                      const pruebasExistentes = pruebasPorIdea.get(selectedFormula.id) || []
                       const tienePruebaIniciada = pruebasExistentes.length > 0
                       
                       return !tienePruebaIniciada ? (
@@ -329,13 +413,13 @@ const Ideas = () => {
                             onClick={async () => {
                               try {
                                 // Crear prueba automáticamente con los datos de la idea
-                                const codigoMuestra = `MU-${idea.id}-${Date.now()}`
+                                const codigoMuestra = `MU-${selectedFormula.id}-${Date.now()}`
                                 const nuevaPrueba = await pruebaService.createPrueba({
-                                  ideaId: idea.id,
+                                  ideaId: selectedFormula.id,
                                   codigoMuestra: codigoMuestra,
                                   tipoPrueba: 'Control de Calidad - Fórmula IA',
-                                  descripcion: `Prueba generada automáticamente para validar la fórmula: ${idea.titulo}`,
-                                  pruebasRequeridas: idea.pruebasRequeridas,
+                                  descripcion: `Prueba generada automáticamente para validar la fórmula: ${selectedFormula.titulo}`,
+                                  pruebasRequeridas: selectedFormula.pruebasRequeridas,
                                   estado: 'PENDIENTE'
                                 })
                                 
@@ -377,32 +461,21 @@ const Ideas = () => {
               )}
 
               {/* Detalles de IA */}
-              {idea.detallesIA && (
-                <div className="mt-4 pt-4 border-t border-border-dark">
-                  <button
-                    onClick={() => toggleDetails(idea.id)}
-                    className="flex items-center gap-2 text-text-light hover:text-primary transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      {expandedIdeas.has(idea.id) ? 'expand_less' : 'expand_more'}
-                    </span>
-                    <span className="text-sm font-medium">
-                      {expandedIdeas.has(idea.id) ? 'Ocultar' : 'Ver'} Detalles de IA
-                    </span>
-                  </button>
-
-                  {expandedIdeas.has(idea.id) && (() => {
-                    const aiDetails = parseAIDetails(idea.detallesIA)
+              {selectedFormula.detallesIA && (
+                <div>
+                  <h3 className="text-text-light font-semibold text-lg mb-3">Detalles de IA</h3>
+                  {(() => {
+                    const aiDetails = parseAIDetails(selectedFormula.detallesIA)
                     if (!aiDetails) {
                       return (
-                        <div className="mt-3 p-4 rounded-lg bg-input-dark border border-border-dark">
-                          <p className="text-text-muted text-sm">{idea.detallesIA}</p>
+                        <div className="p-4 rounded-lg bg-input-dark border border-border-dark">
+                          <p className="text-text-muted text-sm">{selectedFormula.detallesIA}</p>
                         </div>
                       )
                     }
 
                     return (
-                      <div className="mt-3 space-y-4">
+                      <div className="space-y-4">
                         {/* BOM Modificado */}
                         {aiDetails.bomModificado && Array.isArray(aiDetails.bomModificado) && aiDetails.bomModificado.length > 0 && (
                           <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
@@ -613,14 +686,11 @@ const Ideas = () => {
               )}
 
               {/* Pruebas Asociadas */}
-              {pruebasPorIdea.has(idea.id) && pruebasPorIdea.get(idea.id).length > 0 && (
-                <div className="mt-4 pt-4 border-t border-border-dark">
-                  <h4 className="text-text-light font-semibold mb-3 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">biotech</span>
-                    Pruebas de Laboratorio ({pruebasPorIdea.get(idea.id).length})
-                  </h4>
+              {pruebasPorIdea.has(selectedFormula.id) && pruebasPorIdea.get(selectedFormula.id).length > 0 && (
+                <div>
+                  <h3 className="text-text-light font-semibold text-lg mb-3">Pruebas de Laboratorio</h3>
                   <div className="space-y-2">
-                    {pruebasPorIdea.get(idea.id).map((prueba) => (
+                    {pruebasPorIdea.get(selectedFormula.id).map((prueba) => (
                       <div key={prueba.id} className="p-3 rounded-lg bg-input-dark border border-border-dark">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -653,37 +723,53 @@ const Ideas = () => {
               )}
 
               {/* Acciones según estado y rol */}
-              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-dark">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-border-dark">
                 {/* Acciones para Supervisor QA y Admin */}
                 {!isAnalista && (
                   <>
-                    {idea.estado === 'GENERADA' && (
+                    {selectedFormula.estado === 'GENERADA' && (
                       <>
                         <button
-                          onClick={() => handleChangeEstado(idea, 'en_revision')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleChangeEstado(selectedFormula, 'en_revision')
+                            setSelectedFormula(null)
+                          }}
                           className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 text-sm font-medium hover:bg-yellow-500/30"
                         >
                           Enviar a Revisión
                         </button>
                         <button
-                          onClick={() => handleChangeEstado(idea, 'rechazada')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleChangeEstado(selectedFormula, 'rechazada')
+                            setSelectedFormula(null)
+                          }}
                           className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
                         >
                           Rechazar
                         </button>
                       </>
                     )}
-                    {idea.estado === 'EN_REVISION' && (
+                    {selectedFormula.estado === 'EN_REVISION' && (
                       <>
                         <button
-                          onClick={() => handleChangeEstado(idea, 'aprobada')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleChangeEstado(selectedFormula, 'aprobada')
+                            setSelectedFormula(null)
+                          }}
                           className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-sm font-medium hover:bg-green-500/30"
                         >
                           <span className="material-symbols-outlined text-sm mr-1">check_circle</span>
                           Aprobar para Pruebas
                         </button>
                         <button
-                          onClick={() => handleChangeEstado(idea, 'rechazada')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleChangeEstado(selectedFormula, 'rechazada')
+                            setSelectedFormula(null)
+                          }}
                           className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
                         >
                           <span className="material-symbols-outlined text-sm mr-1">cancel</span>
@@ -691,18 +777,26 @@ const Ideas = () => {
                         </button>
                       </>
                     )}
-                    {idea.estado === 'APROBADA' && (
+                    {selectedFormula.estado === 'APROBADA' && (
                       <button
-                        onClick={() => handleChangeEstado(idea, 'en_prueba')}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleChangeEstado(selectedFormula, 'en_prueba')
+                          setSelectedFormula(null)
+                        }}
                         className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-sm font-medium hover:bg-purple-500/30"
                       >
                         <span className="material-symbols-outlined text-sm mr-1">science</span>
                         Enviar a Pruebas
                       </button>
                     )}
-                    {idea.estado === 'PRUEBA_APROBADA' && (
+                    {selectedFormula.estado === 'PRUEBA_APROBADA' && (
                       <button
-                        onClick={() => handleChangeEstado(idea, 'en_produccion')}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleChangeEstado(selectedFormula, 'en_produccion')
+                          setSelectedFormula(null)
+                        }}
                         className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 text-sm font-medium hover:bg-indigo-500/30"
                       >
                         <span className="material-symbols-outlined text-sm mr-1">precision_manufacturing</span>
@@ -711,11 +805,10 @@ const Ideas = () => {
                     )}
                   </>
                 )}
-                
               </div>
+            </div>
           </div>
-          ))}
-          </div>
+        </div>
       )}
 
       {/* Diálogo de selección de analista */}
