@@ -1,20 +1,28 @@
-# PT-ERS-01. Especificación de Requisitos (Plantilla)
+# 📋 Especificación de Requisitos
+## Omega Lab - Sistema PLM/LIMS
+**Versión:** 1.0
 
-**HISTORIAL DE REVISIÓN**
+---
+
+## 📋 Historial de Revisión
 
 | Versión | Fecha Elaboración | Responsable Elaboración | Fecha Aprobación | Responsable Aprobación |
 | --- | --- | --- | --- | --- |
-| 1.0 | 2024-12-XX | Equipo de Desarrollo Proscience Lab |  |  |
+| 1.0 | 2024-12-XX | Equipo de Desarrollo Omega Lab |  |  |
 |  |  |  |  |  |
 
-**CAMBIOS RESPECTO A LA VERSIÓN ANTERIOR**
+---
+
+## 📝 Cambios Respecto a la Versión Anterior
 
 | **VERSIÓN** | **MODIFICACIÓN RESPECTO VERSIÓN ANTERIOR** |
 | --- | --- |
 | 1.0 | Creación del Documento. |
 |  |  |
 
-## Tabla de Contenido
+---
+
+## 📑 Tabla de Contenido
 
 1. [Introducción](#1-introducción)
    - 1.1 [Responsables e Involucrados](#11-responsables-e-involucrados)
@@ -43,6 +51,8 @@
 6. [Restricciones del software](#6-restricciones-del-software)
 7. [Anexos](#7-anexos)
 
+---
+
 ## 1. Introducción
 
 ### **Contextualización del Proyecto**
@@ -51,11 +61,11 @@ La industria de nutracéuticos y suplementos dietarios en Colombia ha experiment
 
 El INVIMA (Instituto Nacional de Vigilancia de Medicamentos y Alimentos) ha intensificado las inspecciones y auditorías, exigiendo mayor rigor en el cumplimiento de normativas, especialmente en aspectos relacionados con trazabilidad completa de lotes, integridad de datos, control de calidad, documentación de procesos y gestión de no conformidades.
 
-Proscience Lab, como empresa comprometida con la calidad y el cumplimiento normativo, requiere un sistema que no solo cumpla con los requisitos regulatorios, sino que también mejore la eficiencia operativa y facilite la innovación mediante el uso de inteligencia artificial para la creación de nuevas fórmulas utilizando productos del inventario existente.
+Omega Lab es un laboratorio de creación de fórmulas químicas que requiere un sistema para simplificar el proceso de formulación, garantizar trazabilidad limpia y mejorar el control de auditoría. El sistema permite generar nuevas fórmulas a partir de productos y formulaciones ya preparadas mediante inteligencia artificial, siguiendo un flujo estructurado: el SupervisorQA genera ideas mediante IA, los Analistas las desarrollan y prueban, y el SupervisorQA aprueba o rechaza para producción.
 
 ### **Propósito del Documento**
 
-Este documento especifica los requisitos funcionales y no funcionales del sistema PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) para Proscience Lab. El propósito es:
+Este documento especifica los requisitos funcionales y no funcionales del sistema PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) para Omega Lab. El propósito es:
 
 - Definir de manera clara y completa todas las funcionalidades que debe tener el sistema
 - Establecer los requisitos técnicos y de calidad que debe cumplir
@@ -68,7 +78,17 @@ Este documento está dirigido a desarrolladores, analistas de sistemas, gerentes
 
 ### **Objetivo del Proyecto**
 
-Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) diseñado específicamente para asistir en la creación de nuevas fórmulas de productos nutracéuticos y suplementos dietarios mediante inteligencia artificial, utilizando los productos y materias primas existentes en el inventario. El sistema permitirá cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio, mientras facilita la innovación y desarrollo de nuevos productos de manera eficiente y segura.
+Desarrollar e implementar un sistema integral PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) diseñado específicamente para laboratorios de creación de fórmulas químicas. El sistema permite generar nuevas fórmulas a partir de productos y formulaciones ya preparadas mediante inteligencia artificial, simplificando el proceso de formulación para empresas, garantizando trazabilidad limpia y mejor control de auditoría.
+
+**Flujo Principal del Sistema:**
+
+1. **Generación de Ideas (SupervisorQA)**: El SupervisorQA selecciona un producto existente con su formulación (BOM) y define un objetivo. El sistema utiliza IA para generar nuevas ideas de fórmulas basándose en el producto y los materiales disponibles.
+
+2. **Desarrollo y Pruebas (Analista)**: Las ideas generadas se asignan a analistas que las desarrollan en el laboratorio, realizan pruebas y determinan si son viables o deben rechazarse.
+
+3. **Aprobación (SupervisorQA)**: El SupervisorQA recibe notificaciones con los resultados de las pruebas y determina si la idea es aceptada para producción o rechazada según el estado y criterios de calidad.
+
+El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio.
 
 ### **Descripción General del Proyecto**
 
@@ -77,27 +97,28 @@ El sistema PLM/LIMS es una solución integral híbrida diseñada específicament
 El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio, mientras facilita la innovación y desarrollo de nuevos productos de manera eficiente y segura.
 
 **Características principales:**
-- **Asistencia de IA en Formulación**: Sistema inteligente que ayuda a crear nuevas fórmulas utilizando productos y materias primas disponibles en el inventario existente
-- **Gestión del Ciclo de Vida del Producto (PLM)**: Desde la investigación y formulación asistida por IA hasta la aprobación y liberación
-- **Sistema de Información de Laboratorio (LIMS)**: Control de calidad, pruebas analíticas y gestión de muestras
-- **Trazabilidad Completa**: Seguimiento de lotes desde materias primas hasta distribución
-- **Integridad de Datos**: Registros inalterables con timestamps y firmas digitales
-- **Control de Versiones**: Gestión de BOM (Bill of Materials) con historial de cambios
-- **Cumplimiento Regulatorio**: Diseñado para cumplir con BPM y facilitar auditorías del INVIMA
-- **Base de Conocimiento**: Repositorio centralizado de SOPs, guías y farmacopeas
-- **Integración con APIs Moleculares**: Búsqueda en bases de datos científicas (PubChem, ChEMBL, DrugBank, ZINC) para investigación de ingredientes
-- **Simulación e IA Avanzada**: Predicción de parámetros fisicoquímicos, análisis de compatibilidad de ingredientes y sugerencias inteligentes de formulación basadas en productos del inventario
+
+- ✅ **Generación de Ideas mediante IA**: El SupervisorQA puede generar nuevas ideas de fórmulas basándose en productos existentes y sus formulaciones (BOM), utilizando inteligencia artificial para sugerir combinaciones inteligentes
+- ✅ **Flujo de Trabajo Estructurado**: Sistema de asignación y seguimiento de ideas desde generación hasta aprobación para producción
+- ✅ **Gestión de Pruebas (LIMS)**: Los analistas pueden crear y gestionar pruebas asociadas a ideas, registrando resultados detallados
+- ✅ **Sistema de Notificaciones**: Notificaciones automáticas cuando las ideas cambian de estado o cuando los analistas completan pruebas
+- ✅ **Trazabilidad Completa y Limpia**: Seguimiento completo de todo el proceso: producto base → idea generada → pruebas realizadas → decisión final
+- ✅ **Integridad de Datos**: Registros inalterables con timestamps y auditoría completa de todas las acciones
+- ✅ **Control de Versiones**: Gestión de BOM (Bill of Materials) con historial completo de cambios
+- ✅ **Cumplimiento Regulatorio**: Diseñado para cumplir con BPM y facilitar auditorías del INVIMA
+- ✅ **Simplificación de Formulaciones**: Reduce la complejidad del proceso de creación de nuevas fórmulas para empresas
+- ✅ **Control de Auditoría Mejorado**: Registro detallado de todas las decisiones y acciones para facilitar auditorías
 
 ### **Beneficios Esperados**
 
-- Reducción del tiempo de desarrollo de productos en un 30-40%
-- Reducción del 40-50% en tiempo de creación de nuevas fórmulas mediante asistencia de IA
-- Eliminación de errores manuales en la gestión de formulaciones y BOM
-- Cumplimiento total con normativas BPM y reducción de no conformidades
-- Trazabilidad completa que facilita la gestión de retiros del mercado si es necesario
-- Mejora en la eficiencia operativa mediante automatización de procesos
-- Reducción de costos asociados a reprocesos y rechazos de lotes
-- Facilita la preparación y ejecución de auditorías regulatorias
+- ✅ Reducción del tiempo de desarrollo de productos en un 30-40%
+- ✅ Reducción del 40-50% en tiempo de creación de nuevas fórmulas mediante asistencia de IA
+- ✅ Eliminación de errores manuales en la gestión de formulaciones y BOM
+- ✅ Cumplimiento total con normativas BPM y reducción de no conformidades
+- ✅ Trazabilidad completa que facilita la gestión de retiros del mercado si es necesario
+- ✅ Mejora en la eficiencia operativa mediante automatización de procesos
+- ✅ Reducción de costos asociados a reprocesos y rechazos de lotes
+- ✅ Facilita la preparación y ejecución de auditorías regulatorias
 - Centralización de información que mejora la toma de decisiones
 - Reducción de tiempo en búsqueda de información técnica y científica
 - Mejora en la gestión de conocimiento organizacional
@@ -140,7 +161,7 @@ El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establ
 
 | **Nombre** | **Tipo (Responsable/ Involucrado)** | **Rol** | Cargo |
 | --- | --- | --- | --- |
-| Equipo de Desarrollo Proscience Lab | Responsable | Desarrollo y mantenimiento del sistema | Equipo Técnico |
+| Equipo de Desarrollo Omega Lab | Responsable | Desarrollo y mantenimiento del sistema | Equipo Técnico |
 | Gerencia de Calidad | Involucrado | Definición de requisitos regulatorios y validación | Gerencia |
 | Personal de Producción | Involucrado | Usuarios finales y retroalimentación | Operaciones |
 | Personal de Control de Calidad | Involucrado | Usuarios finales y validación de procesos LIMS | Calidad |
@@ -170,7 +191,7 @@ El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establ
 ### **Referencias Consultadas Durante el Proceso de Levantamiento de Información**
 
 - Documento PT-PP-01 Planteamiento del Problema
-- Reuniones con Gerencia de Calidad de Proscience Lab
+- Reuniones con Gerencia de Calidad de Omega Lab
 - Entrevistas con personal de producción y control de calidad
 - Análisis de procesos actuales y documentación existente
 - Revisión de normativas regulatorias colombianas
@@ -181,11 +202,13 @@ Este documento establece la base para el desarrollo del sistema PLM/LIMS, defini
 
 ---
 
-## 2. Características del producto
+---
+
+## 2. Características del Producto
 
 ---
 
-El sistema PLM/LIMS para Proscience Lab es una solución integral que combina gestión del ciclo de vida del producto (PLM) con sistema de información de laboratorio (LIMS), diseñada específicamente para la industria de nutracéuticos y suplementos dietarios en Colombia.
+El sistema PLM/LIMS para Omega Lab es una solución integral que combina gestión del ciclo de vida del producto (PLM) con sistema de información de laboratorio (LIMS), diseñada específicamente para la industria de nutracéuticos y suplementos dietarios en Colombia.
 
 ### **Características Principales**
 
@@ -239,7 +262,9 @@ El sistema está diseñado para ser una solución completa, segura y escalable q
 
 ---
 
-## 3. Funciones del producto
+---
+
+## 3. Funciones del Producto
 
 ---
 
@@ -1447,7 +1472,9 @@ Administrador / Usuario Avanzado: Soporte técnico del sistema, puede otorgar ro
 
 ---
 
-## 6. Restricciones del software
+---
+
+## 6. Restricciones del Software
 
 ---
 
@@ -1504,6 +1531,8 @@ Administrador / Usuario Avanzado: Soporte técnico del sistema, puede otorgar ro
 - Documentación técnica obligatoria
 - Tests unitarios requeridos para funcionalidades críticas
 - Code review obligatorio antes de merge
+
+---
 
 ---
 

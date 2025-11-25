@@ -1,8 +1,16 @@
-# Sistema PLM/LIMS para Proscience Lab
+# 📊 Informe General del Sistema
+## Omega Lab - Sistema PLM/LIMS
+**Versión:** 1.0
 
-### Informe final del trabajo de grado
+---
 
-*Este documento permite dar una visión general del sistema a nivel de características, funcionalidades, mapa de navegación, historias de usuario entre otros.*
+> 💡 **Informe final del trabajo de grado**
+> 
+> Este documento permite dar una visión general del sistema a nivel de características, funcionalidades, mapa de navegación, historias de usuario entre otros.
+
+---
+
+## 📋 Información del Proyecto
 
 **NOMBRE PROYECTO**
 
@@ -32,85 +40,102 @@ Sistema Integral PLM/LIMS (Product Lifecycle Management / Laboratory Information
 
 2024
 
-## TABLA DE CONTENIDO
+---
 
-1. [INTRODUCCIÓN](#1-introducción)
-2. [OBJETIVO](#2-objetivo)
-3. [ALCANCE](#3-alcance)
-4. [SITUACIÓN ACTUAL](#4-situación-actual)
-5. [SITUACIÓN ESPERADA](#5-situación-esperada)
-6. [JUSTIFICACIÓN](#6-justificación)
-7. [CARACTERÍSTICAS DEL SISTEMA](#7-características-del-sistema)
-8. [USUARIOS – ROLES](#8-usuarios--roles)
-   - 8.1 [Usuario](#81-usuario)
-   - 8.2 [Analista](#82-analista)
-   - 8.3 [Supervisor](#83-supervisor)
-   - 8.4 [QA Manager](#84-qa-manager)
-   - 8.5 [Administrador](#85-administrador)
-9. [Diagrama de Casos de Uso](#9-diagrama-de-casos-de-uso)
-   - 9.1 [General](#91-general)
-   - 9.2 [Específicos](#92-específicos)
-     - 9.2.1 [Autenticación y Autorización](#921-autenticación-y-autorización)
-     - 9.2.2 [Dashboard](#922-dashboard)
-     - 9.2.3 [Ideas/Research](#923-ideasresearch)
-     - 9.2.4 [Formulación](#924-formulación)
-     - 9.2.5 [IA/Simulación](#925-iasimulación)
-     - 9.2.6 [Producción](#926-producción)
-     - 9.2.7 [Pruebas/Control de Calidad (LIMS)](#927-pruebascontrol-de-calidad-lims)
-     - 9.2.8 [Aprobación/QA](#928-aprobaciónqa)
-     - 9.2.9 [Trazabilidad](#929-trazabilidad)
-     - 9.2.10 [Base de Conocimiento](#9210-base-de-conocimiento)
-     - 9.2.11 [Configuración](#9211-configuración)
-10. [HISTORIAS DE USUARIO](#10-historias-de-usuario)
+## 📑 Tabla de Contenido
 
-## 1. INTRODUCCIÓN
+1. [Introducción](#1-introducción)
+2. [Objetivo](#2-objetivo)
+3. [Alcance](#3-alcance)
+4. [Situación Actual](#4-situación-actual)
+5. [Situación Esperada](#5-situación-esperada)
+6. [Justificación](#6-justificación)
+7. [Flujo del Proceso del Sistema](#7-flujo-del-proceso-del-sistema)
+8. [Características del Sistema](#8-características-del-sistema)
+9. [Usuarios – Roles](#9-usuarios--roles)
+   - 9.1 [Analista de Laboratorio](#91-analista-de-laboratorio)
+   - 9.2 [Supervisor](#92-supervisor)
+   - 9.3 [SupervisorQA (Supervisor de Calidad - Mayor Rango)](#93-supervisorqa-supervisor-de-calidad---mayor-rango)
+   - 9.4 [Administrador](#94-administrador)
+10. [Diagrama de Casos de Uso](#10-diagrama-de-casos-de-uso)
+   - 10.1 [General](#101-general)
+   - 10.2 [Específicos](#102-específicos)
+11. [Historias de Usuario](#11-historias-de-usuario)
+
+---
+
+## 1. Introducción
 
 La industria de nutracéuticos y suplementos dietarios en Colombia ha experimentado un crecimiento significativo en los últimos años, impulsado por el aumento en la conciencia sobre salud y bienestar. Sin embargo, esta industria enfrenta desafíos regulatorios cada vez más estrictos, especialmente con las normativas de Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006.
 
 El INVIMA (Instituto Nacional de Vigilancia de Medicamentos y Alimentos) ha intensificado las inspecciones y auditorías, exigiendo mayor rigor en el cumplimiento de normativas, especialmente en aspectos relacionados con trazabilidad completa de lotes, integridad de datos, control de calidad, documentación de procesos y gestión de no conformidades.
 
-Prosience Lab, como empresa comprometida con la calidad y el cumplimiento normativo, requiere un sistema que no solo cumpla con los requisitos regulatorios, sino que también mejore la eficiencia operativa y facilite la innovación mediante el uso de inteligencia artificial para la creación de nuevas fórmulas utilizando productos del inventario existente.
+Omega Lab, como empresa comprometida con la calidad y el cumplimiento normativo, requiere un sistema que no solo cumpla con los requisitos regulatorios, sino que también mejore la eficiencia operativa y facilite la innovación mediante el uso de inteligencia artificial para la creación de nuevas fórmulas utilizando productos del inventario existente.
 
-Este documento presenta el Informe General del Sistema PLM/LIMS, una solución integral híbrida diseñada específicamente para asistir en la creación de nuevas fórmulas de productos nutracéuticos y suplementos dietarios mediante inteligencia artificial, utilizando los productos y materias primas existentes en el inventario. El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio, mientras facilita la innovación y desarrollo de nuevos productos de manera eficiente y segura.
+Este documento presenta el Informe General del Sistema PLM/LIMS, una solución integral diseñada específicamente para laboratorios de creación de fórmulas químicas. El sistema permite generar nuevas fórmulas a partir de productos y formulaciones ya preparadas mediante inteligencia artificial, simplificando el proceso de formulación para empresas, garantizando trazabilidad limpia y mejor control de auditoría.
 
-## 2. OBJETIVO
+**Flujo del Proceso:**
+1. **SupervisorQA** (mayor rango) genera ideas usando IA basadas en productos/formulaciones existentes
+2. Las ideas generadas se asignan al **Analista** para desarrollo y pruebas
+3. El **Analista** realiza las pruebas y puede aceptar o rechazar la idea
+4. Se envía notificación al **SupervisorQA** con el resultado
+5. El **SupervisorQA** determina si la idea es aceptada para producción según el estado
 
-Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) diseñado específicamente para asistir en la creación de nuevas fórmulas de productos nutracéuticos y suplementos dietarios mediante inteligencia artificial, utilizando los productos y materias primas existentes en el inventario. El sistema permitirá cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio, mientras facilita la innovación y desarrollo de nuevos productos de manera eficiente y segura.
+El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio.
+
+---
+
+## 2. Objetivo
+
+Desarrollar e implementar un sistema integral PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) diseñado específicamente para laboratorios de creación de fórmulas químicas. El sistema permite generar nuevas fórmulas a partir de productos y formulaciones ya preparadas mediante inteligencia artificial, simplificando el proceso de formulación para empresas, garantizando trazabilidad limpia y mejor control de auditoría.
+
+**Flujo Principal del Sistema:**
+
+1. **Generación de Ideas (SupervisorQA)**: El SupervisorQA selecciona un producto existente con su formulación y define un objetivo. El sistema utiliza IA para generar nuevas ideas de fórmulas basándose en el producto y los materiales disponibles en inventario.
+
+2. **Desarrollo y Pruebas (Analista)**: Las ideas generadas se asignan a analistas que las desarrollan en el laboratorio, realizan pruebas y determinan si son viables o deben rechazarse.
+
+3. **Aprobación (SupervisorQA)**: El SupervisorQA recibe notificaciones con los resultados de las pruebas y determina si la idea es aceptada para producción o rechazada según el estado y criterios de calidad.
+
+El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio.
 
 **Objetivos Específicos:**
 
-- Implementar un sistema de gestión del ciclo de vida del producto (PLM) que cubra desde la investigación hasta la aprobación y liberación
-- Desarrollar un sistema de información de laboratorio (LIMS) para control de calidad y gestión de muestras
-- Integrar inteligencia artificial para asistir en la creación de nuevas fórmulas utilizando productos del inventario existente
-- Garantizar trazabilidad completa de lotes desde materias primas hasta distribución
-- Implementar principios ALCOA+ para integridad de datos
-- Facilitar el cumplimiento con normativas regulatorias colombianas (Decreto 3249 de 2006, Ley 1581 de 2012)
-- Reducir el tiempo de desarrollo de productos en un 30-40%
-- Reducir el tiempo de creación de nuevas fórmulas mediante asistencia de IA en un 40-50%
-- Eliminar errores manuales en la gestión de formulaciones y BOM
-- Mejorar la eficiencia operativa mediante automatización de procesos
+- ✅ Simplificar el proceso de formulación para empresas mediante generación automática de ideas
+- ✅ Implementar un flujo de trabajo estructurado: Generación (SupervisorQA) → Desarrollo/Pruebas (Analista) → Aprobación (SupervisorQA)
+- ✅ Integrar inteligencia artificial para generar nuevas fórmulas basándose en productos y formulaciones existentes
+- ✅ Garantizar trazabilidad limpia y completa de todo el proceso de creación de fórmulas
+- ✅ Mejorar el control de auditoría mediante registro detallado de todas las acciones y decisiones
+- ✅ Implementar un sistema de información de laboratorio (LIMS) para gestión de pruebas y resultados
+- ✅ Implementar principios ALCOA+ para integridad de datos
+- ✅ Facilitar el cumplimiento con normativas regulatorias colombianas (Decreto 3249 de 2006, Ley 1581 de 2012)
+- ✅ Reducir el tiempo de creación de nuevas fórmulas mediante asistencia de IA en un 40-50%
+- ✅ Eliminar errores manuales en la gestión de formulaciones y BOM
+- ✅ Mejorar la eficiencia operativa mediante automatización de procesos y notificaciones
 
-## 3. ALCANCE
+---
+
+## 3. Alcance
 
 **Incluye:**
 
-- Módulo de Dashboard con KPIs y métricas en tiempo real
-- Módulo de Ideas/Research con integración a bases de datos moleculares (PubChem, ChEMBL, DrugBank, ZINC)
-- Módulo de Formulación con gestión de BOM y control de versiones, incluyendo asistencia de IA
-- Módulo de IA/Simulación para predicción de propiedades
-- Módulo de Producción con órdenes de lote y dispensación digital
-- Módulo de Pruebas/Control de Calidad (LIMS) con gestión de muestras
-- Módulo de Aprobación/QA con firma digital y gestión de NC/CAPA
-- Módulo de Trazabilidad de Lotes completo
-- Módulo de Base de Conocimiento con control de versiones
-- Módulo de Configuración de usuarios, roles y equipos
-- Sistema de autenticación y autorización basado en roles (RBAC)
-- API RESTful para integración con sistemas externos
-- Interfaz web responsive y PWA (Progressive Web App)
-- Integración con bases de datos moleculares para investigación
-- Sistema de asistencia de IA para creación de fórmulas
-- Predicción de propiedades fisicoquímicas
-- Análisis de compatibilidad de ingredientes
+- ✅ Módulo de Dashboard con KPIs y métricas en tiempo real
+- ✅ Módulo de Ideas/Research con integración a bases de datos moleculares (PubChem, ChEMBL, DrugBank, ZINC)
+- ✅ Módulo de Formulación con gestión de BOM y control de versiones, incluyendo asistencia de IA
+- ✅ Módulo de IA/Simulación para predicción de propiedades
+- ✅ Módulo de Producción con órdenes de lote y dispensación digital
+- ✅ Módulo de Pruebas/Control de Calidad (LIMS) con gestión de muestras
+- ✅ Módulo de Aprobación/QA con firma digital y gestión de NC/CAPA
+- ✅ Módulo de Trazabilidad de Lotes completo
+- ✅ Módulo de Base de Conocimiento con control de versiones
+- ✅ Módulo de Configuración de usuarios, roles y equipos
+- ✅ Sistema de autenticación y autorización basado en roles (RBAC)
+- ✅ API RESTful para integración con sistemas externos
+- ✅ Interfaz web responsive y PWA (Progressive Web App)
+- ✅ Integración con bases de datos moleculares para investigación
+- ✅ Sistema de asistencia de IA para creación de fórmulas
+- ✅ Predicción de propiedades fisicoquímicas
+- ✅ Análisis de compatibilidad de ingredientes
 
 **No incluye:**
 
@@ -121,7 +146,9 @@ Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecyc
 - Módulos de recursos humanos o nómina
 - Integración directa con equipos de laboratorio (fase futura)
 
-## 4. SITUACIÓN ACTUAL
+---
+
+## 4. Situación Actual
 
 **Procesos Manuales y Descentralizados en Creación de Fórmulas:**
 
@@ -179,11 +206,13 @@ Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecyc
 - Dificultad para generar reportes y métricas en tiempo real
 - Falta de visibilidad sobre el estado de lotes y procesos
 
-## 5. SITUACIÓN ESPERADA
+---
+
+## 5. Situación Esperada
 
 **Visión General:**
 
-Con la implementación del sistema PLM/LIMS, Proscience Lab logrará una transformación digital completa de sus procesos, pasando de un modelo basado en documentos físicos y procesos manuales a un sistema integrado, digital y automatizado que garantice:
+Con la implementación del sistema PLM/LIMS, Omega Lab logrará una transformación digital completa de sus procesos, pasando de un modelo basado en documentos físicos y procesos manuales a un sistema integrado, digital y automatizado que garantice:
 
 **Trazabilidad Completa y Transparente:**
 
@@ -242,7 +271,9 @@ Con la implementación del sistema PLM/LIMS, Proscience Lab logrará una transfo
 - Aumento del 30% en utilización de productos del inventario para nuevas formulaciones
 - Reducción del 35% en tiempo de pruebas de nuevas fórmulas gracias a predicción previa de propiedades
 
-## 6. JUSTIFICACIÓN
+---
+
+## 6. Justificación
 
 **Necesidad Regulatoria:**
 
@@ -268,7 +299,7 @@ Los procesos actuales basados en documentos físicos y hojas de cálculo generan
 
 **Necesidad Estratégica:**
 
-Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
+Para mantener y mejorar su posición competitiva, Omega Lab necesita:
 - Diferenciación mediante calidad y cumplimiento demostrable
 - Capacidad de innovar y desarrollar nuevos productos rápidamente
 - Escalabilidad para crecer sin aumentar proporcionalmente costos operativos
@@ -303,13 +334,75 @@ Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
 **Beneficios Estratégicos:**
 - Competitividad: Diferencia competitiva mediante calidad y cumplimiento
 - Innovación acelerada: Asistencia de IA facilita desarrollo de nuevos productos de manera más rápida
-- Ventaja tecnológica: Uso de IA para formulación posiciona a Proscience Lab como líder en innovación tecnológica
+- Ventaja tecnológica: Uso de IA para formulación posiciona a Omega Lab como líder en innovación tecnológica
 - Optimización de recursos: Mejor aprovechamiento del inventario existente para crear nuevos productos
 - Crecimiento: Base sólida para expansión futura
 - Reputación: Mejora imagen corporativa y confianza de clientes
 - Agilidad en desarrollo: Capacidad de responder rápidamente a oportunidades de mercado
 
-## 7. CARACTERÍSTICAS DEL SISTEMA
+---
+
+## 7. Flujo del Proceso del Sistema
+
+### **7.1 Flujo Principal**
+
+El sistema sigue un flujo estructurado de tres etapas principales:
+
+**Etapa 1: Generación de Ideas (SupervisorQA)**
+- El SupervisorQA selecciona un producto existente que tiene una formulación (BOM) definida
+- Define un objetivo o interés para la nueva fórmula (ej: "aumentar absorción", "reducir costos", "mejorar sabor")
+- El sistema utiliza inteligencia artificial (OpenAI) para analizar:
+  - La formulación del producto base (BOM y BOMItems)
+  - Los materiales disponibles en inventario
+  - El objetivo definido
+- El sistema genera una o más ideas de nuevas fórmulas con:
+  - Título y descripción
+  - Detalles técnicos generados por IA
+  - Pruebas requeridas sugeridas
+  - Prioridad y categoría
+- El SupervisorQA revisa las ideas generadas y asigna las prometedoras a analistas
+
+**Etapa 2: Desarrollo y Pruebas (Analista)**
+- El Analista recibe notificación de nueva idea asignada
+- Revisa la idea y la información del producto base
+- Desarrolla la fórmula en el laboratorio según la idea
+- Crea pruebas asociadas a la idea
+- Registra resultados detallados de cada prueba realizada
+- Basándose en los resultados, el Analista puede:
+  - Aceptar la idea (si las pruebas son exitosas)
+  - Rechazar la idea (si las pruebas fallan o no cumple criterios)
+- El sistema notifica automáticamente al SupervisorQA del resultado
+
+**Etapa 3: Aprobación Final (SupervisorQA)**
+- El SupervisorQA recibe notificación con el estado de la idea y resultados de pruebas
+- Revisa toda la información: idea original, pruebas realizadas, resultados
+- Toma la decisión final:
+  - **Aprobar para Producción**: Si la idea cumple todos los criterios de calidad
+  - **Rechazar**: Si no cumple criterios o hay problemas identificados
+- El sistema registra la decisión final con timestamp y usuario responsable
+
+### **7.2 Estados de las Ideas**
+
+Las ideas pasan por los siguientes estados durante su ciclo de vida:
+
+- **GENERADA**: Idea creada por SupervisorQA mediante IA, pendiente de asignación
+- **EN_PRUEBA**: Idea asignada a Analista, en proceso de desarrollo y pruebas
+- **APROBADA**: Idea aprobada por Analista o SupervisorQA, lista para producción
+- **RECHAZADA**: Idea rechazada por Analista o SupervisorQA
+
+### **7.3 Trazabilidad**
+
+El sistema mantiene trazabilidad completa de:
+- Producto base utilizado para generar la idea
+- Usuario que generó la idea (SupervisorQA)
+- Analista asignado y responsable de pruebas
+- Todas las pruebas realizadas con sus resultados
+- Usuario que tomó la decisión final (SupervisorQA)
+- Timestamps de todos los cambios de estado
+
+---
+
+## 8. Características del Sistema
 
 - **Versión:** 1.0
 - **Plataforma:** Web (Progressive Web App - PWA)
@@ -326,94 +419,118 @@ Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
 
 **Características Principales:**
 
-- Asistencia de IA en Formulación: Sistema inteligente que ayuda a crear nuevas fórmulas utilizando productos y materias primas disponibles en el inventario existente
-- Gestión del Ciclo de Vida del Producto (PLM): Desde la investigación y formulación asistida por IA hasta la aprobación y liberación
-- Sistema de Información de Laboratorio (LIMS): Control de calidad, pruebas analíticas y gestión de muestras
-- Trazabilidad Completa: Seguimiento de lotes desde materias primas hasta distribución
-- Integridad de Datos: Registros inalterables con timestamps y firmas digitales
-- Control de Versiones: Gestión de BOM (Bill of Materials) con historial de cambios
-- Cumplimiento Regulatorio: Diseñado para cumplir con BPM y facilitar auditorías del INVIMA
-- Base de Conocimiento: Repositorio centralizado de SOPs, guías y farmacopeas
-- Integración con APIs Moleculares: Búsqueda en bases de datos científicas (PubChem, ChEMBL, DrugBank, ZINC) para investigación de ingredientes
-- Simulación e IA Avanzada: Predicción de parámetros fisicoquímicos, análisis de compatibilidad de ingredientes y sugerencias inteligentes de formulación basadas en productos del inventario
+- ✅ **Generación de Ideas mediante IA**: El SupervisorQA puede generar nuevas ideas de fórmulas basándose en productos existentes y sus formulaciones (BOM), utilizando inteligencia artificial para sugerir combinaciones inteligentes
+- ✅ **Flujo de Trabajo Estructurado**: Sistema de asignación y seguimiento de ideas desde generación hasta aprobación para producción
+- ✅ **Gestión de Pruebas (LIMS)**: Los analistas pueden crear y gestionar pruebas asociadas a ideas, registrando resultados detallados
+- ✅ **Sistema de Notificaciones**: Notificaciones automáticas cuando las ideas cambian de estado o cuando los analistas completan pruebas
+- ✅ **Trazabilidad Completa**: Seguimiento completo de todo el proceso: producto base → idea generada → pruebas realizadas → decisión final
+- ✅ **Integridad de Datos**: Registros inalterables con timestamps y auditoría completa de todas las acciones
+- ✅ **Control de Versiones**: Gestión de BOM (Bill of Materials) con historial completo de cambios
+- ✅ **Cumplimiento Regulatorio**: Diseñado para cumplir con BPM y facilitar auditorías del INVIMA
+- ✅ **Simplificación de Formulaciones**: Reduce la complejidad del proceso de creación de nuevas fórmulas para empresas
+- ✅ **Control de Auditoría Mejorado**: Registro detallado de todas las decisiones y acciones para facilitar auditorías
 
 ### **Estado de Implementación Actual**
 
 **Controladores Implementados:**
+
 - ✅ **AuthController**: Registro de usuarios, inicio de sesión, perfil de usuario
 - ✅ **ProductController**: Gestión de productos, creación y actualización de BOM, historial de versiones de BOM
 - ✅ **MaterialController**: Gestión de materiales (materias primas), búsqueda y filtrado
 - ✅ **CategoryController**: Gestión de categorías de productos y materiales
+- ✅ **IdeaController**: Gestión de ideas generadas por IA, asignación a analistas, seguimiento de estado
+- ✅ **PruebaController**: Gestión de pruebas realizadas por analistas, resultados y estados
 - ✅ **HealthController**: Endpoint de salud del sistema
 
 **Modelos de Datos Implementados:**
 - ✅ **User**: Usuarios del sistema con roles y autenticación
-- ✅ **Product**: Productos terminados
-- ✅ **Material**: Materias primas
+- ✅ **Product**: Productos terminados con sus formulaciones (BOM)
+- ✅ **Material**: Materias primas disponibles en inventario
 - ✅ **Category**: Categorías de productos y materiales
-- ✅ **BOM**: Listas de materiales con control de versiones
+- ✅ **BOM**: Listas de materiales (formulaciones) con control de versiones
 - ✅ **BOMItem**: Items individuales de las listas de materiales
+- ✅ **Idea**: Ideas de nuevas fórmulas generadas por IA, con estados y asignaciones
+- ✅ **Prueba**: Pruebas realizadas por analistas sobre las ideas
+- ✅ **ResultadoPrueba**: Resultados detallados de las pruebas realizadas
 
 **Funcionalidades Implementadas:**
 - ✅ Sistema de autenticación y autorización con JWT
-- ✅ Gestión de usuarios y roles
-- ✅ Gestión de productos terminados
-- ✅ Gestión de materias primas (materiales)
-- ✅ Gestión de categorías
-- ✅ Creación y gestión de BOM (Bill of Materials)
-- ✅ Control de versiones de BOM con historial
+- ✅ Gestión de usuarios y roles (Analista, Supervisor, SupervisorQA, Administrador)
+- ✅ Gestión de productos terminados con sus formulaciones (BOM)
+- ✅ Gestión de materias primas (materiales) disponibles en inventario
+- ✅ Gestión de categorías de productos y materiales
+- ✅ Creación y gestión de BOM (Bill of Materials) con control de versiones
+- ✅ Control de versiones de BOM con historial completo
 - ✅ Gestión de items de BOM con cantidades y porcentajes
 - ✅ Búsqueda y filtrado de productos y materiales
+- ✅ **Generación de ideas mediante IA**: El SupervisorQA puede generar nuevas ideas de fórmulas basadas en productos existentes
+- ✅ **Gestión de ideas**: Creación, asignación a analistas, seguimiento de estados (GENERADA, EN_PRUEBA, APROBADA, RECHAZADA)
+- ✅ **Sistema de pruebas**: Los analistas pueden crear pruebas asociadas a ideas y registrar resultados
+- ✅ **Gestión de resultados de pruebas**: Registro detallado de resultados con estados y observaciones
+- ✅ **Notificaciones**: Sistema de notificaciones cuando las ideas cambian de estado
+- ✅ **Integración con OpenAI**: Servicio de IA para generar sugerencias de formulación basadas en productos existentes
 
 **Funcionalidades Pendientes:**
-- ⏳ Módulo Dashboard con KPIs
-- ⏳ Módulo Ideas/Research con integración a APIs moleculares
-- ⏳ Asistencia de IA para formulación
-- ⏳ Módulo de Producción
-- ⏳ Módulo de Pruebas/Control de Calidad (LIMS)
-- ⏳ Módulo de Aprobación/QA
-- ⏳ Módulo de Trazabilidad
-- ⏳ Módulo de Base de Conocimiento
 
-## 8. USUARIOS – ROLES
+- ⏳ Módulo Dashboard con KPIs y métricas en tiempo real
+- ⏳ Integración con APIs moleculares (PubChem, ChEMBL, DrugBank, ZINC) para investigación
+- ⏳ Módulo de Producción (órdenes de lote, dispensación digital)
+- ⏳ Módulo de Aprobación/QA completo (firma digital, liberación de productos)
+- ⏳ Módulo de Trazabilidad completo (trazabilidad hacia atrás/adelante)
+- ⏳ Módulo de Base de Conocimiento (SOPs, guías, farmacopeas)
+
+---
+
+## 9. Usuarios – Roles
 
 ### 8.1 Analista de Laboratorio
 
 **Descripción:**
 
-Auxiliar de I+D que recibe órdenes de formulación. No tiene acceso a base de datos con fórmulas reales. Solo cumple requerimientos especificados en órdenes, desarrollo de la misma e ingreso del análisis sensorial.
+El Analista es responsable de recibir las ideas generadas por el SupervisorQA mediante IA, desarrollarlas en el laboratorio, realizar las pruebas necesarias y determinar si la idea es viable o debe ser rechazada. Trabaja con las ideas asignadas y registra todos los resultados de las pruebas realizadas.
 
 **Permisos:**
 
-- Lectura de información de productos y lotes
-- Registro de actividades básicas de producción
-- Visualización de dashboard
-- Consulta de trazabilidad (solo lectura)
-- Acceso a base de conocimiento (solo lectura)
-- Gestión de materiales y categorías
-- Lectura de formulaciones (solo órdenes asignadas)
+- Visualización de ideas asignadas por el SupervisorQA
+- Desarrollo y prueba de ideas asignadas
+- Creación de pruebas asociadas a ideas
+- Registro de resultados de pruebas
+- Aceptación o rechazo de ideas después de las pruebas
+- Lectura de información de productos y sus formulaciones (BOM)
+- Consulta de materiales disponibles en inventario
+- Visualización de dashboard con sus actividades
 
 **Módulos accesibles:**
 
-- Dashboard (lectura)
-- Producción (registro de actividades básicas)
-- Trazabilidad (solo lectura)
-- Base de Conocimiento (solo lectura)
-- Inventario (materias primas)
-- Formulación (solo órdenes asignadas)
+- Ideas/Research (solo ideas asignadas)
+- Pruebas/Control de Calidad (LIMS) - creación y gestión de pruebas
+- Dashboard (vista personalizada)
+- Inventario (materias primas - solo lectura)
+- Productos (solo lectura de formulaciones)
+
+**Flujo de Trabajo:**
+
+1. Recibe notificación de nueva idea asignada por SupervisorQA
+2. Revisa la idea y la información del producto base
+3. Desarrolla la fórmula en el laboratorio
+4. Crea pruebas asociadas a la idea
+5. Registra resultados de las pruebas
+6. Acepta o rechaza la idea según los resultados
+7. El sistema notifica al SupervisorQA del resultado
 
 **Restricciones:**
 
-- No puede crear o modificar formulaciones reales en la base de datos
-- No puede aprobar lotes
+- No puede generar ideas mediante IA (solo SupervisorQA)
+- No puede aprobar ideas para producción (solo SupervisorQA)
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema
+- Solo puede trabajar con ideas que le han sido asignadas
 
-### 8.2 Supervisor de Calidad
+### 8.2 Supervisor
 
 **Descripción:**
 
-Recibe materias primas, ingresa datos de proveedor, lotes, trazabilidad. Lleva el informe del estado del análisis de materias primas antes de pasar a formulación. Hace devoluciones de materias primas no aptas. No tiene permisos sobre análisis de formulaciones.
+Supervisor de procesos que apoya en la gestión de materias primas, recepción de materiales, y supervisión de procesos de calidad. Puede visualizar el estado de las ideas y pruebas pero no tiene autoridad para generar ideas mediante IA ni aprobar para producción.
 
 **Permisos:**
 
@@ -421,62 +538,69 @@ Recibe materias primas, ingresa datos de proveedor, lotes, trazabilidad. Lleva e
 - Gestión de materias primas y recepción
 - Ingreso de datos de proveedores y lotes
 - Gestión de trazabilidad de materias primas
-- Análisis de materias primas
-- Devolución de materias primas no aptas
+- Visualización de ideas y pruebas (solo lectura)
 - Visualización de métricas de calidad
+- Lectura de productos y formulaciones
 
 **Módulos accesibles:**
 
 - Dashboard (acceso completo)
-- Ideas/Research
-- Formulación (solo lectura de materias primas)
+- Ideas/Research (solo lectura)
+- Formulación (solo lectura)
 - Producción (gestión de materias primas)
-- Pruebas/LIMS (acceso completo)
+- Pruebas/LIMS (visualización)
 - Trazabilidad (acceso completo)
-- Base de Conocimiento
 - Inventario (materias primas - acceso completo)
 
 **Restricciones:**
 
-- No puede aprobar liberación final de productos
+- No puede generar ideas mediante IA (solo SupervisorQA)
+- No puede aprobar ideas para producción (solo SupervisorQA)
 - No puede gestionar usuarios
 - No puede acceder a configuración del sistema
-- No tiene permisos sobre análisis de formulaciones
 
-### 8.3 Supervisor QA
+### 8.3 SupervisorQA (Supervisor de Calidad - Mayor Rango)
 
 **Descripción:**
 
-Acceso completo a fórmulas reales en la base de datos. Visión total del sistema, recibe notificaciones de stock, lotes, trazabilidad, documentos, reportes, alertas. Puede ver el estado de formulación y quién está operando.
+El SupervisorQA es el rol de mayor autoridad en el sistema. Es responsable de generar nuevas ideas de fórmulas mediante inteligencia artificial basándose en productos y formulaciones existentes. Recibe notificaciones cuando los analistas completan las pruebas y es quien determina si una idea es aceptada para producción o rechazada según el estado y los resultados.
 
 **Permisos:**
 
-- Aprobación de productos con firma digital
-- Gestión completa de No Conformidades (NC)
-- Gestión completa de CAPA
-- Liberación de lotes
+- Generación de ideas mediante IA basadas en productos existentes
+- Asignación de ideas a analistas para desarrollo y pruebas
+- Visualización completa de todas las ideas (asignadas y no asignadas)
+- Recepción de notificaciones cuando analistas completan pruebas
+- Aprobación o rechazo final de ideas para producción
 - Acceso completo a todas las fórmulas en la base de datos
 - Visualización completa del estado del sistema
-- Recepción de notificaciones de stock, lotes, trazabilidad
-- Generación de reportes regulatorios
+- Gestión de productos y sus formulaciones (BOM)
+- Acceso a resultados de todas las pruebas
 
 **Módulos accesibles:**
 
-- Todos los módulos con permisos de aprobación
+- Ideas/Research (acceso completo - generación y gestión)
+- Pruebas/Control de Calidad (LIMS) - visualización completa
 - Dashboard (acceso completo)
-- Ideas/Research
 - Formulación (acceso completo a fórmulas reales)
-- IA/Simulación
-- Producción
-- Pruebas/LIMS
-- Aprobación/QA (acceso completo)
-- Trazabilidad
-- Base de Conocimiento
+- Productos (gestión completa)
 - Inventario (acceso completo)
+- Trazabilidad (acceso completo)
+
+**Flujo de Trabajo:**
+
+1. Selecciona un producto existente con su formulación
+2. Define un objetivo o interés para la nueva fórmula
+3. El sistema genera ideas mediante IA basándose en el producto y materiales disponibles
+4. Revisa las ideas generadas
+5. Asigna las ideas prometedoras a analistas
+6. Recibe notificaciones cuando analistas completan pruebas
+7. Revisa resultados de pruebas y estados
+8. Aprueba ideas exitosas para producción o rechaza las que no cumplen criterios
 
 **Restricciones:**
 
-- No puede gestionar usuarios
+- No puede gestionar usuarios (solo Administrador)
 - No puede acceder a configuración del sistema (excepto parámetros de QA)
 
 ### 8.4 Administrador
@@ -507,7 +631,9 @@ Administrador / Usuario Avanzado: Soporte técnico del sistema, puede otorgar ro
 - Debe documentar todos los cambios en configuración
 
 
-## 9. Diagrama de Casos de Uso
+---
+
+## 10. Diagrama de Casos de Uso
 
 *En esta sección se deben especificar los casos de uso del sistema a construir, inicialmente se definen el diagrama general de casos de uso y posteriormente los subsistemas o diagramas específicos.*
 
@@ -642,7 +768,9 @@ El diagrama general muestra los principales actores del sistema (Usuario, Analis
 - Configurar parámetros del sistema
 - Configurar alertas y notificaciones
 
-## 10. HISTORIAS DE USUARIO
+---
+
+## 11. Historias de Usuario
 
 ---
 
@@ -1183,6 +1311,8 @@ El diagrama general muestra los principales actores del sistema (Usuario, Analis
 - Se mantiene historial de configuraciones
 
 
+
+---
 
 **Fin del Documento**
 

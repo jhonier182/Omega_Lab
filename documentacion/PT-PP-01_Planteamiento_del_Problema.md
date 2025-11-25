@@ -1,14 +1,20 @@
-# PT-PP-01. Planteamiento del Problema (Plantilla)
+# 📋 Planteamiento del Problema
+## Omega Lab - Sistema PLM/LIMS
+**Versión:** 1.0
 
-**HISTORIAL DE REVISIÓN**
+---
+
+## 📋 Historial de Revisión
 
 | Versión | Fecha Elaboración | Responsable Elaboración | Fecha Aprobación | Responsable Aprobación |
 | --- | --- | --- | --- | --- |
-| 1.0 | 2024-12-XX | Equipo de Desarrollo Proscience Lab |  |  |
+| 1.0 | 2024-12-XX | Equipo de Desarrollo Omega Lab |  |  |
 |  |  |  |  |  |
 |  |  |  |  |  |
 
-**CAMBIOS RESPECTO A LA VERSIÓN ANTERIOR**
+---
+
+## 📝 Cambios Respecto a la Versión Anterior
 
 | **VERSIÓN** | **MODIFICACIÓN RESPECTO VERSIÓN ANTERIOR** |
 | --- | --- |
@@ -16,7 +22,9 @@
 |  |  |
 |  |  |
 
-## Tabla de Contenido
+---
+
+## 📑 Tabla de Contenido
 
 1. [Introducción](#1-introducción)
    - 1.1 [Responsables e Involucrados](#11-responsables-e-involucrados)
@@ -27,37 +35,49 @@
 5. [Justificación](#5-justificación)
 6. [Aspectos legales (normas o leyes)](#6-aspectos-legales-normas-o-leyes)
 
+---
+
 ## 1. Introducción
 
 ### **Objetivo del Proyecto**
 
-Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) diseñado específicamente para asistir en la creación de nuevas fórmulas de productos nutracéuticos y suplementos dietarios mediante inteligencia artificial, utilizando los productos y materias primas existentes en el inventario. El sistema permitirá cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio, mientras facilita la innovación y desarrollo de nuevos productos de manera eficiente y segura.
+Desarrollar e implementar un sistema integral PLM/LIMS (Product Lifecycle Management / Laboratory Information Management System) diseñado específicamente para laboratorios de creación de fórmulas químicas. El sistema permite generar nuevas fórmulas a partir de productos y formulaciones ya preparadas mediante inteligencia artificial, simplificando el proceso de formulación para empresas, garantizando trazabilidad limpia y mejor control de auditoría.
+
+**Flujo Principal del Sistema:**
+
+1. **Generación de Ideas (SupervisorQA)**: El SupervisorQA (mayor rango) selecciona un producto existente con su formulación (BOM) y define un objetivo o interés. El sistema utiliza IA para generar nuevas ideas de fórmulas basándose en el producto y los materiales disponibles en inventario.
+
+2. **Desarrollo y Pruebas (Analista)**: Las ideas generadas se asignan a analistas que las desarrollan en el laboratorio, realizan pruebas y determinan si son viables o deben rechazarse.
+
+3. **Aprobación (SupervisorQA)**: El SupervisorQA recibe notificaciones con los resultados de las pruebas y determina si la idea es aceptada para producción o rechazada según el estado y criterios de calidad.
+
+El sistema permite cumplir con las Buenas Prácticas de Manufactura (BPM) establecidas en el Decreto 3249 de 2006 del Ministerio de Salud y Protección Social de Colombia, garantizando trazabilidad completa, integridad de datos, control de calidad y cumplimiento regulatorio.
 
 ### **Características Principales**
 
-- **Asistencia de IA en Formulación**: Sistema inteligente que ayuda a crear nuevas fórmulas utilizando productos y materias primas disponibles en el inventario existente
-- **Gestión del Ciclo de Vida del Producto (PLM)**: Desde la investigación y formulación asistida por IA hasta la aprobación y liberación
-- **Sistema de Información de Laboratorio (LIMS)**: Control de calidad, pruebas analíticas y gestión de muestras
-- **Trazabilidad Completa**: Seguimiento de lotes desde materias primas hasta distribución
-- **Integridad de Datos**: Registros inalterables con timestamps y firmas digitales
-- **Control de Versiones**: Gestión de BOM (Bill of Materials) con historial de cambios
-- **Cumplimiento Regulatorio**: Diseñado para cumplir con BPM y facilitar auditorías del INVIMA
-- **Base de Conocimiento**: Repositorio centralizado de SOPs, guías y farmacopeas
-- **Integración con APIs Moleculares**: Búsqueda en bases de datos científicas (PubChem, ChEMBL, DrugBank, ZINC) para investigación de ingredientes
-- **Simulación e IA Avanzada**: Predicción de parámetros fisicoquímicos, análisis de compatibilidad de ingredientes y sugerencias inteligentes de formulación basadas en productos del inventario
+- ✅ **Generación de Ideas mediante IA**: El SupervisorQA puede generar nuevas ideas de fórmulas basándose en productos existentes y sus formulaciones (BOM), utilizando inteligencia artificial para sugerir combinaciones inteligentes
+- ✅ **Flujo de Trabajo Estructurado**: Sistema de asignación y seguimiento de ideas desde generación hasta aprobación para producción
+- ✅ **Gestión de Pruebas (LIMS)**: Los analistas pueden crear y gestionar pruebas asociadas a ideas, registrando resultados detallados
+- ✅ **Sistema de Notificaciones**: Notificaciones automáticas cuando las ideas cambian de estado o cuando los analistas completan pruebas
+- ✅ **Trazabilidad Completa y Limpia**: Seguimiento completo de todo el proceso: producto base → idea generada → pruebas realizadas → decisión final
+- ✅ **Integridad de Datos**: Registros inalterables con timestamps y auditoría completa de todas las acciones
+- ✅ **Control de Versiones**: Gestión de BOM (Bill of Materials) con historial completo de cambios
+- ✅ **Cumplimiento Regulatorio**: Diseñado para cumplir con BPM y facilitar auditorías del INVIMA
+- ✅ **Simplificación de Formulaciones**: Reduce la complejidad del proceso de creación de nuevas fórmulas para empresas
+- ✅ **Control de Auditoría Mejorado**: Registro detallado de todas las decisiones y acciones para facilitar auditorías
 
 ### **Beneficios Esperados**
 
-- Reducción del tiempo de desarrollo de productos en un 30-40%
-- Eliminación de errores manuales en la gestión de formulaciones y BOM
-- Cumplimiento total con normativas BPM y reducción de no conformidades
-- Trazabilidad completa que facilita la gestión de retiros del mercado si es necesario
-- Mejora en la eficiencia operativa mediante automatización de procesos
-- Reducción de costos asociados a reprocesos y rechazos de lotes
-- Facilita la preparación y ejecución de auditorías regulatorias
-- Centralización de información que mejora la toma de decisiones
-- Reducción de tiempo en búsqueda de información técnica y científica
-- Mejora en la gestión de conocimiento organizacional
+- ✅ **Simplificación del Proceso de Formulación**: Reduce la complejidad para empresas mediante generación automática de ideas
+- ✅ **Trazabilidad Limpia**: Seguimiento completo y claro de todo el proceso desde producto base hasta decisión final
+- ✅ **Mejor Control de Auditoría**: Registro detallado de todas las acciones y decisiones facilita auditorías regulatorias
+- ✅ Reducción del 40-50% en tiempo de creación de nuevas fórmulas mediante asistencia de IA
+- ✅ Eliminación de errores manuales en la gestión de formulaciones y BOM
+- ✅ Cumplimiento total con normativas BPM y reducción de no conformidades
+- ✅ Mejora en la eficiencia operativa mediante automatización de procesos y notificaciones
+- ✅ Reducción de costos asociados a reprocesos y rechazos de lotes
+- ✅ Facilita la preparación y ejecución de auditorías regulatorias
+- ✅ Centralización de información que mejora la toma de decisiones
 
 ### **Audiencia Objetivo**
 
@@ -68,19 +88,20 @@ Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecyc
 ### **Alcance del Proyecto**
 
 **Incluye:**
-- Módulo de Dashboard con KPIs y métricas en tiempo real
-- Módulo de Ideas/Research con integración a bases de datos moleculares
-- Módulo de Formulación con gestión de BOM y control de versiones
-- Módulo de IA/Simulación para predicción de propiedades
-- Módulo de Producción con órdenes de lote y dispensación digital
-- Módulo de Pruebas/Control de Calidad (LIMS) con gestión de muestras
-- Módulo de Aprobación/QA con firma digital y gestión de NC/CAPA
-- Módulo de Trazabilidad de Lotes completo
-- Módulo de Base de Conocimiento con control de versiones
-- Módulo de Configuración de usuarios, roles y equipos
-- Sistema de autenticación y autorización basado en roles
-- API RESTful para integración con sistemas externos
-- Interfaz web responsive y PWA (Progressive Web App)
+
+- ✅ Módulo de Dashboard con KPIs y métricas en tiempo real
+- ✅ Módulo de Ideas/Research con integración a bases de datos moleculares
+- ✅ Módulo de Formulación con gestión de BOM y control de versiones
+- ✅ Módulo de IA/Simulación para predicción de propiedades
+- ✅ Módulo de Producción con órdenes de lote y dispensación digital
+- ✅ Módulo de Pruebas/Control de Calidad (LIMS) con gestión de muestras
+- ✅ Módulo de Aprobación/QA con firma digital y gestión de NC/CAPA
+- ✅ Módulo de Trazabilidad de Lotes completo
+- ✅ Módulo de Base de Conocimiento con control de versiones
+- ✅ Módulo de Configuración de usuarios, roles y equipos
+- ✅ Sistema de autenticación y autorización basado en roles
+- ✅ API RESTful para integración con sistemas externos
+- ✅ Interfaz web responsive y PWA (Progressive Web App)
 
 **No incluye:**
 - Integración con sistemas ERP existentes (fase futura)
@@ -95,7 +116,7 @@ Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecyc
 
 | **Nombre** | **Tipo (Responsable/ Involucrado)** | **Rol** | Cargo |
 | --- | --- | --- | --- |
-| Equipo de Desarrollo Proscience Lab | Responsable | Desarrollo y mantenimiento del sistema | Equipo Técnico |
+| Equipo de Desarrollo Omega Lab | Responsable | Desarrollo y mantenimiento del sistema | Equipo Técnico |
 | Gerencia de Calidad | Involucrado | Definición de requisitos regulatorios y validación | Gerencia |
 | Personal de Producción | Involucrado | Usuarios finales y retroalimentación | Operaciones |
 | Personal de Control de Calidad | Involucrado | Usuarios finales y validación de procesos LIMS | Calidad |
@@ -121,13 +142,15 @@ Desarrollar e implementar un sistema integral híbrido PLM/LIMS (Product Lifecyc
 | ICH Q7 | Buenas Prácticas de Manufactura para Ingredientes Farmacéuticos Activos | [ICH Q7](https://www.ich.org/page/quality-guidelines) |
 |  |  |  |
 
+---
+
 ## 2. Descripción General
 
 ---
 
 ### **Visión del Proyecto**
 
-Ser el sistema de referencia en la industria de nutracéuticos y suplementos dietarios en Colombia para la gestión integral del ciclo de vida de productos, garantizando cumplimiento regulatorio, trazabilidad completa e integridad de datos, que permita a Proscience Lab mantener su posición de liderazgo en calidad y cumplimiento normativo, facilitando la innovación y el desarrollo de nuevos productos de manera eficiente y segura.
+Ser el sistema de referencia en la industria de nutracéuticos y suplementos dietarios en Colombia para la gestión integral del ciclo de vida de productos, garantizando cumplimiento regulatorio, trazabilidad completa e integridad de datos, que permita a Omega Lab mantener su posición de liderazgo en calidad y cumplimiento normativo, facilitando la innovación y el desarrollo de nuevos productos de manera eficiente y segura.
 
 ### **Funcionalidades Clave**
 
@@ -241,6 +264,8 @@ El sistema está diseñado con una arquitectura moderna de tres capas:
 
 ---
 
+---
+
 ## 3. Situación Actual
 
 ---
@@ -345,7 +370,7 @@ Las soluciones existentes en el mercado presentan:
 
 ### **Necesidad de Innovación**
 
-Prosience Lab requiere una solución que:
+Omega Lab requiere una solución que:
 - Se adapte específicamente a sus procesos y necesidades
 - Cumpla con normativas colombianas (Decreto 3249 de 2006)
 - Sea accesible en términos de costo
@@ -356,13 +381,15 @@ Prosience Lab requiere una solución que:
 
 ---
 
+---
+
 ## 4. Situación Esperada
 
 
 
 ### **Visión General**
 
-Con la implementación del sistema PLM/LIMS, Proscience Lab logrará una transformación digital completa de sus procesos, pasando de un modelo basado en documentos físicos y procesos manuales a un sistema integrado, digital y automatizado que garantice:
+Con la implementación del sistema PLM/LIMS, Omega Lab logrará una transformación digital completa de sus procesos, pasando de un modelo basado en documentos físicos y procesos manuales a un sistema integrado, digital y automatizado que garantice:
 
 **Trazabilidad Completa y Transparente**:
 - Cada lote será rastreable desde la recepción de materias primas hasta la distribución del producto final
@@ -406,7 +433,7 @@ Con la implementación del sistema PLM/LIMS, Proscience Lab logrará una transfo
 ### **Impacto Esperado en el Mercado**
 
 **Posicionamiento Competitivo**:
-- Proscience Lab se posicionará como líder en cumplimiento regulatorio y calidad
+- Omega Lab se posicionará como líder en cumplimiento regulatorio y calidad
 - Diferencia competitiva mediante trazabilidad y transparencia
 - Capacidad de responder rápidamente a requerimientos de clientes y reguladores
 
@@ -455,6 +482,8 @@ Con la implementación del sistema PLM/LIMS, Proscience Lab logrará una transfo
 
 ---
 
+---
+
 ## 5. Justificación
 
 ---
@@ -469,7 +498,7 @@ La industria de nutracéuticos y suplementos dietarios en Colombia opera en un e
 - Daño a la reputación
 - Pérdida de licencias de operación
 
-Prosience Lab, como empresa comprometida con la calidad y el cumplimiento normativo, requiere un sistema que no solo cumpla con los requisitos regulatorios, sino que también mejore la eficiencia operativa y facilite la innovación.
+Omega Lab, como empresa comprometida con la calidad y el cumplimiento normativo, requiere un sistema que no solo cumpla con los requisitos regulatorios, sino que también mejore la eficiencia operativa y facilite la innovación.
 
 **Necesidad Regulatoria**:
 El Decreto 3249 de 2006 establece requisitos específicos para BPM que incluyen:
@@ -492,7 +521,7 @@ Los procesos actuales basados en documentos físicos y hojas de cálculo generan
 - Tiempo excesivo en tareas administrativas
 
 **Necesidad Estratégica**:
-Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
+Para mantener y mejorar su posición competitiva, Omega Lab necesita:
 - Diferenciación mediante calidad y cumplimiento demostrable
 - Capacidad de innovar y desarrollar nuevos productos rápidamente
 - Escalabilidad para crecer sin aumentar proporcionalmente costos operativos
@@ -527,7 +556,7 @@ Para mantener y mejorar su posición competitiva, Proscience Lab necesita:
 **Beneficios Estratégicos**:
 - **Competitividad**: Diferencia competitiva mediante calidad y cumplimiento
 - **Innovación Acelerada**: Asistencia de IA facilita desarrollo de nuevos productos de manera más rápida, permitiendo lanzar nuevos productos al mercado con mayor frecuencia
-- **Ventaja Tecnológica**: Uso de IA para formulación posiciona a Proscience Lab como líder en innovación tecnológica
+- **Ventaja Tecnológica**: Uso de IA para formulación posiciona a Omega Lab como líder en innovación tecnológica
 - **Optimización de Recursos**: Mejor aprovechamiento del inventario existente para crear nuevos productos, reduciendo costos y desperdicios
 - **Crecimiento**: Base sólida para expansión futura
 - **Reputación**: Mejora imagen corporativa y confianza de clientes
@@ -626,9 +655,9 @@ El cumplimiento de las leyes y regulaciones colombianas es esencial para garanti
 
 ### **Conclusión**
 
-La implementación del sistema PLM/LIMS para Proscience Lab representa una inversión estratégica crítica que aborda necesidades regulatorias urgentes, mejora significativamente la eficiencia operativa y posiciona a la empresa para el crecimiento futuro. El sistema no solo cumple con las normativas colombianas vigentes, sino que también establece una base sólida para la innovación y la competitividad en el mercado de nutracéuticos y suplementos dietarios.
+La implementación del sistema PLM/LIMS para Omega Lab representa una inversión estratégica crítica que aborda necesidades regulatorias urgentes, mejora significativamente la eficiencia operativa y posiciona a la empresa para el crecimiento futuro. El sistema no solo cumple con las normativas colombianas vigentes, sino que también establece una base sólida para la innovación y la competitividad en el mercado de nutracéuticos y suplementos dietarios.
 
 Los beneficios esperados, tanto cuantitativos como cualitativos, justifican ampliamente la inversión en el proyecto. La arquitectura moderna y escalable del sistema garantiza su sostenibilidad a largo plazo, mientras que el compromiso organizacional asegura su adopción exitosa.
 
-El cumplimiento legal y regulatorio es fundamental para la operación de Proscience Lab, y este sistema proporciona las herramientas necesarias para garantizar dicho cumplimiento de manera eficiente y efectiva. La implementación exitosa del proyecto fortalecerá la posición de Proscience Lab como líder en calidad y cumplimiento normativo en la industria colombiana de nutracéuticos.
+El cumplimiento legal y regulatorio es fundamental para la operación de Omega Lab, y este sistema proporciona las herramientas necesarias para garantizar dicho cumplimiento de manera eficiente y efectiva. La implementación exitosa del proyecto fortalecerá la posición de Omega Lab como líder en calidad y cumplimiento normativo en la industria colombiana de nutracéuticos.
 
