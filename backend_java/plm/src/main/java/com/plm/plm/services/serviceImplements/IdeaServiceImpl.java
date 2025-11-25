@@ -146,12 +146,8 @@ public class IdeaServiceImpl implements IdeaService {
         Idea idea = ideaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Idea no encontrada"));
 
-        // Validar transiciones de estado válidas
-        EstadoIdea estadoActual = idea.getEstado();
-        if (!isValidTransition(estadoActual, nuevoEstado)) {
-            throw new BadRequestException("Transición de estado no válida: " + estadoActual + " -> " + nuevoEstado);
-        }
-
+        // Permitir cualquier transición de estado según la etapa
+        // No se valida la transición para permitir flexibilidad en el flujo de trabajo
         idea.setEstado(nuevoEstado);
 
         // Si se aprueba, registrar aprobador y fecha
@@ -162,11 +158,8 @@ public class IdeaServiceImpl implements IdeaService {
             idea.setApprovedAt(LocalDateTime.now());
         }
 
-        // Si se envía a pruebas, asignar analista
-        if (nuevoEstado == EstadoIdea.EN_PRUEBA) {
-            if (analistaId == null) {
-                throw new BadRequestException("Se debe asignar un analista al enviar la idea a pruebas");
-            }
+        // Si se envía a pruebas, asignar analista (solo si se proporciona)
+        if (nuevoEstado == EstadoIdea.EN_PRUEBA && analistaId != null) {
             User analista = userRepository.findById(analistaId)
                     .orElseThrow(() -> new ResourceNotFoundException("Analista no encontrado"));
             idea.setAsignadoA(analista);
@@ -204,25 +197,7 @@ public class IdeaServiceImpl implements IdeaService {
         }
     }
 
-    private boolean isValidTransition(EstadoIdea estadoActual, EstadoIdea nuevoEstado) {
-        if (estadoActual == EstadoIdea.EN_PRODUCCION || estadoActual == EstadoIdea.RECHAZADA) {
-            return false;
-        }
-
-        switch (estadoActual) {
-            case GENERADA:
-                return nuevoEstado == EstadoIdea.EN_REVISION || nuevoEstado == EstadoIdea.RECHAZADA;
-            case EN_REVISION:
-                return nuevoEstado == EstadoIdea.APROBADA || nuevoEstado == EstadoIdea.RECHAZADA;
-            case APROBADA:
-                return nuevoEstado == EstadoIdea.EN_PRUEBA || nuevoEstado == EstadoIdea.RECHAZADA;
-            case EN_PRUEBA:
-                return nuevoEstado == EstadoIdea.PRUEBA_APROBADA || nuevoEstado == EstadoIdea.RECHAZADA;
-            case PRUEBA_APROBADA:
-                return nuevoEstado == EstadoIdea.EN_PRODUCCION;
-            default:
-                return false;
-        }
-    }
+    // Método removido - ya no se valida la transición de estados
+    // Se permite cambiar libremente entre cualquier estado según la etapa del proceso
 }
 

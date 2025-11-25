@@ -116,7 +116,7 @@ const Dashboard = () => {
       case 'en_prueba':
         return 'En Prueba'
       case 'prueba_aprobada':
-        return 'Prueba Aprobada'
+        return 'Aprobación Final'
       case 'rechazada':
         return 'Rechazada'
       default:

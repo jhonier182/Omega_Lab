@@ -282,29 +282,30 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeCategories() {
-        long existingProducts = productRepository.count();
-        if (existingProducts > 0) {
-            System.out.println("Eliminando " + existingProducts + " productos existentes...");
-            productRepository.deleteAll();
-            System.out.println("Productos eliminados exitosamente");
-        }
-
-        // Eliminar materiales antes de eliminar categorías (por restricción de clave foránea)
-        long existingMaterials = materialRepository.count();
-        if (existingMaterials > 0) {
-            System.out.println("Eliminando " + existingMaterials + " materiales existentes...");
-            materialRepository.deleteAll();
-            System.out.println("Materiales eliminados exitosamente");
-        }
-
+        // No borrar datos existentes para preservar las ideas y sus relaciones
         long existingCategories = categoryRepository.count();
         if (existingCategories > 0) {
-            System.out.println("Eliminando " + existingCategories + " categorías existentes...");
-            categoryRepository.deleteAll();
-            System.out.println("Categorías eliminadas exitosamente");
+            System.out.println("Se encontraron " + existingCategories + " categorías existentes. Se preservarán.");
         }
 
-        List<Category> categories = new ArrayList<>();
+        long existingMaterials = materialRepository.count();
+        if (existingMaterials > 0) {
+            System.out.println("Se encontraron " + existingMaterials + " materiales existentes. Se preservarán.");
+        }
+
+        long existingProducts = productRepository.count();
+        if (existingProducts > 0) {
+            System.out.println("Se encontraron " + existingProducts + " productos existentes. Se preservarán.");
+        }
+
+        // Obtener categorías existentes para verificar cuáles faltan
+        List<Category> existingCategoriesList = categoryRepository.findAll();
+        java.util.Map<String, Category> existingCategoriesMap = new java.util.HashMap<>();
+        for (Category cat : existingCategoriesList) {
+            existingCategoriesMap.put(cat.getNombre() + "_" + cat.getTipoProducto().name(), cat);
+        }
+
+        List<Category> categoriesToCreate = new ArrayList<>();
 
         String[][] categoriasPT = {
             {"Proteínas", "Proteínas de suero y mezclas proteicas"},
@@ -340,40 +341,60 @@ public class DataInitializer implements CommandLineRunner {
             {"Enzimas", "Enzimas digestivas"}
         };
 
+        // Crear solo categorías que no existen
         for (String[] cat : categoriasPT) {
-            Category category = new Category();
-            category.setNombre(cat[0]);
-            category.setDescripcion(cat[1]);
-            category.setTipoProducto(TipoProducto.PRODUCTO_TERMINADO);
-            category.setEstado(EstadoUsuario.ACTIVO);
-            categories.add(category);
+            String key = cat[0] + "_" + TipoProducto.PRODUCTO_TERMINADO.name();
+            if (!existingCategoriesMap.containsKey(key)) {
+                Category category = new Category();
+                category.setNombre(cat[0]);
+                category.setDescripcion(cat[1]);
+                category.setTipoProducto(TipoProducto.PRODUCTO_TERMINADO);
+                category.setEstado(EstadoUsuario.ACTIVO);
+                categoriesToCreate.add(category);
+            }
         }
 
         for (String[] cat : categoriasMP) {
-            Category category = new Category();
-            category.setNombre(cat[0]);
-            category.setDescripcion(cat[1]);
-            category.setTipoProducto(TipoProducto.MATERIA_PRIMA);
-            category.setEstado(EstadoUsuario.ACTIVO);
-            categories.add(category);
+            String key = cat[0] + "_" + TipoProducto.MATERIA_PRIMA.name();
+            if (!existingCategoriesMap.containsKey(key)) {
+                Category category = new Category();
+                category.setNombre(cat[0]);
+                category.setDescripcion(cat[1]);
+                category.setTipoProducto(TipoProducto.MATERIA_PRIMA);
+                category.setEstado(EstadoUsuario.ACTIVO);
+                categoriesToCreate.add(category);
+            }
         }
 
         for (String[] cat : categoriasComp) {
-            Category category = new Category();
-            category.setNombre(cat[0]);
-            category.setDescripcion(cat[1]);
-            category.setTipoProducto(TipoProducto.COMPONENTE);
-            category.setEstado(EstadoUsuario.ACTIVO);
-            categories.add(category);
+            String key = cat[0] + "_" + TipoProducto.COMPONENTE.name();
+            if (!existingCategoriesMap.containsKey(key)) {
+                Category category = new Category();
+                category.setNombre(cat[0]);
+                category.setDescripcion(cat[1]);
+                category.setTipoProducto(TipoProducto.COMPONENTE);
+                category.setEstado(EstadoUsuario.ACTIVO);
+                categoriesToCreate.add(category);
+            }
         }
 
-        categoryRepository.saveAll(categories);
-        System.out.println("Se crearon " + categories.size() + " categorías exitosamente");
+        if (!categoriesToCreate.isEmpty()) {
+            categoryRepository.saveAll(categoriesToCreate);
+            System.out.println("Se crearon " + categoriesToCreate.size() + " nuevas categorías exitosamente");
+        } else {
+            System.out.println("Todas las categorías ya existen. No se crearon nuevas.");
+        }
     }
 
     private void initializeProducts() {
+        // Verificar productos existentes por código
+        List<Product> existingProducts = productRepository.findAll();
+        java.util.Map<String, Product> existingProductsMap = new java.util.HashMap<>();
+        for (Product p : existingProducts) {
+            existingProductsMap.put(p.getCodigo(), p);
+        }
 
-        List<Product> products = new ArrayList<>();
+        List<Product> productsToCreate = new ArrayList<>();
 
         String[] productosTerminados = {
             "BEST WHEY 2.04 LB", "BEST WHEY 4 LB", "BEST PROTEIN 2.04 LB",
@@ -422,25 +443,40 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         for (int i = 0; i < 20; i++) {
-            Product product = new Product();
-            product.setCodigo("PT-" + String.format("%03d", i + 1));
-            product.setNombre(productosTerminados[i]);
-            product.setDescripcion(descripcionesPT[i]);
-            Category categoriaEntity = categoriasMap.get(categoriasPT[i]);
-            if (categoriaEntity != null) {
-                product.setCategoriaEntity(categoriaEntity);
+            String codigo = "PT-" + String.format("%03d", i + 1);
+            // Solo crear si no existe
+            if (!existingProductsMap.containsKey(codigo)) {
+                Product product = new Product();
+                product.setCodigo(codigo);
+                product.setNombre(productosTerminados[i]);
+                product.setDescripcion(descripcionesPT[i]);
+                Category categoriaEntity = categoriasMap.get(categoriasPT[i]);
+                if (categoriaEntity != null) {
+                    product.setCategoriaEntity(categoriaEntity);
+                }
+                product.setUnidadMedida("un");
+                product.setEstado(EstadoUsuario.ACTIVO);
+                productsToCreate.add(product);
             }
-            product.setUnidadMedida("un");
-            product.setEstado(EstadoUsuario.ACTIVO);
-            products.add(product);
         }
 
-        productRepository.saveAll(products);
-        System.out.println("Se crearon " + products.size() + " productos terminados exitosamente");
+        if (!productsToCreate.isEmpty()) {
+            productRepository.saveAll(productsToCreate);
+            System.out.println("Se crearon " + productsToCreate.size() + " nuevos productos terminados exitosamente");
+        } else {
+            System.out.println("Todos los productos ya existen. No se crearon nuevos.");
+        }
     }
 
     private void initializeMaterials() {
-        List<Material> materials = new ArrayList<>();
+        // Verificar materiales existentes por código
+        List<Material> existingMaterials = materialRepository.findAll();
+        java.util.Map<String, Material> existingMaterialsMap = new java.util.HashMap<>();
+        for (Material m : existingMaterials) {
+            existingMaterialsMap.put(m.getCodigo(), m);
+        }
+
+        List<Material> materialsToCreate = new ArrayList<>();
 
         String[] materiasPrimas = {
             "Proteína de Suero Concentrada (WPC 80%)", "Proteína de Suero Aislada (WPI 90%)",
@@ -482,30 +518,43 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         for (int i = 0; i < 15; i++) {
-            Material material = new Material();
-            material.setCodigo("MP-" + String.format("%03d", i + 1));
-            material.setNombre(materiasPrimas[i]);
-            material.setDescripcion(descripcionesMP[i]);
-            Category categoriaEntity = categoriasMap.get(categoriasMP[i]);
-            if (categoriaEntity != null) {
-                material.setCategoriaEntity(categoriaEntity);
+            String codigo = "MP-" + String.format("%03d", i + 1);
+            // Solo crear si no existe
+            if (!existingMaterialsMap.containsKey(codigo)) {
+                Material material = new Material();
+                material.setCodigo(codigo);
+                material.setNombre(materiasPrimas[i]);
+                material.setDescripcion(descripcionesMP[i]);
+                Category categoriaEntity = categoriasMap.get(categoriasMP[i]);
+                if (categoriaEntity != null) {
+                    material.setCategoriaEntity(categoriaEntity);
+                }
+                material.setUnidadMedida("kg");
+                material.setEstado(EstadoUsuario.ACTIVO);
+                materialsToCreate.add(material);
             }
-            material.setUnidadMedida("kg");
-            material.setEstado(EstadoUsuario.ACTIVO);
-            materials.add(material);
         }
 
-        materialRepository.saveAll(materials);
-        System.out.println("Se crearon " + materials.size() + " materiales exitosamente");
+        if (!materialsToCreate.isEmpty()) {
+            materialRepository.saveAll(materialsToCreate);
+            System.out.println("Se crearon " + materialsToCreate.size() + " nuevos materiales exitosamente");
+        } else {
+            System.out.println("Todos los materiales ya existen. No se crearon nuevos.");
+        }
     }
 
     private void initializeBOMs() {
-        // Eliminar todos los BOMs existentes
-        long existingBOMs = bomRepository.count();
-        if (existingBOMs > 0) {
-            System.out.println("Eliminando " + existingBOMs + " BOMs existentes...");
-            bomRepository.deleteAll();
-            System.out.println("BOMs eliminados exitosamente");
+        // Verificar BOMs existentes para no duplicar
+        List<BOM> existingBOMs = bomRepository.findAll();
+        java.util.Map<Integer, BOM> existingBOMsMap = new java.util.HashMap<>();
+        for (BOM bom : existingBOMs) {
+            if (bom.getProducto() != null) {
+                existingBOMsMap.put(bom.getProducto().getId(), bom);
+            }
+        }
+        
+        if (existingBOMs.size() > 0) {
+            System.out.println("Se encontraron " + existingBOMs.size() + " BOMs existentes. Se preservarán.");
         }
 
         // Obtener el usuario admin para asignar como creador
@@ -524,112 +573,154 @@ public class DataInitializer implements CommandLineRunner {
             materialesMap.put(m.getCodigo(), m);
         }
 
+        // Crear BOMs solo para productos que no tienen BOM
         // Crear BOMs para productos terminados de proteínas
-        createBOMForProduct(productosMap.get("PT-001"), "BEST WHEY 2.04 LB", admin, productosMap,
+        if (!existingBOMsMap.containsKey(productosMap.get("PT-001") != null ? productosMap.get("PT-001").getId() : -1)) {
+            createBOMForProduct(productosMap.get("PT-001"), "BEST WHEY 2.04 LB", admin, productosMap,
             new String[]{"MP-001", "MP-001", "MP-001", "MP-001", "MP-001"},
             new double[]{0.85, 0.05, 0.03, 0.04, 0.03},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-002"), "BEST WHEY 4 LB", admin, productosMap,
+        if (!existingBOMsMap.containsKey(productosMap.get("PT-002") != null ? productosMap.get("PT-002").getId() : -1)) {
+            createBOMForProduct(productosMap.get("PT-002"), "BEST WHEY 4 LB", admin, productosMap,
             new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005"},
             new double[]{0.85, 0.05, 0.03, 0.04, 0.03},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-003"), "BEST PROTEIN 2.04 LB", admin, productosMap,
+        // Crear BOMs solo si no existen
+        if (productosMap.get("PT-003") != null && !existingBOMsMap.containsKey(productosMap.get("PT-003").getId())) {
+            createBOMForProduct(productosMap.get("PT-003"), "BEST PROTEIN 2.04 LB", admin, productosMap,
             new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.50, 0.30, 0.15, 0.03, 0.01, 0.01},
             new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-004"), "BEST VEGAN", admin, productosMap,
+        if (productosMap.get("PT-004") != null && !existingBOMsMap.containsKey(productosMap.get("PT-004").getId())) {
+            createBOMForProduct(productosMap.get("PT-004"), "BEST VEGAN", admin, productosMap,
             new String[]{"MP-004", "MP-005", "MP-006", "MP-007", "MP-008", "MP-009"},
             new double[]{0.60, 0.30, 0.02, 0.04, 0.02, 0.02},
             new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-005"), "SMART 3.25 LB", admin, productosMap,
+        if (productosMap.get("PT-005") != null && !existingBOMsMap.containsKey(productosMap.get("PT-005").getId())) {
+            createBOMForProduct(productosMap.get("PT-005"), "SMART 3.25 LB", admin, productosMap,
             new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.70, 0.20, 0.05, 0.02, 0.02, 0.01},
             new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-006"), "SMART 6 LB", admin, productosMap,
+        if (productosMap.get("PT-006") != null && !existingBOMsMap.containsKey(productosMap.get("PT-006").getId())) {
+            createBOMForProduct(productosMap.get("PT-006"), "SMART 6 LB", admin, productosMap,
             new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.70, 0.20, 0.05, 0.02, 0.02, 0.01},
             new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-007"), "SMART BOLSA 13.01 LB", admin, productosMap,
+        if (productosMap.get("PT-007") != null && !existingBOMsMap.containsKey(productosMap.get("PT-007").getId())) {
+            createBOMForProduct(productosMap.get("PT-007"), "SMART BOLSA 13.01 LB", admin, productosMap,
             new String[]{"MP-001", "MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.70, 0.20, 0.05, 0.02, 0.02, 0.01},
             new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-008"), "LA WEY 1.72 LB", admin, productosMap,
+        if (productosMap.get("PT-008") != null && !existingBOMsMap.containsKey(productosMap.get("PT-008").getId())) {
+            createBOMForProduct(productosMap.get("PT-008"), "LA WEY 1.72 LB", admin, productosMap,
             new String[]{"MP-002", "MP-003", "MP-004", "MP-005", "MP-006"},
             new double[]{0.90, 0.05, 0.02, 0.02, 0.01},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
         // BOMs para creatinas
-        createBOMForProduct(productosMap.get("PT-009"), "LEGACY 30S CREATINA HCL", admin, productosMap,
+        if (productosMap.get("PT-009") != null && !existingBOMsMap.containsKey(productosMap.get("PT-009").getId())) {
+            createBOMForProduct(productosMap.get("PT-009"), "LEGACY 30S CREATINA HCL", admin, productosMap,
             new String[]{"MP-006", "MP-007"},
             new double[]{0.95, 0.05},
             new String[]{"kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-010"), "LEGACY 50S CREATINA HCL", admin, productosMap,
+        if (productosMap.get("PT-010") != null && !existingBOMsMap.containsKey(productosMap.get("PT-010").getId())) {
+            createBOMForProduct(productosMap.get("PT-010"), "LEGACY 50S CREATINA HCL", admin, productosMap,
             new String[]{"MP-006", "MP-007"},
             new double[]{0.95, 0.05},
             new String[]{"kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-011"), "LEGACY PLUS 50S", admin, productosMap,
+        if (productosMap.get("PT-011") != null && !existingBOMsMap.containsKey(productosMap.get("PT-011").getId())) {
+            createBOMForProduct(productosMap.get("PT-011"), "LEGACY PLUS 50S", admin, productosMap,
             new String[]{"MP-006", "MP-007", "MP-010"},
             new double[]{0.85, 0.10, 0.05},
             new String[]{"kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-012"), "LEGEND CON CREAPURE®", admin, productosMap,
+        if (productosMap.get("PT-012") != null && !existingBOMsMap.containsKey(productosMap.get("PT-012").getId())) {
+            createBOMForProduct(productosMap.get("PT-012"), "LEGEND CON CREAPURE®", admin, productosMap,
             new String[]{"MP-006"},
             new double[]{1.0},
             new String[]{"kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-013"), "LEGEND CON CREAPURE® 50s", admin, productosMap,
+        if (productosMap.get("PT-013") != null && !existingBOMsMap.containsKey(productosMap.get("PT-013").getId())) {
+            createBOMForProduct(productosMap.get("PT-013"), "LEGEND CON CREAPURE® 50s", admin, productosMap,
             new String[]{"MP-006"},
             new double[]{1.0},
             new String[]{"kg"});
+        }
 
         // BOMs para suplementos
-        createBOMForProduct(productosMap.get("PT-014"), "EEA'S (ARMY) 30 SERVICIOS", admin, productosMap,
+        if (productosMap.get("PT-014") != null && !existingBOMsMap.containsKey(productosMap.get("PT-014").getId())) {
+            createBOMForProduct(productosMap.get("PT-014"), "EEA'S (ARMY) 30 SERVICIOS", admin, productosMap,
             new String[]{"MP-008", "MP-009", "MP-010", "MP-011", "MP-012"},
             new double[]{0.40, 0.35, 0.20, 0.03, 0.02},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-015"), "INTENZE 30 SERVICIOS", admin, productosMap,
+        if (productosMap.get("PT-015") != null && !existingBOMsMap.containsKey(productosMap.get("PT-015").getId())) {
+            createBOMForProduct(productosMap.get("PT-015"), "INTENZE 30 SERVICIOS", admin, productosMap,
             new String[]{"MP-011", "MP-012", "MP-013", "MP-014", "MP-001", "MP-002"},
             new double[]{0.30, 0.25, 0.20, 0.15, 0.05, 0.05},
             new String[]{"kg", "kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-016"), "THE ONE", admin, productosMap,
+        if (productosMap.get("PT-016") != null && !existingBOMsMap.containsKey(productosMap.get("PT-016").getId())) {
+            createBOMForProduct(productosMap.get("PT-016"), "THE ONE", admin, productosMap,
             new String[]{"MP-010", "MP-011", "MP-012", "MP-013", "MP-014"},
             new double[]{0.20, 0.15, 0.30, 0.20, 0.15},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-017"), "OMEGA 3", admin, productosMap,
+        if (productosMap.get("PT-017") != null && !existingBOMsMap.containsKey(productosMap.get("PT-017").getId())) {
+            createBOMForProduct(productosMap.get("PT-017"), "OMEGA 3", admin, productosMap,
             new String[]{"MP-001", "MP-002"},
             new double[]{0.90, 0.10},
             new String[]{"kg", "kg"});
+        }
 
         // Los kits no tienen BOM directo, son combinaciones de productos terminados
         // Pero podemos crear BOMs básicos para ellos
-        createBOMForProduct(productosMap.get("PT-018"), "KIT GYMBRO", admin, productosMap,
+        if (productosMap.get("PT-018") != null && !existingBOMsMap.containsKey(productosMap.get("PT-018").getId())) {
+            createBOMForProduct(productosMap.get("PT-018"), "KIT GYMBRO", admin, productosMap,
             new String[]{"MP-001", "MP-006", "MP-007", "MP-008"},
             new double[]{0.60, 0.30, 0.05, 0.05},
             new String[]{"kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-019"), "KIT GYM RAT", admin, productosMap,
+        if (productosMap.get("PT-019") != null && !existingBOMsMap.containsKey(productosMap.get("PT-019").getId())) {
+            createBOMForProduct(productosMap.get("PT-019"), "KIT GYM RAT", admin, productosMap,
             new String[]{"MP-001", "MP-006", "MP-008", "MP-009", "MP-010"},
             new double[]{0.50, 0.25, 0.15, 0.05, 0.05},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
-        createBOMForProduct(productosMap.get("PT-020"), "KIT ESSENTIAL", admin, productosMap,
+        if (productosMap.get("PT-020") != null && !existingBOMsMap.containsKey(productosMap.get("PT-020").getId())) {
+            createBOMForProduct(productosMap.get("PT-020"), "KIT ESSENTIAL", admin, productosMap,
             new String[]{"MP-001", "MP-006", "MP-008", "MP-010", "MP-011"},
             new double[]{0.40, 0.20, 0.20, 0.15, 0.05},
             new String[]{"kg", "kg", "kg", "kg", "kg"});
+        }
 
-        System.out.println("Se crearon BOMs para todos los productos terminados exitosamente");
+        System.out.println("BOMs verificados y creados solo para productos que no tenían BOM");
     }
 
     private void createBOMForProduct(Product producto, String nombreBOM, User creador, 

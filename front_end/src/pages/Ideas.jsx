@@ -12,12 +12,8 @@ const Ideas = () => {
   const [loadingIdeas, setLoadingIdeas] = useState(false)
   const [expandedIdeas, setExpandedIdeas] = useState(new Set())
   const [selectedFormula, setSelectedFormula] = useState(null)
-  const [filters, setFilters] = useState({
-    estado: '',
-    categoria: '',
-    prioridad: '',
-    search: ''
-  })
+  const [draggedFormula, setDraggedFormula] = useState(null)
+  const [dragOverColumn, setDragOverColumn] = useState(null)
   const [showAnalystDialog, setShowAnalystDialog] = useState(false)
   const [selectedIdea, setSelectedIdea] = useState(null)
   const [analistas, setAnalistas] = useState([])
@@ -42,16 +38,22 @@ const Ideas = () => {
     )
   }
 
+  // Cargar ideas solo una vez al inicio
   useEffect(() => {
     loadIdeas()
-  }, [filters])
+  }, [])
 
+  // Cargar pruebas solo cuando se cargan las ideas inicialmente, no en cada cambio
   useEffect(() => {
-    // Cargar pruebas para cada idea cuando se cargan las ideas
-    if (ideas.length > 0) {
-      loadPruebasForIdeas()
+    if (ideas.length > 0 && !loadingIdeas) {
+      // Usar un timeout para evitar cargar pruebas durante actualizaciones rápidas
+      const timeoutId = setTimeout(() => {
+        loadPruebasForIdeas()
+      }, 300)
+      return () => clearTimeout(timeoutId)
     }
-  }, [ideas])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ideas.length])
 
   const loadIdeas = async () => {
     setLoadingIdeas(true)
@@ -63,8 +65,8 @@ const Ideas = () => {
         const ideasEnPrueba = data.filter(idea => idea.estado === 'EN_PRUEBA')
         setIdeas(ideasEnPrueba)
       } else {
-        // Si es Supervisor QA o Admin, cargar todas las ideas con filtros
-        const data = await ideaService.getIdeas(filters)
+        // Si es Supervisor QA o Admin, cargar todas las ideas
+        const data = await ideaService.getIdeas({ estado: '', categoria: '', prioridad: '', search: '' })
         setIdeas(data)
       }
     } catch (error) {
@@ -73,6 +75,7 @@ const Ideas = () => {
       setLoadingIdeas(false)
     }
   }
+
 
   const loadAnalistas = async () => {
     setLoadingAnalistas(true)
@@ -100,11 +103,24 @@ const Ideas = () => {
 
     // Para otros estados, cambiar directamente
     try {
-      await ideaService.changeEstado(idea.id, nuevoEstado)
-      loadIdeas()
+      const updatedIdea = await ideaService.changeEstado(idea.id, nuevoEstado)
+      // Actualizar la idea localmente de forma optimista (sin recargar todo)
+      setIdeas(prevIdeas => 
+        prevIdeas.map(i => 
+          i.id === idea.id 
+            ? { ...i, ...updatedIdea, estado: updatedIdea.estado || nuevoEstado.toUpperCase() } 
+            : i
+        )
+      )
+      // Si hay un modal abierto con esta fórmula, actualizarlo también
+      if (selectedFormula && selectedFormula.id === idea.id) {
+        setSelectedFormula(prev => prev ? { ...prev, ...updatedIdea, estado: updatedIdea.estado || nuevoEstado.toUpperCase() } : null)
+      }
     } catch (error) {
       console.error('Error al cambiar estado:', error)
       alert('Error al cambiar estado: ' + (error.message || 'Error desconocido'))
+      // En caso de error, recargar para sincronizar
+      loadIdeas()
     }
   }
 
@@ -115,14 +131,27 @@ const Ideas = () => {
     }
 
     try {
-      await ideaService.changeEstado(selectedIdea.id, 'en_prueba', selectedAnalistaId)
+      const updatedIdea = await ideaService.changeEstado(selectedIdea.id, 'en_prueba', selectedAnalistaId)
+      // Actualizar la idea localmente de forma optimista (sin recargar todo)
+      setIdeas(prevIdeas => 
+        prevIdeas.map(i => 
+          i.id === selectedIdea.id 
+            ? { ...i, ...updatedIdea, estado: updatedIdea.estado || 'EN_PRUEBA' } 
+            : i
+        )
+      )
+      // Si hay un modal abierto con esta fórmula, actualizarlo también
+      if (selectedFormula && selectedFormula.id === selectedIdea.id) {
+        setSelectedFormula(prev => prev ? { ...prev, ...updatedIdea, estado: updatedIdea.estado || 'EN_PRUEBA' } : null)
+      }
       setShowAnalystDialog(false)
       setSelectedIdea(null)
       setSelectedAnalistaId(null)
-      loadIdeas()
     } catch (error) {
       console.error('Error al asignar a analista:', error)
       alert('Error al asignar analista: ' + (error.message || 'Error desconocido'))
+      // En caso de error, recargar para sincronizar
+      loadIdeas()
     }
   }
 
@@ -158,14 +187,116 @@ const Ideas = () => {
       case 'en_prueba':
         return 'En Prueba'
       case 'prueba_aprobada':
-        return 'Prueba Aprobada'
+        return 'Aprobación Final'
       case 'rechazada':
-        return 'Rechazada'
+        return 'Archivada'
       case 'en_produccion':
         return 'En Producción'
       default:
         return estado
     }
+  }
+
+  // Definir columnas del kanban (sin incluir RECHAZADA - las fórmulas rechazadas se archivan)
+  const kanbanColumns = [
+    { id: 'GENERADA', label: 'Generada', borderClass: 'border-blue-500/30', bgClass: 'bg-blue-500/10', dotClass: 'bg-blue-500', badgeClass: 'bg-blue-500/20 text-blue-400' },
+    { id: 'EN_REVISION', label: 'En Revisión', borderClass: 'border-yellow-500/30', bgClass: 'bg-yellow-500/10', dotClass: 'bg-yellow-500', badgeClass: 'bg-yellow-500/20 text-yellow-400' },
+    { id: 'APROBADA', label: 'Aprobada', borderClass: 'border-green-500/30', bgClass: 'bg-green-500/10', dotClass: 'bg-green-500', badgeClass: 'bg-green-500/20 text-green-400' },
+    { id: 'EN_PRUEBA', label: 'En Prueba', borderClass: 'border-purple-500/30', bgClass: 'bg-purple-500/10', dotClass: 'bg-purple-500', badgeClass: 'bg-purple-500/20 text-purple-400' },
+    { id: 'PRUEBA_APROBADA', label: 'Aprobación Final', borderClass: 'border-emerald-500/30', bgClass: 'bg-emerald-500/10', dotClass: 'bg-emerald-500', badgeClass: 'bg-emerald-500/20 text-emerald-400' },
+    { id: 'EN_PRODUCCION', label: 'En Producción', borderClass: 'border-indigo-500/30', bgClass: 'bg-indigo-500/10', dotClass: 'bg-indigo-500', badgeClass: 'bg-indigo-500/20 text-indigo-400' }
+  ]
+
+  // Agrupar fórmulas por estado (excluyendo RECHAZADA del kanban - se archivan)
+  const formulasByEstado = ideas.reduce((acc, idea) => {
+    const estado = idea.estado || 'GENERADA'
+    // Las fórmulas rechazadas no aparecen en el kanban, se archivan
+    if (estado === 'RECHAZADA') {
+      return acc
+    }
+    if (!acc[estado]) {
+      acc[estado] = []
+    }
+    acc[estado].push(idea)
+    return acc
+  }, {})
+
+  // Manejar inicio de arrastre
+  const handleDragStart = (e, formula) => {
+    setDraggedFormula(formula)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', e.target.outerHTML)
+    e.target.style.opacity = '0.5'
+  }
+
+  // Manejar arrastre sobre una columna
+  const handleDragOver = (e, columnId) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverColumn(columnId)
+  }
+
+  // Manejar salida del arrastre
+  const handleDragLeave = () => {
+    setDragOverColumn(null)
+  }
+
+  // Manejar soltar en una columna
+  const handleDrop = async (e, targetEstado) => {
+    e.preventDefault()
+    if (!draggedFormula) return
+
+    // Si el estado es el mismo, no hacer nada
+    if (draggedFormula.estado === targetEstado) {
+      setDraggedFormula(null)
+      return
+    }
+
+    // Si el estado objetivo es EN_PRUEBA, mostrar diálogo de analista
+    if (targetEstado === 'EN_PRUEBA') {
+      setSelectedIdea(draggedFormula)
+      setSelectedAnalistaId(null)
+      if (analistas.length === 0) {
+        await loadAnalistas()
+      }
+      setShowAnalystDialog(true)
+      setDraggedFormula(null)
+      setDragOverColumn(null)
+      return
+    }
+
+    // Para otros estados, cambiar directamente
+    try {
+      const updatedIdea = await ideaService.changeEstado(draggedFormula.id, targetEstado.toLowerCase())
+      // Actualizar la idea localmente de forma optimista (sin recargar todo)
+      setIdeas(prevIdeas => 
+        prevIdeas.map(i => 
+          i.id === draggedFormula.id 
+            ? { ...i, ...updatedIdea, estado: updatedIdea.estado || targetEstado } 
+            : i
+        )
+      )
+      // Si hay un modal abierto con esta fórmula, actualizarlo también
+      if (selectedFormula && selectedFormula.id === draggedFormula.id) {
+        setSelectedFormula(prev => prev ? { ...prev, ...updatedIdea, estado: updatedIdea.estado || targetEstado } : null)
+      }
+      setDraggedFormula(null)
+      setDragOverColumn(null)
+    } catch (error) {
+      console.error('Error al cambiar estado:', error)
+      alert('Error al cambiar estado: ' + (error.message || 'Error desconocido'))
+      setDraggedFormula(null)
+      setDragOverColumn(null)
+      // En caso de error, recargar para sincronizar
+      loadIdeas()
+    }
+  }
+
+  // Manejar fin de arrastre
+  const handleDragEnd = (e) => {
+    e.target.style.opacity = '1'
+    setDraggedFormula(null)
+    setDragOverColumn(null)
   }
 
   const toggleDetails = (ideaId) => {
@@ -203,45 +334,6 @@ const Ideas = () => {
 
   return (
     <div className="w-full h-full">
-      {/* Filtros - Solo para Supervisor QA y Admin */}
-      {!isAnalista && (
-        <div className="rounded-lg bg-card-dark border border-border-dark p-6 mb-6">
-          <div className="flex flex-wrap gap-4">
-            <input
-              type="text"
-              placeholder="Buscar fórmulas..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="flex-1 min-w-[200px] h-10 px-4 rounded-lg bg-input-dark border-none text-text-light placeholder:text-text-muted focus:outline-0 focus:ring-2 focus:ring-primary/50"
-            />
-            <select
-              value={filters.estado}
-              onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-              className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Todos los estados</option>
-              <option value="generada">Generada</option>
-              <option value="en_revision">En Revisión</option>
-              <option value="aprobada">Aprobada</option>
-              <option value="en_prueba">En Prueba</option>
-              <option value="prueba_aprobada">Prueba Aprobada</option>
-              <option value="rechazada">Rechazada</option>
-              <option value="en_produccion">En Producción</option>
-            </select>
-            <select
-              value={filters.categoria}
-              onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
-              className="h-10 px-4 rounded-lg bg-input-dark border-none text-text-light focus:outline-0 focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Todas las categorías</option>
-              <option value="Nutracéutico">Nutracéutico</option>
-              <option value="Suplemento Dietario">Suplemento Dietario</option>
-              <option value="Ingrediente Funcional">Ingrediente Funcional</option>
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* Lista de Ideas */}
       {loadingIdeas ? (
         <div className="flex items-center justify-center py-8">
@@ -257,52 +349,91 @@ const Ideas = () => {
           </p>
                 </div>
       ) : (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-max">
-          {ideas.map((idea) => (
-              <div 
-                key={idea.id} 
-                onClick={() => setSelectedFormula(idea)}
-                className="flex-shrink-0 w-80 p-4 rounded-lg bg-card-dark border border-border-dark cursor-pointer hover:border-primary/50 hover:bg-card-dark/80 transition-all"
-              >
-                <div className="flex flex-col h-full">
-                  <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-text-light font-semibold text-base line-clamp-2">{idea.titulo}</h3>
-                      </div>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getEstadoColor(idea.estado)}`}>
-                      {getEstadoLabel(idea.estado)}
-                    </span>
+        <div className="overflow-x-auto pb-4 h-full">
+          <div className="flex gap-4 min-w-max h-full">
+            {kanbanColumns.map((column) => {
+              const formulas = formulasByEstado[column.id] || []
+              return (
+                <div
+                  key={column.id}
+                  className={`flex-shrink-0 w-80 flex flex-col transition-all ${
+                    dragOverColumn === column.id ? 'scale-105' : ''
+                  }`}
+                  onDragOver={(e) => handleDragOver(e, column.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => {
+                    handleDrop(e, column.id)
+                    setDragOverColumn(null)
+                  }}
+                >
+                  {/* Header de la columna */}
+                  <div className={`mb-4 p-3 rounded-lg border-2 border-dashed ${column.borderClass} ${column.bgClass}`}>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-text-light font-semibold text-sm flex items-center gap-2">
+                        <span className={`w-3 h-3 rounded-full ${column.dotClass}`}></span>
+                        {column.label}
+                      </h3>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${column.badgeClass}`}>
+                        {formulas.length}
+                      </span>
                     </div>
-        </div>
-
-                  <p className="text-text-muted text-sm mb-3 line-clamp-3 flex-1">{idea.descripcion}</p>
-                  
-                  <div className="space-y-1 text-xs text-text-muted mt-auto">
-                    {idea.categoria && (
-                      <div className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">category</span>
-                        <span>{idea.categoria}</span>
                   </div>
-                  )}
-                    {idea.createdAt && (
-                      <div className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">calendar_today</span>
-                        <span>{new Date(idea.createdAt).toLocaleDateString('es-ES')}</span>
+
+                  {/* Área de drop */}
+                  <div className={`flex-1 min-h-[200px] rounded-lg border-2 border-dashed p-2 space-y-3 overflow-y-auto transition-all ${
+                    dragOverColumn === column.id 
+                      ? `${column.borderClass} ${column.bgClass} border-solid` 
+                      : 'bg-input-dark/30 border-border-dark'
+                  }`}>
+                    {formulas.map((formula) => (
+                      <div
+                        key={formula.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, formula)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => setSelectedFormula(formula)}
+                        className={`p-4 rounded-lg bg-card-dark border border-border-dark cursor-move hover:border-primary/50 hover:bg-card-dark/80 transition-all ${
+                          draggedFormula?.id === formula.id ? 'opacity-50' : ''
+                        }`}
+                      >
+                        <div className="flex flex-col">
+                          <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                              <h3 className="text-text-light font-semibold text-sm line-clamp-2 mb-1">
+                                {formula.titulo}
+                              </h3>
+                            </div>
+                            <span className="material-symbols-outlined text-text-muted text-sm ml-2">drag_indicator</span>
+                          </div>
+
+                          <p className="text-text-muted text-xs mb-3 line-clamp-2">{formula.descripcion}</p>
+                          
+                          <div className="space-y-1 text-xs text-text-muted">
+                            {formula.categoria && (
+                              <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">category</span>
+                                <span>{formula.categoria}</span>
+                              </div>
+                            )}
+                            {formula.createdAt && (
+                              <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">calendar_today</span>
+                                <span>{new Date(formula.createdAt).toLocaleDateString('es-ES')}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {formulas.length === 0 && (
+                      <div className="flex items-center justify-center h-32 text-text-muted text-sm">
+                        <span>Arrastra fórmulas aquí</span>
                       </div>
                     )}
                   </div>
-                  
-                  <div className="mt-3 pt-3 border-t border-border-dark">
-                    <span className="text-primary text-xs font-medium flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">visibility</span>
-                      Ver detalles
-                      </span>
-                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -323,7 +454,7 @@ const Ideas = () => {
                 <h2 className="text-text-light text-2xl font-bold">{selectedFormula.titulo}</h2>
                 <span className={`px-3 py-1 rounded text-sm font-medium ${getEstadoColor(selectedFormula.estado)}`}>
                   {getEstadoLabel(selectedFormula.estado)}
-                      </span>
+                    </span>
               </div>
               <button
                 onClick={() => setSelectedFormula(null)}
@@ -331,7 +462,7 @@ const Ideas = () => {
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
-            </div>
+        </div>
 
             <div className="p-6 space-y-6">
               {/* Información Básica */}
@@ -344,7 +475,7 @@ const Ideas = () => {
                     <div className="mb-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
                       <p className="text-text-muted text-xs mb-1">Objetivo:</p>
                       <p className="text-text-light text-sm font-medium">{selectedFormula.objetivo}</p>
-                    </div>
+                  </div>
                   )}
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -747,7 +878,8 @@ const Ideas = () => {
                           }}
                           className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
                         >
-                          Rechazar
+                          <span className="material-symbols-outlined text-sm mr-1">archive</span>
+                          Archivar
                         </button>
                       </>
                     )}
@@ -772,8 +904,8 @@ const Ideas = () => {
                           }}
                           className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30"
                         >
-                          <span className="material-symbols-outlined text-sm mr-1">cancel</span>
-                          Rechazar
+                          <span className="material-symbols-outlined text-sm mr-1">archive</span>
+                          Archivar
                         </button>
                       </>
                     )}
@@ -806,9 +938,9 @@ const Ideas = () => {
                   </>
                 )}
               </div>
-            </div>
           </div>
-        </div>
+          </div>
+          </div>
       )}
 
       {/* Diálogo de selección de analista */}
