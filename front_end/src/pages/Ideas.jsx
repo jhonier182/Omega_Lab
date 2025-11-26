@@ -343,12 +343,81 @@ const Ideas = () => {
       ) : ideas.length === 0 ? (
         <div className="text-center py-12 rounded-lg bg-card-dark border border-border-dark">
           <span className="material-symbols-outlined text-6xl text-text-muted mb-4">lightbulb_outline</span>
-          <p className="text-text-light text-lg font-semibold mb-2">No hay fórmulas registradas</p>
+          <p className="text-text-light text-lg font-semibold mb-2">
+            {isAnalista ? 'No tienes fórmulas asignadas' : 'No hay fórmulas registradas'}
+          </p>
           <p className="text-text-muted text-sm">
-            Ve al módulo <strong>IA / Simulación</strong> para generar nuevas fórmulas desde productos del inventario
+            {isAnalista 
+              ? 'Las fórmulas asignadas aparecerán aquí cuando te sean asignadas'
+              : 'Ve al módulo IA / Simulación para generar nuevas fórmulas desde productos del inventario'}
           </p>
                 </div>
+      ) : isAnalista ? (
+        // Vista de lista para analista
+        <div className="space-y-4">
+          {ideas.map((formula) => {
+            const pruebas = pruebasPorIdea.get(formula.id) || []
+            const tienePruebaIniciada = pruebas.length > 0
+
+            return (
+              <div
+                key={formula.id}
+                onClick={() => setSelectedFormula(formula)}
+                className="p-6 rounded-lg bg-card-dark border border-border-dark hover:border-primary/50 hover:bg-card-dark/80 transition-all cursor-pointer"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-text-light font-semibold text-lg">{formula.titulo}</h3>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getEstadoColor(formula.estado)}`}>
+                        {getEstadoLabel(formula.estado)}
+                      </span>
+                    </div>
+                    <p className="text-text-muted text-sm mb-4 line-clamp-2">{formula.descripcion}</p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      {formula.categoria && (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-text-muted text-sm">category</span>
+                          <span className="text-text-muted text-xs">Categoría:</span>
+                          <span className="text-text-light font-medium">{formula.categoria}</span>
+                        </div>
+                      )}
+                      {formula.createdAt && (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-text-muted text-sm">calendar_today</span>
+                          <span className="text-text-muted text-xs">Fecha:</span>
+                          <span className="text-text-light font-medium">
+                            {new Date(formula.createdAt).toLocaleDateString('es-ES')}
+                          </span>
+                        </div>
+                      )}
+                      {formula.productoOrigenNombre && (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-text-muted text-sm">inventory_2</span>
+                          <span className="text-text-muted text-xs">Producto:</span>
+                          <span className="text-text-light font-medium">{formula.productoOrigenNombre}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-text-muted text-sm">science</span>
+                        <span className="text-text-muted text-xs">Pruebas:</span>
+                        <span className={`font-medium ${tienePruebaIniciada ? 'text-success' : 'text-warning'}`}>
+                          {tienePruebaIniciada ? 'Iniciada' : 'Pendiente'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <span className="material-symbols-outlined text-text-muted">chevron_right</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       ) : (
+        // Vista kanban para Supervisor QA y Admin
         <div className="overflow-x-auto pb-4 h-full">
           <div className="flex gap-4 min-w-max h-full">
             {kanbanColumns.map((column) => {

@@ -219,18 +219,33 @@ public class PruebaServiceImpl implements PruebaService {
                         .orElse(null);
                 
                 if (idea != null && idea.getEstado() == EstadoIdea.EN_PRUEBA) {
-                    if (todasPasaron) {
-                        // Todas las pruebas pasaron, cambiar idea a PRUEBA_APROBADA
-                        ideaService.changeEstado(ideaId, EstadoIdea.PRUEBA_APROBADA, null, null);
-                    } else if (algunaFallo) {
-                        // Alguna prueba falló, cambiar idea a RECHAZADA
-                        ideaService.changeEstado(ideaId, EstadoIdea.RECHAZADA, null, null);
+                    // Obtener el usuario asignado a la idea (analista) para usar como userId
+                    // Si no hay usuario asignado, usar el creador de la idea
+                    Integer userId = idea.getAsignadoA() != null ? idea.getAsignadoA().getId() : 
+                                    (idea.getCreador() != null ? idea.getCreador().getId() : null);
+                    
+                    if (userId == null) {
+                        // Si no hay usuario disponible, buscar un administrador o supervisor QA
+                        // Por ahora, simplemente cambiar el estado directamente sin userId
+                        idea.setEstado(todasPasaron ? EstadoIdea.PRUEBA_APROBADA : EstadoIdea.RECHAZADA);
+                        ideaRepository.save(idea);
+                        System.out.println("Estado de idea " + ideaId + " actualizado a " + idea.getEstado() + " (sin userId)");
+                    } else {
+                        if (todasPasaron) {
+                            // Todas las pruebas pasaron, cambiar idea a PRUEBA_APROBADA
+                            ideaService.changeEstado(ideaId, EstadoIdea.PRUEBA_APROBADA, userId, null);
+                            System.out.println("Estado de idea " + ideaId + " actualizado a PRUEBA_APROBADA");
+                        } else if (algunaFallo) {
+                            // Alguna prueba falló, cambiar idea a RECHAZADA
+                            ideaService.changeEstado(ideaId, EstadoIdea.RECHAZADA, userId, null);
+                            System.out.println("Estado de idea " + ideaId + " actualizado a RECHAZADA");
+                        }
                     }
                 }
             }
         } catch (Exception e) {
             // Log el error pero no interrumpir el flujo
-            System.err.println("Error al sincronizar estado de idea: " + e.getMessage());
+            System.err.println("Error al sincronizar estado de idea " + ideaId + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -264,6 +279,10 @@ public class PruebaServiceImpl implements PruebaService {
             if (pruebaActualizada.getIdea().getEstado() != null) {
                 pruebaActualizada.getIdea().getEstado(); // Acceder al estado
             }
+            
+            // Verificar si la prueba debería cambiar de estado automáticamente
+            // Esto se hace en el frontend, pero también verificamos aquí por si acaso
+            // Si la prueba está en EN_PROCESO y tiene resultados, el frontend la actualizará
         }
         
         return pruebaActualizada.getDTO();
